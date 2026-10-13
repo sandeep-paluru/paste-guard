@@ -1,0 +1,10 @@
+#pg-overlay { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; width: 320px;
+  padding: 12px 14px; border-radius: 10px; font: 14px/1.4 system-ui, sans-serif; color: #111;
+  background: #fff; box-shadow: 0 6px 24px rgba(0,0,0,.25); border-left: 6px solid #999; }
+#pg-overlay.pg-nudge { border-left-color: #e0b100; }
+#pg-overlay.pg-coach { border-left-color: #e07000; }
+#pg-overlay.pg-block { border-left-color: #c62828; }
+#pg-overlay .pg-title { font-weight: 700; margin-bottom: 4px; }
+#pg-overlay ul { margin: 6px 0; padding-left: 18px; }
+#pg-overlay .pg-actions { display: flex; gap: 8px; justify-content: flex-end; }
+#pg-overlay button { padding: 4px 10px; border-radius: 6px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer; }

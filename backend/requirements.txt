@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn>=0.29
+# Day 2:
+# sentence-transformers
+# sqlite-vec
