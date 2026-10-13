@@ -54,16 +54,17 @@ Open `http://127.0.0.1:8765/admin` on the backend machine (or through an SSH tun
 Documents are split on paragraph boundaries into 120 to 200 word chunks with overlap, plus shorter 60 word passages so short excerpts still have a close neighbour.
 
 ## Results
-From `eval/results.md` (396 samples, 12 confidential documents, one code repository):
+From `eval/results.md` (472 samples, 18 confidential documents, one code repository):
 
 | Kind | Method | Precision | Recall | F1 | False positive rate |
 |---|---|---|---|---|---|
-| Documents | Paste Guard (coach level) | 0.98 | 0.82 | 0.89 | 0.03 |
-| Documents | Regex and keyword baseline | 1.00 | 0.11 | 0.19 | 0.00 |
+| Documents | Paste Guard (coach level) | 0.99 | 0.75 | 0.85 | 0.04 |
+| Documents | Paste Guard (any warning, nudge level) | 0.97 | 0.82 | 0.89 | 0.08 |
+| Documents | Regex and keyword baseline | 1.00 | 0.11 | 0.20 | 0.00 |
 | Code | Paste Guard (coach level) | 0.97 | 0.92 | 0.95 | 0.04 |
 | Code | Regex and keyword baseline | 0.00 | 0.00 | 0.00 | 0.00 |
 
-Paraphrases are caught 83% of the time (regex 4%), verbatim excerpts 97%, prompt-wrapped pastes 100%. Summaries (58%) and tone rewrites (42%) are the hardest. The top match names the right source document 95% of the time. Thresholds were tuned on this set, so treat these as in-sample numbers. Full breakdown and chart: `eval/results.md`.
+At the coach level, verbatim excerpts are caught 96% of the time (regex 14%), prompt-wrapped pastes 92% (regex 19%) and paraphrases 61% (regex 3%). Summaries (50%) and tone rewrites (39%) are the hardest. The top match names the right source document 96% of the time. Thresholds were tuned on this set, so treat these as in-sample numbers. Full breakdown and chart: `eval/results.md`.
 
 ## Privacy
 - Paste text is processed in memory and never written to disk.

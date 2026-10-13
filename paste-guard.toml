@@ -16,9 +16,9 @@ port = 8765
 # Cosine similarity thresholds per content kind (0 to 1).
 # Values are tuned with eval/run_eval.py; see eval/results.md.
 [thresholds.doc]
-nudge = 0.60
-coach = 0.62
-block = 0.75
+nudge = 0.62
+coach = 0.65
+block = 0.78
 
 [thresholds.code]
 nudge = 0.55
