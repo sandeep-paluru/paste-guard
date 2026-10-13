@@ -1,6 +1,17 @@
-<!doctype html><html><body style="font-family:sans-serif;padding:12px;min-width:360px">
-<h3>Paste Guard settings</h3>
-<label>Backend URL<br><input id="url" style="width:100%" placeholder="http://localhost:8765"></label>
-<p style="font-size:12px;color:#555">Use http://localhost:8765 for the local backend, or a remote VM URL (https recommended).</p>
-<button id="save">Save</button> <span id="status"></span>
+<!doctype html><html><head><meta charset="utf-8"><title>Paste Guard settings</title><link rel="stylesheet" href="common.css">
+<style>.body{max-width:560px}</style></head><body>
+<div class="hdr"><img src="icons/icon32.png" alt=""><b>Paste Guard settings</b><span class="v" id="ver"></span></div>
+<div class="body">
+  <h3>Backend</h3>
+  <input type="text" id="url" placeholder="http://localhost:8765">
+  <p class="muted">Address of the Paste Guard backend. Use http://localhost:8765 when it runs on this computer, or your company's server address (https recommended).</p>
+  <div class="row"><span class="dot" id="dot"></span><span id="status">Not checked</span></div>
+  <h3>Protected sites</h3>
+  <div id="sites"></div>
+  <p class="muted">Uncheck a site to pause checks there.</p>
+  <h3>Behaviour</h3>
+  <label class="chk"><input type="checkbox" id="files"> Check file uploads and drag-and-drop (.txt, .md, .pdf, .docx)</label>
+  <label class="chk"><input type="checkbox" id="failopen"> Let pastes through when the backend is unreachable</label>
+  <div class="row" style="margin-top:14px"><button class="primary" id="save">Save</button><button id="test">Test connection</button></div>
+</div>
 <script src="options.js"></script></body></html>

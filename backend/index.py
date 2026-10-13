@@ -1,7 +1,10 @@
-"""Vector index over the company's code: sqlite-vec, FAISS-free numpy fallback.
+"""Vector index over company code AND company documents (sqlite-vec, numpy fallback).
 
-CLI:  python index.py build /path/to/repo [--db pg_index.db]
-      python index.py query "some code" [--db pg_index.db]
+CLI:  python index.py build --code ../demo/company-repo --docs ../demo/company-docs [--db data/index.db]
+      python index.py query "some text" [--db data/index.db]
+
+Each chunk stores kind=doc|code and its source path, so verdicts can use
+separate thresholds per kind and the overlay can show the matched passage.
 """
 import argparse
 import os
@@ -12,9 +15,11 @@ from pathlib import Path
 import numpy as np
 
 import embedder
-from chunking import CODE_EXT, SKIP_DIRS, normalise, windows
+from chunking import CODE_EXT, DOC_EXT, SKIP_DIRS, doc_chunks, doc_passages, extract_text, normalise, windows
 
-DB_PATH = os.environ.get("PG_INDEX_DB", str(Path(__file__).with_name("pg_index.db")))
+from config import CONFIG
+
+DB_PATH = CONFIG["index"]["db"]
 
 try:
     import sqlite_vec
@@ -32,50 +37,100 @@ def _connect(db_path: str) -> sqlite3.Connection:
     return con
 
 
-def iter_files(repo: Path):
-    for p in repo.rglob("*"):
-        if p.is_file() and p.suffix in CODE_EXT and not (set(p.parts) & SKIP_DIRS):
-            if p.stat().st_size < 500_000:
+def iter_files(root: Path, exts):
+    for p in sorted(root.rglob("*")):
+        if p.is_file() and p.suffix.lower() in exts and not (set(p.parts) & SKIP_DIRS):
+            if p.stat().st_size < 5_000_000:
                 yield p
 
 
-def build_index(repo_path: str, db_path: str = DB_PATH) -> int:
-    repo = Path(repo_path).resolve()
-    if os.path.exists(db_path):
-        os.replace(db_path, db_path + ".prev")  # keep the previous index, never delete
-    con = _connect(db_path)
+def collect(code_dirs=(), doc_dirs=()):
+    """Return rows (kind, source, start, end, text)."""
+    rows = []
+    for d in code_dirs:
+        root = Path(d).resolve()
+        if not root.is_dir():
+            print(f"warning: code folder not found, skipping: {root}", file=sys.stderr)
+            continue
+        for f in iter_files(root, CODE_EXT):
+            for s, e, chunk in windows(f.read_text(errors="ignore")):
+                rows.append(("code", str(f.relative_to(root)), s, e, chunk))
+    for d in doc_dirs:
+        root = Path(d).resolve()
+        if not root.is_dir():
+            print(f"warning: docs folder not found, skipping: {root}", file=sys.stderr)
+            continue
+        for f in iter_files(root, DOC_EXT):
+            try:
+                text = extract_text(f, f.suffix)
+            except Exception as ex:  # unreadable file: report and continue
+                print(f"skip {f}: {ex}", file=sys.stderr)
+                continue
+            for s, e, chunk in doc_passages(text):
+                rows.append(("doc", str(f.relative_to(root)), s, e, chunk))
+    return rows
+
+
+def build_index(code_dirs=(), doc_dirs=(), db_path: str = DB_PATH) -> int:
+    rows = collect(code_dirs, doc_dirs)
+    os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+    tmp = db_path + ".building"
+    if os.path.exists(tmp):
+        os.replace(tmp, tmp + ".stale")
+    con = _connect(tmp)
     d = embedder.dim()
-    con.execute("CREATE TABLE chunks(id INTEGER PRIMARY KEY, path TEXT, start_line INT, end_line INT, text TEXT, emb BLOB)")
+    con.execute("CREATE TABLE chunks(id INTEGER PRIMARY KEY, kind TEXT, path TEXT, start_line INT, end_line INT, "
+                "text TEXT, emb BLOB)")
     if HAVE_VEC:
         con.execute(f"CREATE VIRTUAL TABLE vec_chunks USING vec0(embedding float[{d}] distance_metric=cosine)")
     con.execute("CREATE TABLE meta(k TEXT PRIMARY KEY, v TEXT)")
-    rows = []
-    for f in iter_files(repo):
-        text = f.read_text(errors="ignore")
-        for s, e, chunk in windows(text):
-            rows.append((str(f.relative_to(repo)), s, e, chunk))
-    B = 64
+    B = 32
     for i in range(0, len(rows), B):
         batch = rows[i:i + B]
-        vecs = embedder.embed([normalise(r[3]) for r in batch])
+        vecs = embedder.embed([normalise(r[4]) for r in batch])
         for r, v in zip(batch, vecs):
-            cur = con.execute("INSERT INTO chunks(path,start_line,end_line,text,emb) VALUES(?,?,?,?,?)",
+            cur = con.execute("INSERT INTO chunks(kind,path,start_line,end_line,text,emb) VALUES(?,?,?,?,?,?)",
                               (*r, v.tobytes()))
             if HAVE_VEC:
                 con.execute("INSERT INTO vec_chunks(rowid, embedding) VALUES(?,?)", (cur.lastrowid, v.tobytes()))
         print(f"indexed {min(i + B, len(rows))}/{len(rows)} chunks", file=sys.stderr)
-    con.executemany("INSERT INTO meta VALUES(?,?)", [("repo", str(repo)), ("model", embedder.MODEL_NAME),
-                                                    ("chunks", str(len(rows)))])
+    n_doc = sum(r[0] == "doc" for r in rows)
+    con.executemany("INSERT INTO meta VALUES(?,?)", [
+        ("code_dirs", ",".join(str(Path(x).name) for x in code_dirs)),
+        ("doc_dirs", ",".join(str(Path(x).name) for x in doc_dirs)),
+        ("model", embedder.MODEL_NAME), ("chunks", str(len(rows))), ("doc_chunks", str(n_doc)),
+        ("code_chunks", str(len(rows) - n_doc))])
+    con.execute("INSERT INTO meta VALUES('built_at', datetime('now'))")
     con.commit()
     con.close()
+    if os.path.exists(db_path):
+        os.replace(db_path, db_path + ".prev")  # keep the previous index as a backup
+    os.replace(tmp, db_path)  # atomic swap; a running server reloads it automatically
     return len(rows)
+
+
+def _hit(kind, path, s, e, text, sim):
+    snippet = text if len(text) <= 400 else text[:400].rsplit(" ", 1)[0] + " ..."
+    return {"kind": kind, "path": path, "source": path, "lines": [s, e],
+            "unit": "paragraphs" if kind == "doc" else "lines",
+            "similarity": round(float(sim), 4), "snippet": snippet}
 
 
 class Index:
     def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
-        self.con = _connect(db_path) if os.path.exists(db_path) else None
+        self._open()
+
+    def _open(self):
+        self.mtime = os.path.getmtime(self.db_path) if os.path.exists(self.db_path) else None
+        self.con = _connect(self.db_path) if self.mtime else None
         self._mat = None
+
+    def refresh(self):
+        """Reopen the index if it was rebuilt on disk (e.g. by `pasteguard reindex`)."""
+        m = os.path.getmtime(self.db_path) if os.path.exists(self.db_path) else None
+        if m != self.mtime:
+            self._open()
 
     def stats(self) -> dict:
         if not self.con:
@@ -83,32 +138,44 @@ class Index:
         meta = dict(self.con.execute("SELECT k, v FROM meta").fetchall())
         return {"built": True, "backend": "sqlite-vec" if HAVE_VEC else "numpy", **meta}
 
-    def query(self, vec: np.ndarray, k: int = 5) -> list[dict]:
+    def query(self, vec: np.ndarray, k: int = 5, kind: str | None = None) -> list[dict]:
         if not self.con:
             return []
         if HAVE_VEC:
+            fetch = k * 4 if kind else k
             res = self.con.execute(
-                "SELECT c.path, c.start_line, c.end_line, v.distance FROM vec_chunks v JOIN chunks c ON c.id = v.rowid "
-                "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance", (vec.astype(np.float32).tobytes(), k)).fetchall()
-            return [{"path": p, "lines": [s, e], "similarity": round(1 - dist, 4)} for p, s, e, dist in res]
-        if self._mat is None:
-            data = self.con.execute("SELECT path, start_line, end_line, emb FROM chunks").fetchall()
-            self._meta = [(p, s, e) for p, s, e, _ in data]
-            self._mat = np.stack([np.frombuffer(b, dtype=np.float32) for *_, b in data])
-        sims = self._mat @ vec
-        top = np.argsort(-sims)[:k]
-        return [{"path": self._meta[i][0], "lines": list(self._meta[i][1:]), "similarity": round(float(sims[i]), 4)}
-                for i in top]
+                "SELECT c.kind, c.path, c.start_line, c.end_line, c.text, v.distance FROM vec_chunks v "
+                "JOIN chunks c ON c.id = v.rowid WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
+                (vec.astype(np.float32).tobytes(), fetch)).fetchall()
+            hits = [_hit(kd, p, s, e, t, 1 - dist) for kd, p, s, e, t, dist in res]
+        else:
+            if self._mat is None:
+                data = self.con.execute("SELECT kind, path, start_line, end_line, text, emb FROM chunks").fetchall()
+                self._meta = [r[:5] for r in data]
+                self._mat = np.stack([np.frombuffer(r[5], dtype=np.float32) for r in data])
+            sims = self._mat @ vec
+            hits = [_hit(*self._meta[i], float(sims[i])) for i in np.argsort(-sims)[:k * 4]]
+        if kind:
+            hits = [h for h in hits if h["kind"] == kind]
+        return hits[:k]
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    b = sub.add_parser("build"); b.add_argument("repo"); b.add_argument("--db", default=DB_PATH)
+    b = sub.add_parser("build")
+    b.add_argument("repo", nargs="*", help="code directories (positional, kept for compatibility)")
+    b.add_argument("--code", action="append", default=[])
+    b.add_argument("--docs", action="append", default=[])
+    b.add_argument("--db", default=DB_PATH)
+    sub.add_parser("reindex", help="rebuild from the folders in paste-guard.toml")
     q = sub.add_parser("query"); q.add_argument("text"); q.add_argument("--db", default=DB_PATH)
     a = ap.parse_args()
-    if a.cmd == "build":
-        print(f"{build_index(a.repo, a.db)} chunks indexed into {a.db}")
+    if a.cmd == "reindex":
+        n = build_index(CONFIG["index"]["code"], CONFIG["index"]["docs"], DB_PATH)
+        print(f"{n} chunks indexed into {DB_PATH}")
+    elif a.cmd == "build":
+        print(f"{build_index(a.repo + a.code, a.docs, a.db)} chunks indexed into {a.db}")
     else:
         for hit in Index(a.db).query(embedder.embed([normalise(a.text)])[0]):
             print(hit)

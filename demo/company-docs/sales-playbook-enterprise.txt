@@ -1,7 +1,11 @@
-ENTERPRISE SALES PLAYBOOK FY2027
-CONFIDENTIAL - NORTHWIND ANALYTICS
-
-Version FY27 v1 | Last updated Sep 22, 2026 | Owner: Sales Enablement (J. Mercado) | Distribution: All AEs, SEs, RVPs | Change note: new Brightlayer section
+Enterprise Sales Playbook FY2027
+================================
+CONFIDENTIAL - CALLOWAY METRICS, INC.
+Version: FY27 v1
+Date: Sep 22, 2026
+Owner: Sales Enablement (J. Mercado)
+Distribution: All AEs, SEs, RVPs
+Change: new Brightlayer section
 
 CONFIDENTIAL. Calloway Metrics Sales Enablement. For internal use by account executives, sales engineers and sales leadership. Do not share with prospects, partners or recruiters.
 
@@ -25,7 +29,33 @@ Compensation reminders. Multi year deals earn a 1.2x accelerator on year one ACV
 
 Security review. Send the security package at Stage 3, not earlier. The package includes the SOC 2 Type II report under NDA, the penetration test summary, and the standard data processing agreement. If the prospect asks about SEC-2026-014, use the approved incident statement only.
 
-Escalation. Strategic deals above 500,000 dollars ACV require a deal review with the CRO before Stage 4. Bring the mutual action plan, the champion map and the competitive analysis to the review.
+OBJECTION HANDLING
+------------------
+Objection                           | What it usually means                  | Response                                                          
+------------------------------------+----------------------------------------+-------------------------------------------------------------------
+You're more expensive than Kestrova | they haven't seen governance gaps      | run the RLS demo, ask about their audit requirements              
+We already have a BI tool           | switching cost fear                    | position as semantic layer + assistant on top, not rip and replace
+Your security incident              | procurement checkbox                   | approved statement + remediation summary, offer call with CISO    
+Need it real time                   | they are evaluating Varnetta streaming | Riptrace roadmap under NDA only, no dates in writing              
+AI hallucinations                   | burned by a chatbot                    | show SQL transparency, every answer cites the query               
 
-Document control and handling. This document is classified CONFIDENTIAL under the Calloway Metrics Information Classification Policy. It may be stored only in approved company systems and must not be uploaded, pasted or summarized in external services, including consumer AI assistants, translation sites or personal email. Printed copies must be shredded after use. Report suspected disclosure to the Security team within one hour of discovery.
+SAMPLE DISCOVERY CALL (annotated)
+---------------------------------
+AE:  How do new metrics get onto a dashboard today?
+Buyer: Ticket to the data team, usually two or three weeks.
+AE:  What happens in the meantime?
+Buyer: People export to Excel and do it themselves.
+AE:  So you've got numbers floating around that don't match?
+Buyer: Constantly. Finance and ops argued about churn for a month.
+      ^^ THIS is the pain. Write down the exact words, use in proposal.
+
+TERRITORY AND ROUTING
+---------------------
+Enterprise AEs own named accounts above 2,000 employees. Accounts are routed by HQ location: East (ET and CT timezones), West (MT and PT), EMEA (London). Inbound leads above 2,000 employees go to the named AE within 4 business hours or they reroute to the round robin pool. Disputes go to the RVP and are resolved within one week; the rule of thumb is first to logged meeting wins.
+
+Common mistakes we saw in FY26 lost deal reviews: sending pricing before the proof of value (14 deals), single threading through a data engineer with no budget authority (11 deals), and promising Riptrace dates in email (3 deals, one of which ended up in a contract dispute).
+
+If you are unsure about anything in here ask in #sales-enablement or grab Jess Mercado. This playbook gets updated each quarter, check the version at the top.
+
+Escalation. Strategic deals above 500,000 dollars ACV require a deal review with the CRO before Stage 4. Bring the mutual action plan, the champion map and the competitive analysis to the review.
 

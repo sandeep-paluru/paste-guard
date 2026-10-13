@@ -3,3 +3,7 @@ uvicorn
 fastembed
 sqlite-vec
 numpy
+pypdf
+python-docx
+python-multipart
+tomli; python_version < "3.11"

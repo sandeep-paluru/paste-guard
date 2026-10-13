@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Paste Guard with Prompt Diff",
-  "version": "0.2.0",
-  "description": "Checks pastes into AI tools for secrets and company code. Local by default.",
+  "name": "Paste Guard",
+  "version": "0.3.0",
+  "description": "Checks pastes, uploads and drops into AI tools for confidential documents, company code and secrets. Local by default.",
   "background": {
     "service_worker": "service_worker.js"
   },
@@ -37,6 +37,21 @@
   ],
   "options_ui": {
     "page": "options.html",
-    "open_in_tab": false
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Paste Guard",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
   }
 }

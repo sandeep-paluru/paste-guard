@@ -4,3 +4,4 @@ __pycache__/
 demo/company-repo/
 backend/pg_index.db*
 .venv/
+data/

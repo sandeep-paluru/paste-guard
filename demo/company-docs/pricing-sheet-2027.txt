@@ -1,7 +1,11 @@
-CALLOWAY METRICS 2027 PRICING SHEET (INTERNAL)
-CONFIDENTIAL - NORTHWIND ANALYTICS
-
-Version v3.0 FINAL | Last updated Oct 1, 2026 | Owner: Revenue Strategy (T. Albrecht) | Distribution: Sales leadership, Deal Desk | Change note: added nonprofit cap, removed Starter
+Calloway Metrics 2027 Pricing Sheet (Internal)
+==============================================
+CONFIDENTIAL - CALLOWAY METRICS, INC.
+Version: v3.0 FINAL
+Date: Oct 1, 2026
+Owner: Revenue Strategy (T. Albrecht)
+Distribution: Sales leadership, Deal Desk
+Change: added nonprofit cap, removed Starter
 
 CONFIDENTIAL. Internal pricing guidance for fiscal year 2027. Not for distribution to customers or partners. Effective January 1, 2027. Owner: Revenue Strategy team. This sheet supersedes all 2026 rate cards and discount matrices.
 
@@ -24,7 +28,53 @@ Nonprofit and education. Qualified nonprofits receive 40 percent off Team and Bu
 
 Multi year terms. Two year commitments receive an additional 5 percent discount and three year commitments receive 9 percent, both within the authority matrix above. Prepaid annual terms are standard; quarterly billing carries a 3 percent surcharge.
 
-Questions about this sheet go to the Revenue Strategy channel only. Screenshots and exports of this sheet are prohibited. Partners receive a separate partner price list with a fixed 25 percent margin.
+RATE CARD (copy of tab 'List_2027' from pricing model v3.0.xlsx)
+----------------------------------------------------------------
+SKU       | Plan       | Unit        | List (annual) | List (monthly) | Floor    | Min qty | Notes                 
+----------+------------+-------------+---------------+----------------+----------+---------+-----------------------
+CM-TEAM-S | Team       | seat/mo     | $54           | $64            | $46      | 10      | replaces Starter      
+CM-BUS-S  | Business   | seat/mo     | $118          | $136           | $98      | 25      |                       
+CM-ENT-P  | Enterprise | platform/yr | $96,000       | n/a            | $78,000  | 1       | incl. SSO, audit log  
+CM-ENT-S  | Enterprise | seat/mo     | $142          | n/a            | $88      | 50      | floor HARD            
+CM-EPL    | Ent Plus   | contract    | custom        | n/a            | $380,000 | 1       | dedicated tenancy     
+CM-STR-E  | Add on     | 1k events   | $0.042        | $0.048         | $0.030   | n/a     | 50M/mo incl in ENT    
+CM-AIQ-C  | Add on     | 100 queries | $0.90         | $1.00          | $0.60    | n/a     | AI query assistant    
+CM-LNT-A  | Add on     | tenant/yr   | $30,000       | n/a            | $22,000  | 1       | Lantern, avail Q3 2027
+CM-PS-D   | Services   | day         | $2,400        | n/a            | $1,900   | 1       | professional services 
 
-Document control and handling. This document is classified CONFIDENTIAL under the Calloway Metrics Information Classification Policy. It may be stored only in approved company systems and must not be uploaded, pasted or summarized in external services, including consumer AI assistants, translation sites or personal email. Printed copies must be shredded after use. Report suspected disclosure to the Security team within one hour of discovery.
+DISCOUNT MATRIX
+---------------
+Discount band | Approver          | Turnaround SLA  | Required                    
+--------------+-------------------+-----------------+-----------------------------
+0-12%         | AE                | n/a             | none                        
+12.1-22%      | Regional Director | 1 business day  | deal desk note              
+22.1-35%      | VP Sales          | 2 business days | competitive justification   
+>35%          | CFO               | 3 business days | 36+ month term, exec sponsor
+
+WORKED EXAMPLE (Business, 300 seats, 3 yr)
+------------------------------------------
+300 seats x $118 x 12          = $424,800 list ACV
+less 18% (RD approval)          = -$76,464
+less 3-yr term discount 9%      = -$31,350
+-------------------------------------------
+Net ACV                          = $316,986
+TCV (3 yr, 7% uplift waived)     = $950,958
+Effective seat price             = $88.05/seat/mo   <-- right at ENT floor, ok for BUS
+
+note from Tomas: people keep asking if the 88 floor applies to Business. It doesn't technically (BUS floor is 98) but if you are landing BUS deals at 88 effective you should be talking to the customer about Enterprise instead because they're getting SSO and audit log free basically.
+
+FX
+--
+EUR and GBP price books are set at fixed rates for the full year: 1 USD = 0.92 EUR, 1 USD = 0.79 GBP, rounded up to the nearest whole currency unit. AUD pricing is deferred until the Sydney region launches.
+
+CHANGE LOG
+----------
+Date       | Version | Change                                       | By         
+-----------+---------+----------------------------------------------+------------
+2026-07-15 | v1.0    | initial draft                                | T. Albrecht
+2026-08-30 | v2.0    | added Lantern SKU, raised BUS floor 92 to 98 | T. Albrecht
+2026-09-18 | v2.3    | nonprofit cap 3%                             | H. Osei    
+2026-10-01 | v3.0    | FINAL, Starter removed                       | T. Albrecht
+
+Questions about this sheet go to the Revenue Strategy channel only. Screenshots and exports of this sheet are prohibited. Partners receive a separate partner price list with a fixed 25 percent margin.
 

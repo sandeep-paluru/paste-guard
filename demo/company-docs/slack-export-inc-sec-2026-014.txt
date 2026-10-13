@@ -1,0 +1,47 @@
+Slack export: #inc-sec-2026-014 (July 28, 2026)
+===============================================
+CONFIDENTIAL - CALLOWAY METRICS, INC.
+Version: export part 1
+Date: Aug 3, 2026
+Owner: L. Brandt
+Distribution: incident file only
+
+CONFIDENTIAL. PRIVILEGED AND CONFIDENTIAL, PREPARED AT THE DIRECTION OF COUNSEL. Export generated 2026-08-03 by L. Brandt for incident file. Times in UTC. Some messages removed (bot noise, emoji reactions). Do not forward.
+
+[05:37] jonas.wallin: hey is anyone else seeing egress on nw-prod-exports-eu?? graph is way up since like 2am
+[05:38] jonas.wallin: ~2GB out. thats not a normal export pattern, exports are scheduled for 06:00
+[05:39] jonas.wallin: paging secops
+[05:41] kenji.torres: here. looking
+[05:44] kenji.torres: access log shows ListObjects + GetObject from 185.x.x.x and 91.x.x.x. principal is svc-export-scheduler
+[05:45] kenji.torres: that SA should only be called from our scheduler pods. this is not us
+[05:46] ana.novak: revoke it now, we can deal with exports failing
+[05:47] kenji.torres: revoking token + putting deny-all on the bucket policy
+[05:51] kenji.torres: done. confirmed 403s from both IPs
+[05:52] jonas.wallin: why did nobody get paged at 3?? there's an alert for exactly this
+[05:55] jonas.wallin: ...it went to #pager-data-legacy. that rotation was retired in march. great
+[06:02] kenji.torres: declaring SEV1. I'm IC. @lena.brandt @raj.okafor fyi, possible customer data exposure. please don't discuss outside this channel
+[06:05] lena.brandt: ack. from now on treat this channel as privileged, I'll put the header in. no speculation about cause in writing pls, facts only
+[06:11] kenji.torres: scope so far: 1 bucket, eu region, scheduled csv exports. no evidence of access to warehouse
+[06:14] mei.tanaka: data platform here. bucket has exports for 37 tenants. I can get the list
+[06:20] mei.tanaka: list in the incident doc. includes bramblewood, ostrander, kestrel, delacroix
+[06:31] kenji.torres: how did someone get the SA token? it's long lived (I know, I know)
+[06:48] sam.okoye: found it. it's in a public github repo, a fork of helm-values under a personal account. committed jul 19. user is one of the contractors from the reporting migration
+[06:49] ana.novak: ffs
+[06:50] lena.brandt: Sam please screenshot and preserve, do not contact the contractor yet
+[06:52] sam.okoye: preserved. filing takedown with github
+[07:15] kenji.torres: do we know if other SAs are in that file
+[07:22] sam.okoye: two more tokens in there. one is staging, one is the metrics pusher (prod, write only to metrics). rotating both
+[07:40] raj.okafor: what do we tell customers and when
+[07:42] lena.brandt: EU notification clock started at ~05:40 when we became aware. we have till jul 31 ~05:40 for the DPA. customers: we need to know which files had personal data first
+[07:43] dana.whitcombe: I'm on. Kenji give me a 3 line summary when you can, I'll call Harborline and Bramblewood myself today
+[08:10] mei.tanaka: personal data check: 4 tenants had files with end user PII. roughly 41k rows. bramblewood marketing lists are the biggest
+[08:12] kenji.torres: summary for Dana: unauthorized read of scheduled export files for 37 customers between 02:14-05:51 UTC via leaked token. stopped. no warehouse access found. ~41k end user records in 4 customers' files.
+[09:30] lena.brandt: outside counsel engaged (firm in the incident file). forensics vendor on standby
+[11:02] jonas.wallin: added alert route test to the SRE weekly checklist. also found 2 OTHER alerts pointing to legacy channels, fixed
+[13:45] kenji.torres: postmortem owner = me. draft by aug 8. action items so far: workload identity for all SAs, secret scanning on forks, contractor access review, alert route audit, egress rate limits
+[13:47] ana.novak: +1. and per tenant creds for exports, this blast radius is unacceptable
+[16:20] lena.brandt: customer notice draft v2 in the doc. please don't edit, comment only
+[22:05] kenji.torres: handing IC to sam overnight. nothing new in logs since 05:51. going to sleep
+
+End of export for 2026-07-28. Messages from July 29 onward are in part 2 of the export.
+

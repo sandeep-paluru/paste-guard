@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Paste Guard Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+ body{font:14px/1.45 system-ui,sans-serif;margin:0;background:#f4f5f7;color:#1d2330}
+ header{background:#1d2330;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px}
+ header h1{font-size:18px;margin:0;font-weight:600} header .v{opacity:.6;font-size:12px}
+ main{padding:20px 24px;max-width:1200px;margin:auto}
+ .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+ .card{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+ .card .n{font-size:24px;font-weight:700} .card .l{color:#667;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+ table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+ th,td{padding:7px 10px;text-align:left;border-bottom:1px solid #eee;font-size:13px} th{background:#fafbfc;color:#556}
+ .b{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;color:#fff}
+ .allow{background:#2e7d32}.nudge{background:#c79100}.coach{background:#e07000}.block{background:#c62828}
+ code{font-size:12px;color:#556} h2{font-size:15px;margin:22px 0 8px} .muted{color:#778;font-size:12px}
+</style></head><body>
+<header><h1>Paste Guard</h1><span class="v" id="ver"></span></header>
+<main>
+ <div class="cards" id="cards"></div>
+ <h2>Thresholds</h2><div id="thr" class="muted"></div>
+ <h2>Recent verdicts</h2>
+ <p class="muted">Content is never stored. Each row keeps a SHA-256 of the text, its length, the verdict and the matched source.</p>
+ <table><thead><tr><th>Time</th><th>Channel</th><th>Site</th><th>Verdict</th><th>Match</th><th>Similarity</th><th>Findings</th><th>Chars</th><th>SHA-256</th><th>ms</th></tr></thead>
+ <tbody id="rows"></tbody></table>
+ <p class="muted" id="cfg"></p>
+</main>
+<script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function load(){
+ const d=await (await fetch("/admin/api")).json(), i=d.index, c=d.counts_7d;
+ document.getElementById("ver").textContent="v"+d.version+"  |  "+d.model;
+ const card=(n,l)=>`<div class="card"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`;
+ document.getElementById("cards").innerHTML=[
+  card(i.built?(i.doc_chunks||0):"-","Document passages"),card(i.built?(i.code_chunks||0):"-","Code chunks"),
+  card(i.built_at?i.built_at+" UTC":"never","Index built"),
+  card(c.block||0,"Blocked (7 days)"),card(c.coach||0,"Coached (7 days)"),card(c.nudge||0,"Nudged (7 days)"),card(c.allow||0,"Allowed (7 days)")].join("");
+ document.getElementById("thr").innerHTML=Object.entries(d.thresholds).map(([k,t])=>
+  `<b>${esc(k)}</b>: nudge ${t.nudge}, coach ${t.coach}, block ${t.block}`).join(" &nbsp; | &nbsp; ")+
+  `<br>Protected sites: ${d.sites.map(esc).join(", ")}<br>Indexed folders: docs ${esc(i.doc_dirs||"")}; code ${esc(i.code_dirs||"")}`;
+ document.getElementById("rows").innerHTML=d.recent.map(r=>`<tr><td>${new Date(r.ts*1000).toLocaleString()}</td>
+  <td>${esc(r.channel)}</td><td>${esc(r.site)}</td><td><span class="b ${esc(r.verdict)}">${esc(r.verdict)}</span></td>
+  <td>${esc(r.match_source||"")} <span class="muted">${esc(r.match_kind||"")}</span></td><td>${r.similarity??""}</td>
+  <td>${esc(r.findings)}</td><td>${r.chars}</td><td><code>${esc(r.sha256.slice(0,12))}</code></td><td>${r.ms}</td></tr>`).join("")
+  ||'<tr><td colspan="10" class="muted">No checks yet.</td></tr>';
+ document.getElementById("cfg").textContent="Config: "+d.config+". Re-index after changing folders: ./pasteguard reindex";
+}
+load(); setInterval(load,10000);
+</script></body></html>

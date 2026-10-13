@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Paste Guard command line.
+#   ./pasteguard serve      start the backend (host/port from paste-guard.toml)
+#   ./pasteguard reindex    rebuild the index from the folders in paste-guard.toml
+#   ./pasteguard status     show backend health
+#   ./pasteguard eval       run the evaluation (writes eval/results.md)
+#   ./pasteguard version
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="${PG_PYTHON:-$ROOT/.venv/bin/python}"
+[ -x "$PY" ] || PY=python3
+export PG_CONFIG="${PG_CONFIG:-$ROOT/paste-guard.toml}"
+cfg() { (cd "$ROOT/backend" && "$PY" -c "from config import CONFIG; print(CONFIG['server']['$1'])"); }
+case "${1:-help}" in
+  serve)   cd "$ROOT/backend" && exec "$PY" -m uvicorn app:app --host "$(cfg host)" --port "$(cfg port)" ;;
+  reindex) cd "$ROOT/backend" && exec "$PY" index.py reindex ;;
+  status)  curl -fsS "http://127.0.0.1:$(cfg port)/health" && echo ;;
+  eval)    cd "$ROOT" && exec "$PY" eval/run_eval.py "${@:2}" ;;
+  version) cat "$ROOT/VERSION" ;;
+  *) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

@@ -8,3 +8,9 @@
 #pg-overlay ul { margin: 6px 0; padding-left: 18px; }
 #pg-overlay .pg-actions { display: flex; gap: 8px; justify-content: flex-end; }
 #pg-overlay button { padding: 4px 10px; border-radius: 6px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer; }
+#pg-overlay { width: 380px; }
+#pg-overlay .pg-match { margin: 6px 0; font-size: 13px; }
+#pg-overlay blockquote { margin: 4px 0; padding: 6px 8px; max-height: 120px; overflow: auto; background: #f7f7f7;
+  border-left: 3px solid #ccc; font-size: 12px; white-space: pre-wrap; }
+#pg-toast { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; padding: 8px 12px; border-radius: 8px;
+  background: #222; color: #fff; font: 13px system-ui, sans-serif; }

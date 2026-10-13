@@ -1,0 +1,16 @@
+# One-command setup with Docker:  docker compose up -d
+# Point the two volumes at your company's documents and code folders.
+services:
+  paste-guard:
+    build: .
+    image: paste-guard:0.3.0
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ./demo/company-docs:/app/demo/company-docs:ro
+      - ./demo/company-repo:/app/demo/company-repo:ro
+      - paste-guard-data:/app/data
+    mem_limit: 700m
+    restart: unless-stopped
+volumes:
+  paste-guard-data:

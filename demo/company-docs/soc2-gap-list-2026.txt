@@ -1,0 +1,61 @@
+SOC 2 Type II Readiness: Gap List (renewal audit window Jan-Jun 2027)
+=====================================================================
+CONFIDENTIAL - CALLOWAY METRICS, INC.
+Version: wk41
+Date: Oct 13, 2026
+Owner: N. Petrov (GRC)
+Distribution: Security leadership sync
+Change: G-03 slipped
+
+CONFIDENTIAL. Security and Compliance. Owner: Nadia Petrov (GRC lead). Working document, updated weekly. Source of truth is the GRC tracker; this export is for the leadership sync on Oct 14. Contains details of control weaknesses; do not share with customers or auditors in this form.
+
+Context: our auditor flagged 2 exceptions in the 2025-2026 report (CC6.2 access reviews, CC7.3 incident response). With SEC-2026-014, we expect much closer scrutiny of CC6 and CC7 this cycle. Customers are already asking for the bridge letter. Target is a clean report with zero exceptions.
+
+GAP LIST
+--------
+ID   | Criteria | Gap                                                | Severity | Owner               | Due    | Status                    
+-----+----------+----------------------------------------------------+----------+---------------------+--------+---------------------------
+G-01 | CC6.1    | service account tokens long lived, no rotation     | High     | Platform (A. Novak) | Sep 30 | DONE, workload identity   
+G-02 | CC6.2    | quarterly access reviews missed Q1 for 3 systems   | High     | IT (D. Fagan)       | Nov 15 | in progress               
+G-03 | CC6.3    | contractor offboarding not tied to HRIS            | High     | IT / People         | Oct 15 | slipped to Oct 31         
+G-04 | CC7.2    | alert routing not tested, retired rotations        | High     | SRE (J. Wallin)     | Oct 1  | DONE, quarterly test added
+G-05 | CC7.3    | IR runbook missing customer comms steps            | Med      | SecEng (K. Torres)  | Nov 1  | draft                     
+G-06 | CC8.1    | emergency changes bypass review, 14 in H1          | Med      | Eng Ops             | Dec 1  | not started               
+G-07 | CC6.6    | secret scanning excludes forks                     | High     | SecEng              | Sep 15 | DONE                      
+G-08 | CC9.2    | vendor risk reviews overdue (11 vendors)           | Med      | Procurement         | Dec 15 | in progress               
+G-09 | A1.2     | DR test for EU region not done in 2026             | Med      | SRE                 | Nov 30 | scheduled Nov 18          
+G-10 | CC2.2    | security training completion 84% (target 98%)      | Low      | People              | Nov 30 | reminders sent            
+G-11 | CC6.7    | egress rate limits on export buckets               | Med      | Data Platform       | Oct 31 | in progress               
+G-12 | C1.1     | data classification not applied to 2 legacy stores | Low      | Data Platform       | Jan 15 | not started               
+
+NOTES ON THE HIGH ITEMS
+-----------------------
+G-02: The three systems are the billing admin console, the legacy reporting DB, and the Ferrolake staging cluster (which we got read access to during diligence and nobody tracked). Dave is pulling evidence for Q2 and Q3 reviews now. If we can't evidence Q1 the auditor may still note it but it's outside the new window, so not an exception for 2027, just needs a remediation narrative.
+
+G-03: Root issue is that contractors are created in the identity provider manually by hiring managers, not from the HRIS. People team is adding contractors to the HRIS with end dates. Until that ships, IT runs a weekly manual reconciliation. This is the same failure that contributed to SEC-2026-014, so it WILL get attention from auditors. Escalating to Raj because it's slipping.
+
+G-06: 14 emergency changes in H1 skipped the second reviewer. 9 were legitimate incidents, 5 were just people in a hurry before a demo. We need a post hoc review step within 48 hours and a weekly report. Eng Ops hasn't picked it up; asking Ana for an owner.
+
+EVIDENCE CHECKLIST STATUS
+-------------------------
+Control family              | Evidence items | Collected | %  
+----------------------------+----------------+-----------+----
+CC1-CC2 (governance, comms) | 22             | 19        | 86%
+CC3-CC5 (risk, monitoring)  | 18             | 15        | 83%
+CC6 (logical access)        | 41             | 24        | 59%
+CC7 (operations, IR)        | 27             | 17        | 63%
+CC8 (change mgmt)           | 15             | 9         | 60%
+CC9 / A1 / C1               | 20             | 14        | 70%
+
+BUDGET
+------
+Auditor fee for Type II renewal: 68,000 dollars (up from 54k). Compliance automation tool renewal: 31,000. Third party pentest (required for customer commitments after incident): 42,000. Board requested export pipeline assessment: 85,000, may overlap with pentest scope, Nadia to check with vendor about combining for roughly 100k total.
+
+RISKS
+-----
+If G-02, G-03 and G-06 are not closed by December 31 we will enter the audit window with known gaps and should expect at least one exception. An exception on CC6 a year after a breach would hurt enterprise deals, especially Selwyn Pharma and Cedarpoint which both asked specifically. Sales is asking whether we can provide an interim 'management assertion letter' to bridge; legal says yes but it carries little weight with sophisticated buyers.
+
+FedRAMP readiness depends on closing these first. Do not start the FedRAMP gap assessment until this list is at least 80% done.
+
+Next sync: Oct 21. Please update your rows in the tracker by Monday EOD, not in this doc.
+

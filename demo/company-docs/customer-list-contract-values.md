@@ -1,8 +1,10 @@
 # Top Customer Accounts and Contract Values, Q3 2026
 
-**CONFIDENTIAL - Calloway Metrics**
+> **CONFIDENTIAL** | Calloway Metrics, Inc.
 
-Version Q3-26 r2 | Last updated Oct 6, 2026 | Owner: FP&A / CS Ops | Distribution: Exec team, Account Directors | Change note: Tallis AR updated
+| Version | Date | Owner | Distribution | Change |
+|---|---|---|---|---|
+| Q3-26 r2 | Oct 6, 2026 | FP&A / CS Ops | Exec team, Account Directors | Tallis AR updated |
 
 CONFIDENTIAL. Prepared by Finance and Customer Success for the quarterly business review. Contains customer names, contract values and renewal risk ratings. Restricted to the executive team and account directors.
 
@@ -26,7 +28,38 @@ Concentration risk. No single customer exceeds 5 percent of ARR, which remains w
 
 Methodology notes. ACV figures reflect contracted recurring fees and exclude professional services and one time implementation fees. Risk ratings are assigned by the account director and reviewed by the VP of Customer Success each month using health score, executive engagement, product usage trends, support ticket volume and payment history. Accounts flagged HIGH for two consecutive months are escalated to the executive sponsor program, which pairs each account with a member of the leadership team who meets the customer at least monthly until the rating improves.
 
-Handling. Do not share this list with partners, resellers or prospects. Do not reference other customers by name in sales conversations without written permission from the reference program. This document is regenerated each quarter; destroy prior versions.
+## Full top 25 table
 
-Document control and handling. This document is classified CONFIDENTIAL under the Calloway Metrics Information Classification Policy. It may be stored only in approved company systems and must not be uploaded, pasted or summarized in external services, including consumer AI assistants, translation sites or personal email. Printed copies must be shredded after use. Report suspected disclosure to the Security team within one hour of discovery.
+| # | Account | Segment | ACV ($) | Seats | Renewal | Risk | AD |
+|---|---|---|---|---|---|---|---|
+| 1 | Harborline Logistics | Logistics | 2,840,000 | 3,900 | 2027-03 | LOW | M. Quist |
+| 2 | Cedarpoint Health Network | Healthcare | 2,310,000 | 2,750 | 2027-01 | HIGH | S. Delgado |
+| 3 | Bramblewood Retail Group | Retail | 1,970,000 | 2,400 | 2027-06 | MED | M. Quist |
+| 4 | Ostrander Mutual Insurance | Insurance | 1,660,000 | 1,820 | 2026-11 | LOW | R. Haines |
+| 5 | Kestrel Aerospace Components | Manufacturing | 1,420,000 | 1,300 | 2027-04 | MED | R. Haines |
+| 6 | Velmont University System | Education | 1,180,000 | 9,100 | 2027-07 | LOW | J. Park |
+| 7 | Tallis Freight Partners | Logistics | 960,000 | 880 | 2026-12 | HIGH | S. Delgado |
+| 8 | Ainsley & Crowe LLP | Legal | 910,000 | 640 | 2027-02 | LOW | J. Park |
+| 9 | Northfork Regional Bank | FinServ | 880,000 | 700 | 2027-05 | MED | R. Haines |
+| 10 | Pemberton Foods | CPG | 845,000 | 1,050 | 2027-08 | LOW | M. Quist |
+| 11 | Quayside Port Authority | Public | 790,000 | 520 | 2026-12 | MED | J. Park |
+| 12 | Delacroix Hotels | Hospitality | 760,000 | 1,400 | 2027-03 | LOW | S. Delgado |
+| 13 | Granger-Holt Energy | Energy | 735,000 | 610 | 2027-09 | LOW | R. Haines |
+| 14 | Selwyn Pharma Services | Healthcare | 710,000 | 480 | 2027-01 | HIGH | S. Delgado |
+| 15 | Birchway Home Furnishings | Retail | 655,000 | 900 | 2027-06 | LOW | M. Quist |
+
+Rows 16 to 25 are in the source spreadsheet (CS Ops > QBR > top25_q3.xlsx). Combined ACV for 16-25 is 5.42M, no HIGH risk accounts in that group.
+
+## Churn and downsell, Q3
+
+| Account | Prior ACV | Outcome | Reason |
+|---|---|---|---|
+| Wexford Media | 312,000 | churned | acquired, parent uses Varnetta |
+| Lindqvist Labs | 188,000 | downsell to 96,000 | seat reduction after layoffs |
+| Hollis Clinics | 140,000 | churned | budget, moved to spreadsheets(!) |
+| Marrow & Finch | 95,000 | churned | Kestrova price |
+
+Selwyn Pharma Services was added to HIGH this month. Their security team has opened a formal review after SEC-2026-014 even though their data was not in the affected bucket, and procurement has asked for a right to audit clause that legal has not agreed to before.
+
+Handling. Do not share this list with partners, resellers or prospects. Do not reference other customers by name in sales conversations without written permission from the reference program. This document is regenerated each quarter; destroy prior versions.
 

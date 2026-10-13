@@ -26,3 +26,15 @@ def redact(text: str, findings: list[dict]) -> str:
     for f in sorted(findings, key=lambda f: f["start"], reverse=True):
         text = text[: f["start"]] + f"[REDACTED:{f['type']}]" + text[f["end"]:]
     return text
+
+
+# Soft markers that a document is internal. Used as a coach signal by the
+# backend and as part of the regex baseline in eval/run_eval.py.
+MARKERS = re.compile(
+    r"(?i)\b(confidential|strictly private|internal only|internal use only|proprietary|do not distribute|"
+    r"not for distribution|attorney[- ]client privileged|trade secret|restricted)\b")
+
+
+def markers(text: str) -> list[dict]:
+    return [{"type": "confidential_marker", "start": m.start(), "end": m.end(), "match": m.group(0)}
+            for m in MARKERS.finditer(text)]
