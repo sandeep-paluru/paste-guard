@@ -1,0 +1,30 @@
+CALLOWAY METRICS 2027 PRICING SHEET (INTERNAL)
+CONFIDENTIAL - NORTHWIND ANALYTICS
+
+Version v3.0 FINAL | Last updated Oct 1, 2026 | Owner: Revenue Strategy (T. Albrecht) | Distribution: Sales leadership, Deal Desk | Change note: added nonprofit cap, removed Starter
+
+CONFIDENTIAL. Internal pricing guidance for fiscal year 2027. Not for distribution to customers or partners. Effective January 1, 2027. Owner: Revenue Strategy team. This sheet supersedes all 2026 rate cards and discount matrices.
+
+Plan structure. Calloway will move from three plans to four in 2027. The Starter plan is retired for new customers. Existing Starter customers are grandfathered at their current price until their renewal date after June 30, 2027, after which they migrate to Team.
+
+  * Team plan: 54 dollars per seat per month billed annually, minimum 10 seats, list price 64 dollars monthly billing
+  * Business plan: 118 dollars per seat per month billed annually, minimum 25 seats
+  * Enterprise plan: base platform fee of 96,000 dollars per year plus 142 dollars per seat per month
+  * Enterprise Plus: custom, floor of 380,000 dollars annual contract value, includes dedicated tenancy
+
+Discount authority. Account executives may discount up to 12 percent off list without approval. Regional directors may approve up to 22 percent. Anything between 22 and 35 percent requires the VP of Sales. Discounts above 35 percent require CFO sign off and must be accompanied by a multi year commitment of at least 36 months. Our internal floor price for Enterprise seats is 88 dollars per seat per month; do not quote below this under any circumstances.
+
+Usage add ons. Real time streaming, launching with the Tidewater integration, will be priced at 0.042 dollars per thousand events, with the first 50 million events per month included in Enterprise. Our blended cost to serve is approximately 0.011 dollars per thousand events, giving a target gross margin of 74 percent on streaming. AI query assistant credits cost 0.90 dollars per hundred queries, against an inference cost of roughly 0.31 dollars.
+
+Competitive positioning. Against Quillmark, lead with total cost of ownership; their list price is 15 percent lower but they charge separately for connectors. Against Brightlayer, we are 20 to 25 percent more expensive and should only discount aggressively when the deal includes the streaming add on. Do not mention Brightlayer's recent outage in writing.
+
+Price increase for renewals. Existing customers on Business and Enterprise will see a 7 percent uplift at renewal. Customers in the top 40 accounts by ARR may be held flat at the discretion of their account director, but the uplift should be used as a negotiation lever for multi year extensions. We forecast that the uplift adds 4.8 million dollars of ARR in 2027 with an expected churn impact of 0.6 percentage points.
+
+Nonprofit and education. Qualified nonprofits receive 40 percent off Team and Business. Education pricing is a flat 22 dollars per seat. These programs are capped at 3 percent of total bookings and are reviewed quarterly by Revenue Strategy.
+
+Multi year terms. Two year commitments receive an additional 5 percent discount and three year commitments receive 9 percent, both within the authority matrix above. Prepaid annual terms are standard; quarterly billing carries a 3 percent surcharge.
+
+Questions about this sheet go to the Revenue Strategy channel only. Screenshots and exports of this sheet are prohibited. Partners receive a separate partner price list with a fixed 25 percent margin.
+
+Document control and handling. This document is classified CONFIDENTIAL under the Calloway Metrics Information Classification Policy. It may be stored only in approved company systems and must not be uploaded, pasted or summarized in external services, including consumer AI assistants, translation sites or personal email. Printed copies must be shredded after use. Report suspected disclosure to the Security team within one hour of discovery.
+
