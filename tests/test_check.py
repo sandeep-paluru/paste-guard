@@ -45,7 +45,7 @@ def test_disguised_matches():
     r = run("disguised", DISGUISED)
     assert r["verdict"] in {"coach", "block"}
     assert r["semantic_match"]["path"].endswith("encoding.py")
-    assert "[REDACTED:company_code" in r["redacted"]
+    assert "[REDACTED: matches " in r["redacted"]
 
 
 def test_unrelated_allows():
@@ -107,3 +107,26 @@ def test_admin_logs_no_content():
 if __name__ == "__main__":
     print(client.get("/health").json())
     test_disguised_matches(); test_unrelated_allows(); test_secret_blocks(); print("ALL PASS")
+
+
+def test_redaction_keeps_signature_and_points_at_source():
+    r = client.post("/check", json={"text": "Why does this fail?\n" + DISGUISED, "source": "claude.ai"}).json()
+    red = r["redacted"]
+    assert "def decode_b64_safe(data):" in red          # signature kept
+    assert "urlsafe_b64decode" not in red               # body removed
+    assert "[REDACTED: matches src/itsdangerous/" in red and " lines " in red
+    assert red.startswith("Why does this fail?")      # the user's own question survives
+
+
+def test_redaction_keeps_doc_heading():
+    doc = (Path(__file__).resolve().parents[1] / "demo/company-docs/board-memo-acquisition-ferrolake.md").read_text()[:1500]
+    red = client.post("/check", json={"text": doc, "source": "chatgpt.com"}).json()["redacted"]
+    assert red.startswith("# Board Memo")
+    assert "[REDACTED: matches " in red and "paragraphs" in red
+
+
+def test_log_site_never_empty():
+    client.post("/check", json={"text": "plain question about the weather in Boston this weekend"})
+    rows = client.get("/admin/api").json()["recent"]
+    assert rows[0]["site"] == "direct API call"
+    assert all(r["site"] for r in rows[:5])

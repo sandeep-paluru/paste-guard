@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 (2026-10-13)
+- Hybrid matching: embedding cosine OR word 3-gram containment. Held-out document F1 0.87 to 0.94 at the same 3% FPR.
+- Separated document bands: nudge 0.58, coach 0.64, block 0.74 (were 0.62, 0.63, 0.78). New `[fingerprint]` config.
+- Redaction keeps headings and code signatures and replaces bodies with `[REDACTED: matches <source> lines a-b]`.
+- Verdict log always records a site (hostname, referer, or `direct API call`).
+- Held-out evaluation split by source document, model benchmark across 5 embedding models and 3 lexical baselines
+  (`eval/benchmarks.md`, `eval/bench_all.sh`), HTTP latency script, `docs/OPTIMIZATION_LOG.md`.
+
 ## 0.3.0 (2026-10-13)
 - Confidential document protection: .md, .txt, .pdf and .docx are indexed in paragraph-aware passages at two granularities.
 - File uploads and drag-and-drop are checked on protected AI sites; PDF and DOCX text is extracted by the backend (`/check_file`).

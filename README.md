@@ -51,22 +51,36 @@ Open `http://127.0.0.1:8765/admin` on the backend machine (or through an SSH tun
  .txt/.md read in the browser             secrets and marker scan
  overlay: allow, nudge, coach, block  <-  windows of the paste embedded (all-MiniLM-L6-v2, ONNX, CPU)
  matched passage + source document        nearest passages in sqlite-vec (docs + code)
- one-click redaction                      per-kind thresholds -> verdict, matches, redacted text
+                                          + word 3-gram overlap with each passage
+ one-click redaction that keeps            per-kind bands -> verdict, matches, redacted text
+ headings and signatures
 ```
-Documents are split on paragraph boundaries into 120 to 200 word chunks with overlap, plus shorter 60 word passages so short excerpts still have a close neighbour.
+Documents are split on paragraph boundaries into 120 to 200 word chunks with overlap, plus shorter 60 word passages so short excerpts still have a close neighbour. A paste is flagged when either its embedding is close to a passage or enough of its word 3-grams appear in one passage; the first catches rewording, the second catches partial copies.
 
 ## Results
-From `eval/results.md` (472 samples, 18 confidential documents, one code repository):
+Nothing is trained. Matching uses a public pretrained embedding model (all-MiniLM-L6-v2) zero-shot, plus a word 3-gram
+fingerprint. The only values fitted to the eval data are the similarity thresholds.
+
+From `eval/results.md` (472 samples, 18 confidential documents, one code repository), deployed bands, coach level:
 
 | Kind | Method | Precision | Recall | F1 | False positive rate |
 |---|---|---|---|---|---|
-| Documents | Paste Guard (coach level) | 0.99 | 0.80 | 0.88 | 0.03 |
-| Documents | Paste Guard (any warning, nudge level) | 0.98 | 0.81 | 0.89 | 0.07 |
+| Documents | Paste Guard hybrid (embedding OR 3-gram) | 1.00 | 0.87 | 0.93 | 0.01 |
+| Documents | Embedding only | 1.00 | 0.76 | 0.86 | 0.01 |
 | Documents | Regex and keyword baseline | 1.00 | 0.11 | 0.20 | 0.00 |
-| Code | Paste Guard (coach level) | 0.97 | 0.92 | 0.95 | 0.04 |
+| Code | Paste Guard hybrid | 0.97 | 1.00 | 0.99 | 0.04 |
 | Code | Regex and keyword baseline | 0.00 | 0.00 | 0.00 | 0.00 |
 
-At the coach level, verbatim excerpts are caught 94% of the time (regex 14%), prompt-wrapped pastes 92% (regex 19%) and paraphrases 81% (regex 3%). Summaries (56%), partial excerpts (57%) and tone rewrites (50%) are the hardest. The top match names the right source document 95% of the time. Thresholds were tuned on this set, so treat these as in-sample numbers. Full breakdown and chart: `eval/results.md`.
+Those bands were picked on the same set. Held-out check (`eval/benchmarks.md`): thresholds tuned on pastes from 9 of
+the 18 documents and scored on the other 9, then swapped. Documents: hybrid F1 0.94 (recall 0.90, FPR 0.03), MiniLM
+alone 0.87 (recall 0.77), regex 0.20. Per transform (held-out, hybrid): verbatim 1.00, partial excerpts 0.92,
+paraphrases 0.89, summaries 0.50, tone rewrites 0.50. Summaries and tone rewrites remain the weak spots. The top
+match names the right source document 98% of the time.
+
+Model benchmark (`eval/benchmarks.md`, charts `eval/bench_*.png`): MiniLM, bge-small, bge-base, jina code, nomic,
+TF-IDF, 3-gram containment and MinHash on the same data, with latency and RAM. MiniLM plus the 3-gram fingerprint was
+kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. Latency over HTTP: p50 16 ms on an
+8 vCPU machine, p50 208 ms on the 2 vCPU, 1 GB Techvista VM. How we got here, with numbers: `docs/OPTIMIZATION_LOG.md`.
 
 ## Privacy
 - Paste text is processed in memory and never written to disk.

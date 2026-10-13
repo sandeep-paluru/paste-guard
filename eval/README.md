@@ -18,3 +18,13 @@ Question: does Paste Guard catch confidential documents and company code that ar
 ./pasteguard eval --tune
 ```
 Writes `results.md`, `results.png` and per-sample `scores.jsonl`. Thresholds were chosen from this sweep, so treat the numbers as an in-sample estimate; re-run on your own documents before rollout.
+
+## Model benchmark and held-out check
+
+```
+eval/bench_all.sh      # scores every method in its own process, then writes benchmarks.md and bench_*.png
+python3 eval/http_latency.py --n 80   # p50/p95 of real /check calls against a running backend
+```
+`bench_score.py` scores one method (embedding models through fastembed, TF-IDF, 3-gram containment, MinHash) using the
+same paste windows as the backend. `bench_report.py` tunes thresholds in-sample and with a 2-fold split by source
+document, adds the regex baseline and the hybrids, and reports speed and memory. No model is trained.

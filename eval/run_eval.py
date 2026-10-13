@@ -16,32 +16,33 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
+sys.path.insert(0, str(ROOT / "eval"))
 import app  # noqa: E402
 import secrets_scan  # noqa: E402
 
-# Baseline: what a typical regex DLP rule set catches. Secrets rules, explicit
-# classification markers, and a dictionary of sensitive business keywords.
-KEYWORDS = re.compile(
-    r"(?i)\b(confidential|proprietary|internal only|internal use only|do not distribute|trade secret|"
-    r"privileged|restricted|not for distribution|board of directors|term sheet|acquisition|layoff|"
-    r"reduction in force|compensation band|salary band|settlement|incident postmortem|roadmap)\b")
-
-
-def regex_flag(text: str) -> bool:
-    return bool(secrets_scan.scan(text) or secrets_scan.markers(text) or KEYWORDS.search(text))
+from baseline import regex_flag  # noqa: E402
 
 
 def kind_of(path: Path) -> str:
     return "code" if path.name.startswith("code") else "doc"
 
 
-def best_sim(text: str, kind: str) -> tuple[float, str | None]:
-    best, src = 0.0, None
+def best_sim(text: str, kind: str) -> tuple[float, str | None, float, int]:
+    """Best embedding similarity, its source, best 3-gram containment, and the highest verdict level
+    (0 none, 1 nudge, 2 coach, 3 block) the deployed hybrid logic reaches for this kind."""
+    best, src, fp, lvl, lvl_src = 0.0, None, 0.0, 0, None
     for w in app.semantic(text):
         for h in w["hits"]:
-            if h["kind"] == kind and h["similarity"] > best:
+            if h["kind"] != kind:
+                continue
+            if h.get("method") == "fingerprint":
+                fp = max(fp, h["similarity"])
+            elif h["similarity"] > best:
                 best, src = h["similarity"], h["source"]
-    return best, src
+            r = app.RANK[app.level(h)]
+            if r > lvl:
+                lvl, lvl_src = r, h["source"]
+    return best, lvl_src or src, fp, lvl
 
 
 def prf(rows, pred):
@@ -80,37 +81,43 @@ def main():
                 rows.append(r)
     print(f"{len(rows)} samples", file=sys.stderr)
     for i, r in enumerate(rows):
-        r["sim"], r["hit_src"] = best_sim(r["text"], r["kind"])
+        r["sim"], r["hit_src"], r["fp"], r["level"] = best_sim(r["text"], r["kind"])
         r["regex"] = regex_flag(r["text"])
         if i % 50 == 0:
             print(f"  {i}/{len(rows)}", file=sys.stderr)
 
     T = app.THRESHOLDS
-    sem = lambda r: r["sim"] >= T[r["kind"]]["coach"]  # noqa: E731  (coach or block is an actionable warning)
-    sem_nudge = lambda r: r["sim"] >= T[r["kind"]]["nudge"]  # noqa: E731
+    sem = lambda r: r["level"] >= 2  # noqa: E731  (coach or block is an actionable warning)
+    sem_nudge = lambda r: r["level"] >= 1  # noqa: E731
+    sem_emb = lambda r: r["sim"] >= T[r["kind"]]["coach"]  # noqa: E731  (embedding only, for comparison)
+    sem_block = lambda r: r["level"] >= 3  # noqa: E731
     rgx = lambda r: r["regex"]  # noqa: E731
 
     out = ["# Paste Guard evaluation results", "",
            f"Model: `{app.embedder.MODEL_NAME}`. Index: {app.INDEX.stats().get('doc_chunks')} document passages, "
            f"{app.INDEX.stats().get('code_chunks')} code chunks. Samples: {len(rows)}.", "",
-           "Semantic = Paste Guard similarity at or above the kind's **coach** threshold (an actionable warning). "
-           "Semantic (nudge) also counts the softer nudge level. Regex = secrets rules plus CONFIDENTIAL-style markers "
+           "Paste Guard hybrid = the deployed decision logic: embedding cosine bands OR word 3-gram containment bands, "
+           "counted at the **coach** level (an actionable warning) unless noted. The model is pretrained and used zero-shot; "
+           "nothing is trained. Thresholds below were picked from this same set, so these are in-sample numbers; "
+           "held-out numbers (thresholds tuned on other documents) are in `eval/benchmarks.md`. Regex = secrets rules plus CONFIDENTIAL-style markers "
            "plus a sensitive business keyword dictionary.", "",
-           "Thresholds used: " + "; ".join(f"{k}: nudge {v['nudge']}, coach {v['coach']}, block {v['block']}"
-                                         for k, v in T.items()), "",
+           "Embedding bands: " + "; ".join(f"{k}: nudge {v['nudge']}, coach {v['coach']}, block {v['block']}"
+                                         for k, v in T.items()) + ". Fingerprint bands: " + "; ".join(
+               f"{k}: coach {app.FINGERPRINT[k]['coach']}, block {app.FINGERPRINT[k]['block']}" for k in ("doc", "code")), "",
            "## Per kind", "", "| Kind | Method | N | Precision | Recall | F1 | FPR |", "|---|---|---|---|---|---|---|"]
     chart = {}
     for k in ("doc", "code"):
         sub = [r for r in rows if r["kind"] == k]
         if not sub:
             continue
-        for name, fn in (("Semantic", sem), ("Semantic (nudge)", sem_nudge), ("Regex baseline", rgx)):
+        for name, fn in (("Paste Guard hybrid (coach)", sem), ("Paste Guard hybrid (nudge)", sem_nudge),
+                         ("Paste Guard hybrid (block)", sem_block), ("Embedding only (coach)", sem_emb), ("Regex baseline", rgx)):
             m = prf(sub, fn)
             chart[(k, name)] = m
             out.append(f"| {k} | {name} | {m['n']} | {m['precision']:.2f} | {m['recall']:.2f} | {m['f1']:.2f} | {m['fpr']:.2f} |")
 
     out += ["", "## Recall per transform (positives) and FPR per negative type", "",
-            "| Kind | Transform | Label | N | Semantic | Regex | Mean similarity |", "|---|---|---|---|---|---|---|"]
+            "| Kind | Transform | Label | N | Paste Guard | Regex | Mean embedding similarity |", "|---|---|---|---|---|---|---|"]
     groups = defaultdict(list)
     for r in rows:
         groups[(r["kind"], r["transform"], r["label"])].append(r)
@@ -140,7 +147,7 @@ def main():
     (ROOT / "eval" / "results.md").write_text("\n".join(out))
     (ROOT / "eval" / "scores.jsonl").write_text("\n".join(json.dumps(
         {"id": r["id"], "kind": r["kind"], "label": r["label"], "transform": r["transform"],
-         "sim": r["sim"], "regex": r["regex"]}) for r in rows) + "\n")
+         "sim": r["sim"], "fp": r["fp"], "level": r["level"], "regex": r["regex"]}) for r in rows) + "\n")
     _chart(per_tf)
     print("\n".join(out))
 
@@ -155,7 +162,7 @@ def _chart(per_tf):
     g = [per_tf[x][1] for x in keys]
     fig, ax = plt.subplots(figsize=(10, 0.38 * len(keys) + 1.5))
     y = range(len(keys))
-    ax.barh([i + 0.2 for i in y], s, height=0.4, label="Paste Guard semantic", color="#1f6feb")
+    ax.barh([i + 0.2 for i in y], s, height=0.4, label="Paste Guard hybrid (coach)", color="#1f6feb")
     ax.barh([i - 0.2 for i in y], g, height=0.4, label="Regex and keyword baseline", color="#9aa4b2")
     ax.set_yticks(list(y)); ax.set_yticklabels(labels, fontsize=8); ax.invert_yaxis()
     ax.set_xlim(0, 1); ax.set_xlabel("Detection rate (positives) or false alarm rate (negatives)")

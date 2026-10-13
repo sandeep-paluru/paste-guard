@@ -1,472 +1,472 @@
-{"id": "code-0015", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.7669, "regex": false}
-{"id": "code-0034", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.9024, "regex": false}
-{"id": "code-0080", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "regex": false}
-{"id": "code-0017", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9022, "regex": false}
-{"id": "code-0088", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4962, "regex": false}
-{"id": "code-0043", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8143, "regex": false}
-{"id": "code-0062", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6904, "regex": false}
-{"id": "code-0065", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9223, "regex": false}
-{"id": "code-0055", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9128, "regex": false}
-{"id": "code-0021", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.887, "regex": false}
-{"id": "code-0024", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.792, "regex": false}
-{"id": "code-0023", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8146, "regex": false}
-{"id": "code-0048", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9359, "regex": false}
-{"id": "code-0105", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.384, "regex": false}
-{"id": "code-0058", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.9758, "regex": false}
-{"id": "code-0112", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3426, "regex": false}
-{"id": "code-0002", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6966, "regex": false}
-{"id": "code-0093", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3643, "regex": false}
-{"id": "code-0063", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8641, "regex": false}
-{"id": "code-0110", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2817, "regex": false}
-{"id": "code-0056", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9654, "regex": false}
-{"id": "code-0103", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4243, "regex": false}
-{"id": "code-0089", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "regex": false}
-{"id": "code-0097", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3473, "regex": false}
-{"id": "code-0019", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.7507, "regex": false}
-{"id": "code-0102", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.5069, "regex": false}
-{"id": "code-0035", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8323, "regex": false}
-{"id": "code-0045", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9271, "regex": false}
-{"id": "code-0047", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.914, "regex": false}
-{"id": "code-0109", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2912, "regex": false}
-{"id": "code-0040", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8791, "regex": false}
-{"id": "code-0106", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4363, "regex": false}
-{"id": "code-0111", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2567, "regex": false}
-{"id": "code-0078", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3727, "regex": false}
-{"id": "code-0092", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3482, "regex": false}
-{"id": "code-0039", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8431, "regex": false}
-{"id": "code-0087", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4901, "regex": false}
-{"id": "code-0029", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8577, "regex": false}
-{"id": "code-0115", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4173, "regex": false}
-{"id": "code-0091", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2731, "regex": false}
-{"id": "code-0012", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8737, "regex": false}
-{"id": "code-0032", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9572, "regex": false}
-{"id": "code-0095", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.383, "regex": false}
-{"id": "code-0099", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3421, "regex": false}
-{"id": "code-0090", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "regex": false}
-{"id": "code-0069", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3715, "regex": false}
-{"id": "code-0046", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8304, "regex": false}
-{"id": "code-0016", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.7868, "regex": false}
-{"id": "code-0074", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3738, "regex": false}
-{"id": "code-0113", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.673, "regex": false}
-{"id": "code-0101", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4918, "regex": false}
-{"id": "code-0070", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4095, "regex": false}
-{"id": "code-0072", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3886, "regex": false}
-{"id": "code-0104", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4113, "regex": false}
-{"id": "code-0020", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7646, "regex": false}
-{"id": "code-0006", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.5735, "regex": false}
-{"id": "code-0022", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8892, "regex": false}
-{"id": "code-0018", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8561, "regex": false}
-{"id": "code-0044", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.8456, "regex": false}
-{"id": "code-0075", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4135, "regex": false}
-{"id": "code-0013", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.8416, "regex": false}
-{"id": "code-0086", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3004, "regex": false}
-{"id": "code-0083", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "regex": false}
-{"id": "code-0010", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.5745, "regex": false}
-{"id": "code-0054", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8977, "regex": false}
-{"id": "code-0051", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8996, "regex": false}
-{"id": "code-0049", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9642, "regex": false}
-{"id": "code-0061", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7262, "regex": false}
-{"id": "code-0007", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8724, "regex": false}
-{"id": "code-0027", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8871, "regex": false}
-{"id": "code-0028", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9316, "regex": false}
-{"id": "code-0096", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3801, "regex": false}
-{"id": "code-0003", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8151, "regex": false}
-{"id": "code-0081", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.1841, "regex": false}
-{"id": "code-0050", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8481, "regex": false}
-{"id": "code-0098", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3691, "regex": false}
-{"id": "code-0079", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "regex": false}
-{"id": "code-0052", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9086, "regex": false}
-{"id": "code-0014", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6069, "regex": false}
-{"id": "code-0073", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.331, "regex": false}
-{"id": "code-0114", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.6536, "regex": false}
-{"id": "code-0108", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "regex": false}
-{"id": "code-0037", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9182, "regex": false}
-{"id": "code-0066", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.901, "regex": false}
-{"id": "code-0116", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4151, "regex": false}
-{"id": "code-0041", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.6182, "regex": false}
-{"id": "code-0033", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8861, "regex": false}
-{"id": "code-0094", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3625, "regex": false}
-{"id": "code-0071", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3956, "regex": false}
-{"id": "code-0053", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8932, "regex": false}
-{"id": "code-0036", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9124, "regex": false}
-{"id": "code-0084", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "regex": false}
-{"id": "code-0059", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.7464, "regex": false}
-{"id": "code-0011", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.7374, "regex": false}
-{"id": "code-0085", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2519, "regex": false}
-{"id": "code-0001", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7816, "regex": false}
-{"id": "code-0064", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8593, "regex": false}
-{"id": "code-0038", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8661, "regex": false}
-{"id": "code-0082", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.207, "regex": false}
-{"id": "code-0030", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8621, "regex": false}
-{"id": "code-0067", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2338, "regex": false}
-{"id": "code-0026", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9215, "regex": false}
-{"id": "code-0076", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3698, "regex": false}
-{"id": "code-0057", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9931, "regex": false}
-{"id": "code-0042", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.6026, "regex": false}
-{"id": "code-0060", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.7286, "regex": false}
-{"id": "code-0100", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2872, "regex": false}
-{"id": "code-0004", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8216, "regex": false}
-{"id": "code-0077", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3876, "regex": false}
-{"id": "code-0031", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9023, "regex": false}
-{"id": "code-0025", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9458, "regex": false}
-{"id": "code-0005", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.7438, "regex": false}
-{"id": "code-0008", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.948, "regex": false}
-{"id": "code-0009", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.7226, "regex": false}
-{"id": "code-0068", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2509, "regex": false}
-{"id": "code-0107", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "regex": false}
-{"id": "doc-0318", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5667, "regex": false}
-{"id": "doc-0226", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8629, "regex": false}
-{"id": "doc-0305", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4227, "regex": false}
-{"id": "doc-0242", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8689, "regex": true}
-{"id": "doc-0210", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6677, "regex": false}
-{"id": "doc-0019", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6779, "regex": false}
-{"id": "doc-0045", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8313, "regex": false}
-{"id": "doc-0284", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6989, "regex": false}
-{"id": "doc-0042", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9136, "regex": false}
-{"id": "doc-0248", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6555, "regex": false}
-{"id": "doc-0059", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8493, "regex": false}
-{"id": "doc-0030", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.728, "regex": false}
-{"id": "doc-0134", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6125, "regex": true}
-{"id": "doc-0105", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9643, "regex": false}
-{"id": "doc-0230", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6235, "regex": false}
-{"id": "doc-0040", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7419, "regex": false}
-{"id": "doc-0287", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4852, "regex": false}
-{"id": "doc-0088", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8118, "regex": false}
-{"id": "doc-0057", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6602, "regex": false}
-{"id": "doc-0049", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7281, "regex": false}
-{"id": "doc-0222", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7275, "regex": true}
-{"id": "doc-0180", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7286, "regex": false}
-{"id": "doc-0073", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.722, "regex": false}
-{"id": "doc-0147", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7633, "regex": true}
-{"id": "doc-0015", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6747, "regex": false}
-{"id": "doc-0092", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8887, "regex": false}
-{"id": "doc-0349", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3379, "regex": false}
-{"id": "doc-0050", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6338, "regex": false}
-{"id": "doc-0347", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5349, "regex": false}
-{"id": "doc-0292", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5678, "regex": false}
-{"id": "doc-0238", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8204, "regex": true}
-{"id": "doc-0192", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5265, "regex": true}
-{"id": "doc-0348", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4763, "regex": false}
-{"id": "doc-0148", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6709, "regex": false}
-{"id": "doc-0277", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9102, "regex": true}
-{"id": "doc-0319", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4237, "regex": false}
-{"id": "doc-0219", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.8316, "regex": false}
-{"id": "doc-0215", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6457, "regex": false}
-{"id": "doc-0113", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8773, "regex": true}
-{"id": "doc-0121", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7983, "regex": true}
-{"id": "doc-0070", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7758, "regex": true}
-{"id": "doc-0302", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5341, "regex": false}
-{"id": "doc-0129", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9494, "regex": true}
-{"id": "doc-0140", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6573, "regex": false}
-{"id": "doc-0304", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6116, "regex": false}
-{"id": "doc-0201", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6535, "regex": false}
-{"id": "doc-0157", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8924, "regex": false}
-{"id": "doc-0117", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5395, "regex": false}
-{"id": "doc-0262", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6017, "regex": false}
-{"id": "doc-0189", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7459, "regex": false}
-{"id": "doc-0086", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7862, "regex": false}
-{"id": "doc-0091", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8244, "regex": false}
-{"id": "doc-0179", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7688, "regex": false}
-{"id": "doc-0227", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8721, "regex": false}
-{"id": "doc-0322", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4561, "regex": false}
-{"id": "doc-0223", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8028, "regex": false}
-{"id": "doc-0218", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.473, "regex": false}
-{"id": "doc-0142", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.808, "regex": false}
-{"id": "doc-0233", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6777, "regex": false}
-{"id": "doc-0006", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.849, "regex": false}
-{"id": "doc-0076", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7337, "regex": false}
-{"id": "doc-0132", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7457, "regex": false}
-{"id": "doc-0338", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6236, "regex": false}
-{"id": "doc-0111", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8435, "regex": false}
-{"id": "doc-0115", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.784, "regex": false}
-{"id": "doc-0332", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5431, "regex": false}
-{"id": "doc-0312", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.445, "regex": false}
-{"id": "doc-0137", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8562, "regex": true}
-{"id": "doc-0324", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4202, "regex": false}
-{"id": "doc-0064", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7181, "regex": false}
-{"id": "doc-0313", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4434, "regex": false}
-{"id": "doc-0106", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5611, "regex": false}
-{"id": "doc-0266", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.4969, "regex": false}
-{"id": "doc-0021", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6058, "regex": false}
-{"id": "doc-0090", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6045, "regex": false}
-{"id": "doc-0214", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6176, "regex": false}
-{"id": "doc-0144", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6928, "regex": true}
-{"id": "doc-0171", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7314, "regex": false}
-{"id": "doc-0062", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9395, "regex": false}
-{"id": "doc-0150", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6513, "regex": false}
-{"id": "doc-0337", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5094, "regex": false}
-{"id": "doc-0109", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8644, "regex": false}
-{"id": "doc-0174", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8203, "regex": false}
-{"id": "doc-0033", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.8106, "regex": false}
-{"id": "doc-0039", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.691, "regex": false}
-{"id": "doc-0331", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4686, "regex": false}
-{"id": "doc-0275", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5519, "regex": false}
-{"id": "doc-0204", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6535, "regex": false}
-{"id": "doc-0250", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9016, "regex": false}
-{"id": "doc-0279", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8458, "regex": false}
-{"id": "doc-0139", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8914, "regex": false}
-{"id": "doc-0207", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9587, "regex": false}
-{"id": "doc-0308", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4187, "regex": false}
-{"id": "doc-0063", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8894, "regex": false}
-{"id": "doc-0295", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4335, "regex": false}
-{"id": "doc-0083", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5683, "regex": true}
-{"id": "doc-0320", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4094, "regex": false}
-{"id": "doc-0153", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6468, "regex": false}
-{"id": "doc-0079", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9135, "regex": false}
-{"id": "doc-0058", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8544, "regex": false}
-{"id": "doc-0247", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7065, "regex": false}
-{"id": "doc-0168", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5437, "regex": false}
-{"id": "doc-0163", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7623, "regex": false}
-{"id": "doc-0011", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9017, "regex": false}
-{"id": "doc-0177", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8708, "regex": false}
-{"id": "doc-0249", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7162, "regex": false}
-{"id": "doc-0108", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.636, "regex": false}
-{"id": "doc-0203", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.7456, "regex": false}
-{"id": "doc-0195", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7434, "regex": false}
-{"id": "doc-0152", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.489, "regex": false}
-{"id": "doc-0240", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5256, "regex": false}
-{"id": "doc-0268", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6853, "regex": false}
-{"id": "doc-0310", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5524, "regex": false}
-{"id": "doc-0114", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8584, "regex": true}
-{"id": "doc-0055", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8694, "regex": false}
-{"id": "doc-0329", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4275, "regex": false}
-{"id": "doc-0278", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9162, "regex": false}
-{"id": "doc-0099", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6661, "regex": false}
-{"id": "doc-0025", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8835, "regex": false}
-{"id": "doc-0314", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4708, "regex": false}
-{"id": "doc-0224", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.729, "regex": false}
-{"id": "doc-0288", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5236, "regex": false}
-{"id": "doc-0241", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7914, "regex": false}
-{"id": "doc-0032", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7749, "regex": false}
-{"id": "doc-0283", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6217, "regex": false}
-{"id": "doc-0199", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5936, "regex": false}
-{"id": "doc-0082", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6397, "regex": false}
-{"id": "doc-0298", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6029, "regex": false}
-{"id": "doc-0014", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6617, "regex": false}
-{"id": "doc-0027", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8704, "regex": false}
-{"id": "doc-0170", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.5658, "regex": false}
-{"id": "doc-0013", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6013, "regex": false}
-{"id": "doc-0071", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9047, "regex": false}
-{"id": "doc-0110", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9643, "regex": false}
-{"id": "doc-0175", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6208, "regex": false}
-{"id": "doc-0181", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9128, "regex": false}
-{"id": "doc-0184", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.4824, "regex": false}
-{"id": "doc-0164", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7291, "regex": false}
-{"id": "doc-0017", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6574, "regex": false}
-{"id": "doc-0096", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8769, "regex": false}
-{"id": "doc-0255", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7461, "regex": false}
-{"id": "doc-0245", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7501, "regex": false}
-{"id": "doc-0216", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8316, "regex": false}
-{"id": "doc-0328", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3542, "regex": false}
-{"id": "doc-0334", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4078, "regex": false}
-{"id": "doc-0354", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6707, "regex": false}
-{"id": "doc-0087", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6456, "regex": false}
-{"id": "doc-0342", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4493, "regex": false}
-{"id": "doc-0161", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8931, "regex": false}
-{"id": "doc-0225", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5302, "regex": false}
-{"id": "doc-0198", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.6423, "regex": false}
-{"id": "doc-0330", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4048, "regex": false}
-{"id": "doc-0097", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7315, "regex": false}
-{"id": "doc-0089", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5895, "regex": false}
-{"id": "doc-0107", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4996, "regex": false}
-{"id": "doc-0209", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8812, "regex": false}
-{"id": "doc-0282", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6538, "regex": false}
-{"id": "doc-0104", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6851, "regex": false}
-{"id": "doc-0186", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6366, "regex": false}
-{"id": "doc-0206", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9115, "regex": false}
-{"id": "doc-0315", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5702, "regex": false}
-{"id": "doc-0041", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7908, "regex": false}
-{"id": "doc-0007", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.907, "regex": false}
-{"id": "doc-0101", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6279, "regex": false}
-{"id": "doc-0213", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.6319, "regex": false}
-{"id": "doc-0336", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4341, "regex": false}
-{"id": "doc-0246", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.747, "regex": false}
-{"id": "doc-0316", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4298, "regex": false}
-{"id": "doc-0341", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5104, "regex": false}
-{"id": "doc-0280", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6878, "regex": false}
-{"id": "doc-0344", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5364, "regex": false}
-{"id": "doc-0231", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7818, "regex": false}
-{"id": "doc-0155", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8931, "regex": false}
-{"id": "doc-0257", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9158, "regex": false}
-{"id": "doc-0093", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6456, "regex": false}
-{"id": "doc-0264", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7244, "regex": false}
-{"id": "doc-0353", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6329, "regex": false}
-{"id": "doc-0346", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3911, "regex": false}
-{"id": "doc-0333", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5568, "regex": false}
-{"id": "doc-0149", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.727, "regex": false}
-{"id": "doc-0188", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.907, "regex": false}
-{"id": "doc-0317", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4614, "regex": false}
-{"id": "doc-0270", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8797, "regex": false}
-{"id": "doc-0100", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6049, "regex": false}
-{"id": "doc-0212", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7224, "regex": false}
-{"id": "doc-0116", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6618, "regex": false}
-{"id": "doc-0130", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8751, "regex": false}
-{"id": "doc-0228", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.925, "regex": false}
-{"id": "doc-0256", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.708, "regex": false}
-{"id": "doc-0300", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4075, "regex": false}
-{"id": "doc-0005", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6117, "regex": true}
-{"id": "doc-0122", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7951, "regex": false}
-{"id": "doc-0273", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 1.0, "regex": false}
-{"id": "doc-0291", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4611, "regex": false}
-{"id": "doc-0052", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8102, "regex": false}
-{"id": "doc-0141", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.57, "regex": true}
-{"id": "doc-0031", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6377, "regex": false}
-{"id": "doc-0237", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7948, "regex": false}
-{"id": "doc-0290", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4562, "regex": false}
-{"id": "doc-0294", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5063, "regex": false}
-{"id": "doc-0119", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6463, "regex": false}
-{"id": "doc-0235", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7916, "regex": false}
-{"id": "doc-0133", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6885, "regex": false}
-{"id": "doc-0182", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9247, "regex": false}
-{"id": "doc-0285", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6, "regex": false}
-{"id": "doc-0265", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7204, "regex": false}
-{"id": "doc-0211", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8559, "regex": true}
-{"id": "doc-0056", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7035, "regex": false}
-{"id": "doc-0343", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4663, "regex": false}
-{"id": "doc-0267", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.537, "regex": false}
-{"id": "doc-0173", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8898, "regex": false}
-{"id": "doc-0272", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8933, "regex": false}
-{"id": "doc-0335", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5611, "regex": false}
-{"id": "doc-0274", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5641, "regex": false}
-{"id": "doc-0124", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4443, "regex": false}
-{"id": "doc-0004", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4768, "regex": false}
-{"id": "doc-0035", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8328, "regex": false}
-{"id": "doc-0286", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5423, "regex": false}
-{"id": "doc-0160", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7825, "regex": true}
-{"id": "doc-0078", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7467, "regex": false}
-{"id": "doc-0350", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3792, "regex": false}
-{"id": "doc-0191", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8492, "regex": false}
-{"id": "doc-0311", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6202, "regex": false}
-{"id": "doc-0066", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7145, "regex": false}
-{"id": "doc-0085", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6397, "regex": false}
-{"id": "doc-0038", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.591, "regex": false}
-{"id": "doc-0296", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4752, "regex": false}
-{"id": "doc-0239", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7855, "regex": false}
-{"id": "doc-0051", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7801, "regex": false}
-{"id": "doc-0165", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6853, "regex": false}
-{"id": "doc-0162", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7516, "regex": false}
-{"id": "doc-0158", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5954, "regex": false}
-{"id": "doc-0297", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4673, "regex": false}
-{"id": "doc-0197", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5997, "regex": false}
-{"id": "doc-0301", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4719, "regex": false}
-{"id": "doc-0355", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3728, "regex": false}
-{"id": "doc-0261", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7162, "regex": false}
-{"id": "doc-0123", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5896, "regex": true}
-{"id": "doc-0253", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6168, "regex": false}
-{"id": "doc-0098", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6895, "regex": false}
-{"id": "doc-0252", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7299, "regex": false}
-{"id": "doc-0127", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5977, "regex": true}
-{"id": "doc-0276", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9489, "regex": false}
-{"id": "doc-0289", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4143, "regex": false}
-{"id": "doc-0190", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7481, "regex": false}
-{"id": "doc-0060", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9079, "regex": false}
-{"id": "doc-0053", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9347, "regex": false}
-{"id": "doc-0194", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5498, "regex": false}
-{"id": "doc-0325", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3572, "regex": false}
-{"id": "doc-0061", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9233, "regex": false}
-{"id": "doc-0068", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.3974, "regex": false}
-{"id": "doc-0217", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6659, "regex": true}
-{"id": "doc-0020", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8717, "regex": false}
-{"id": "doc-0351", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3298, "regex": false}
-{"id": "doc-0065", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.3974, "regex": false}
-{"id": "doc-0243", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7186, "regex": false}
-{"id": "doc-0034", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6377, "regex": false}
-{"id": "doc-0048", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.765, "regex": false}
-{"id": "doc-0309", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.492, "regex": false}
-{"id": "doc-0036", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9136, "regex": false}
-{"id": "doc-0234", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7818, "regex": false}
-{"id": "doc-0327", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6216, "regex": false}
-{"id": "doc-0303", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4464, "regex": false}
-{"id": "doc-0251", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9056, "regex": false}
-{"id": "doc-0345", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.457, "regex": false}
-{"id": "doc-0010", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.847, "regex": false}
-{"id": "doc-0026", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8745, "regex": false}
-{"id": "doc-0232", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6524, "regex": false}
-{"id": "doc-0193", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6754, "regex": false}
-{"id": "doc-0054", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9007, "regex": false}
-{"id": "doc-0185", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6304, "regex": false}
-{"id": "doc-0069", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9107, "regex": false}
-{"id": "doc-0299", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4861, "regex": false}
-{"id": "doc-0016", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.7529, "regex": false}
-{"id": "doc-0293", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4046, "regex": false}
-{"id": "doc-0356", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4896, "regex": false}
-{"id": "doc-0009", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8205, "regex": false}
-{"id": "doc-0323", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3988, "regex": false}
-{"id": "doc-0269", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.5248, "regex": false}
-{"id": "doc-0352", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4306, "regex": false}
-{"id": "doc-0306", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5127, "regex": false}
-{"id": "doc-0220", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8431, "regex": false}
-{"id": "doc-0263", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5867, "regex": false}
-{"id": "doc-0023", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7359, "regex": false}
-{"id": "doc-0075", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.88, "regex": true}
-{"id": "doc-0146", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7283, "regex": false}
-{"id": "doc-0077", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7742, "regex": false}
-{"id": "doc-0254", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.9016, "regex": false}
-{"id": "doc-0167", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.5985, "regex": false}
-{"id": "doc-0200", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.648, "regex": false}
-{"id": "doc-0080", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8563, "regex": false}
-{"id": "doc-0271", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7077, "regex": false}
-{"id": "doc-0340", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5796, "regex": false}
-{"id": "doc-0120", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6209, "regex": false}
-{"id": "doc-0156", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8903, "regex": true}
-{"id": "doc-0154", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 1.0, "regex": false}
-{"id": "doc-0012", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.907, "regex": false}
-{"id": "doc-0202", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6088, "regex": false}
-{"id": "doc-0022", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.3871, "regex": false}
-{"id": "doc-0205", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9609, "regex": false}
-{"id": "doc-0074", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7765, "regex": false}
-{"id": "doc-0046", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7013, "regex": false}
-{"id": "doc-0136", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6885, "regex": false}
-{"id": "doc-0047", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.639, "regex": false}
-{"id": "doc-0003", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7915, "regex": false}
-{"id": "doc-0259", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7743, "regex": false}
-{"id": "doc-0128", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9514, "regex": true}
-{"id": "doc-0103", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7972, "regex": false}
-{"id": "doc-0258", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8935, "regex": false}
-{"id": "doc-0143", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9574, "regex": true}
-{"id": "doc-0244", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6554, "regex": false}
-{"id": "doc-0043", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8855, "regex": false}
-{"id": "doc-0339", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3928, "regex": false}
-{"id": "doc-0172", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9008, "regex": false}
-{"id": "doc-0001", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8757, "regex": false}
-{"id": "doc-0094", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7957, "regex": false}
-{"id": "doc-0183", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.648, "regex": false}
-{"id": "doc-0112", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8427, "regex": false}
-{"id": "doc-0159", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6984, "regex": false}
-{"id": "doc-0018", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8348, "regex": false}
-{"id": "doc-0126", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7483, "regex": true}
-{"id": "doc-0166", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8152, "regex": false}
-{"id": "doc-0281", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6989, "regex": false}
-{"id": "doc-0169", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.4548, "regex": false}
-{"id": "doc-0187", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.4824, "regex": false}
-{"id": "doc-0135", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5129, "regex": false}
-{"id": "doc-0002", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 1.0, "regex": false}
-{"id": "doc-0229", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7654, "regex": false}
-{"id": "doc-0138", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6826, "regex": true}
-{"id": "doc-0081", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8549, "regex": true}
-{"id": "doc-0095", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6899, "regex": false}
-{"id": "doc-0236", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.5955, "regex": true}
-{"id": "doc-0024", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8533, "regex": false}
-{"id": "doc-0151", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7775, "regex": true}
-{"id": "doc-0125", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.3786, "regex": false}
-{"id": "doc-0307", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6021, "regex": false}
-{"id": "doc-0145", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8827, "regex": false}
-{"id": "doc-0260", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6125, "regex": false}
-{"id": "doc-0196", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7157, "regex": false}
-{"id": "doc-0044", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9257, "regex": false}
-{"id": "doc-0029", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7726, "regex": false}
-{"id": "doc-0084", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5634, "regex": false}
-{"id": "doc-0221", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8655, "regex": false}
-{"id": "doc-0131", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8129, "regex": false}
-{"id": "doc-0321", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4478, "regex": false}
-{"id": "doc-0037", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.5935, "regex": false}
-{"id": "doc-0008", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8523, "regex": true}
-{"id": "doc-0067", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.4982, "regex": false}
-{"id": "doc-0028", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8956, "regex": false}
-{"id": "doc-0178", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8025, "regex": false}
-{"id": "doc-0208", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.9409, "regex": false}
-{"id": "doc-0072", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7114, "regex": false}
-{"id": "doc-0326", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.2728, "regex": false}
-{"id": "doc-0102", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6661, "regex": false}
-{"id": "doc-0176", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5722, "regex": false}
-{"id": "doc-0118", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.8879, "regex": false}
+{"id": "code-0015", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.7669, "fp": 0.6905, "level": 3, "regex": false}
+{"id": "code-0034", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.9024, "fp": 0.8298, "level": 3, "regex": false}
+{"id": "code-0080", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0017", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9022, "fp": 0.8605, "level": 3, "regex": false}
+{"id": "code-0088", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4962, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0043", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8143, "fp": 0.6667, "level": 3, "regex": false}
+{"id": "code-0062", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6904, "fp": 0.1818, "level": 2, "regex": false}
+{"id": "code-0065", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9223, "fp": 0.95, "level": 3, "regex": false}
+{"id": "code-0055", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9128, "fp": 0.8333, "level": 3, "regex": false}
+{"id": "code-0021", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.887, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0024", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.792, "fp": 0.9535, "level": 3, "regex": false}
+{"id": "code-0023", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8146, "fp": 0.4821, "level": 2, "regex": false}
+{"id": "code-0048", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9359, "fp": 0.9706, "level": 3, "regex": false}
+{"id": "code-0105", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.384, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0058", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.9758, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0112", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3426, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0002", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6966, "fp": 0.4, "level": 2, "regex": false}
+{"id": "code-0093", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3643, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0063", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8641, "fp": 0.4808, "level": 3, "regex": false}
+{"id": "code-0110", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2817, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0056", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9654, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0103", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4243, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0089", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0097", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3473, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0019", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.7507, "fp": 0.3611, "level": 2, "regex": false}
+{"id": "code-0102", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.5069, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0035", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8323, "fp": 0.5763, "level": 3, "regex": false}
+{"id": "code-0045", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9271, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0047", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.914, "fp": 0.6327, "level": 3, "regex": false}
+{"id": "code-0109", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2912, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0040", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8791, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0106", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4363, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0111", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2567, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0078", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3727, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0092", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3482, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0039", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8431, "fp": 0.4889, "level": 2, "regex": false}
+{"id": "code-0087", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4901, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0029", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8577, "fp": 0.9643, "level": 3, "regex": false}
+{"id": "code-0115", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4173, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0091", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2731, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0012", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8737, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0032", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9572, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0095", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.383, "fp": 0.0196, "level": 0, "regex": false}
+{"id": "code-0099", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3421, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0090", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0069", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3715, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0046", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8304, "fp": 0.6867, "level": 3, "regex": false}
+{"id": "code-0016", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.7868, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0074", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3738, "fp": 0.0333, "level": 0, "regex": false}
+{"id": "code-0113", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.673, "fp": 0.0, "level": 2, "regex": false}
+{"id": "code-0101", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4918, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0070", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4095, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0072", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3886, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0104", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4113, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0020", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7646, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0006", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.5735, "fp": 0.25, "level": 2, "regex": false}
+{"id": "code-0022", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8892, "fp": 0.5294, "level": 3, "regex": false}
+{"id": "code-0018", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8561, "fp": 0.5632, "level": 3, "regex": false}
+{"id": "code-0044", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.8456, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0075", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.4135, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0013", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.8416, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0086", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3004, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0083", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0010", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.5745, "fp": 0.3103, "level": 2, "regex": false}
+{"id": "code-0054", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8977, "fp": 0.6047, "level": 3, "regex": false}
+{"id": "code-0051", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8996, "fp": 0.3494, "level": 3, "regex": false}
+{"id": "code-0049", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9642, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0061", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7262, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0007", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8724, "fp": 0.4894, "level": 3, "regex": false}
+{"id": "code-0027", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8871, "fp": 0.4605, "level": 3, "regex": false}
+{"id": "code-0028", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9316, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0096", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3801, "fp": 0.0185, "level": 0, "regex": false}
+{"id": "code-0003", "kind": "code", "label": "positive", "transform": "rename", "sim": 0.8151, "fp": 0.6957, "level": 3, "regex": false}
+{"id": "code-0081", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.1841, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0050", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8481, "fp": 0.4211, "level": 2, "regex": false}
+{"id": "code-0098", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3691, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0079", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0052", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9086, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0014", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.6069, "fp": 0.375, "level": 2, "regex": false}
+{"id": "code-0073", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.331, "fp": 0.037, "level": 0, "regex": false}
+{"id": "code-0114", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.6536, "fp": 0.0, "level": 2, "regex": false}
+{"id": "code-0108", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0037", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9182, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0066", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.901, "fp": 0.3542, "level": 3, "regex": false}
+{"id": "code-0116", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.4151, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0041", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.6182, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0033", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8861, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0094", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3625, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0071", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3956, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0053", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.8932, "fp": 0.9032, "level": 3, "regex": false}
+{"id": "code-0036", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.9124, "fp": 0.871, "level": 3, "regex": false}
+{"id": "code-0084", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0059", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.7464, "fp": 0.8929, "level": 3, "regex": false}
+{"id": "code-0011", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.7374, "fp": 0.0278, "level": 2, "regex": false}
+{"id": "code-0085", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2519, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0001", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.7816, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0064", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8593, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0038", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.8661, "fp": 0.7667, "level": 3, "regex": false}
+{"id": "code-0082", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.207, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0030", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.8621, "fp": 0.4872, "level": 3, "regex": false}
+{"id": "code-0067", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.2338, "fp": 0.125, "level": 0, "regex": false}
+{"id": "code-0026", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9215, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0076", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.3698, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0057", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.9931, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0042", "kind": "code", "label": "positive", "transform": "wrapped", "sim": 0.6026, "fp": 0.4615, "level": 2, "regex": false}
+{"id": "code-0060", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.7286, "fp": 0.8182, "level": 3, "regex": false}
+{"id": "code-0100", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2872, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0004", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.8216, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0077", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.3876, "fp": 0.0, "level": 0, "regex": false}
+{"id": "code-0031", "kind": "code", "label": "positive", "transform": "rename+reformat", "sim": 0.9023, "fp": 0.8163, "level": 3, "regex": false}
+{"id": "code-0025", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.9458, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0005", "kind": "code", "label": "positive", "transform": "reformat", "sim": 0.7438, "fp": 0.8947, "level": 3, "regex": false}
+{"id": "code-0008", "kind": "code", "label": "positive", "transform": "verbatim", "sim": 0.948, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0009", "kind": "code", "label": "positive", "transform": "partial", "sim": 0.7226, "fp": 1.0, "level": 3, "regex": false}
+{"id": "code-0068", "kind": "code", "label": "negative", "transform": "wrapped_public_code", "sim": 0.2509, "fp": 0.1053, "level": 0, "regex": false}
+{"id": "code-0107", "kind": "code", "label": "negative", "transform": "public_code", "sim": 0.0, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0318", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5667, "fp": 0.1111, "level": 0, "regex": false}
+{"id": "doc-0226", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8629, "fp": 0.8163, "level": 3, "regex": false}
+{"id": "doc-0305", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4227, "fp": 0.0476, "level": 0, "regex": false}
+{"id": "doc-0242", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8689, "fp": 0.8657, "level": 3, "regex": true}
+{"id": "doc-0210", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6677, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0019", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6779, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0045", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8313, "fp": 0.9259, "level": 3, "regex": false}
+{"id": "doc-0284", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6989, "fp": 0.1714, "level": 2, "regex": false}
+{"id": "doc-0042", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9136, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0248", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6555, "fp": 0.0741, "level": 2, "regex": false}
+{"id": "doc-0059", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8493, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0030", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.728, "fp": 0.0333, "level": 2, "regex": false}
+{"id": "doc-0134", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6125, "fp": 0.0556, "level": 1, "regex": true}
+{"id": "doc-0105", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9643, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0230", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6235, "fp": 0.0714, "level": 1, "regex": false}
+{"id": "doc-0040", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7419, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0287", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4852, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0088", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8118, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0057", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6602, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0049", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7281, "fp": 0.0278, "level": 2, "regex": false}
+{"id": "doc-0222", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7275, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0180", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7286, "fp": 0.7674, "level": 3, "regex": false}
+{"id": "doc-0073", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.722, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0147", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7633, "fp": 0.8889, "level": 3, "regex": true}
+{"id": "doc-0015", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6747, "fp": 0.0465, "level": 2, "regex": false}
+{"id": "doc-0092", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8887, "fp": 0.8704, "level": 3, "regex": false}
+{"id": "doc-0349", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3379, "fp": 0.0476, "level": 0, "regex": false}
+{"id": "doc-0050", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6338, "fp": 0.0588, "level": 1, "regex": false}
+{"id": "doc-0347", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5349, "fp": 0.0526, "level": 0, "regex": false}
+{"id": "doc-0292", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5678, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0238", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8204, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0192", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5265, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0348", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4763, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0148", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6709, "fp": 0.9118, "level": 3, "regex": false}
+{"id": "doc-0277", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9102, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0319", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4237, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0219", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.8316, "fp": 0.1579, "level": 3, "regex": false}
+{"id": "doc-0215", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6457, "fp": 0.0606, "level": 2, "regex": false}
+{"id": "doc-0113", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8773, "fp": 0.9697, "level": 3, "regex": true}
+{"id": "doc-0121", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7983, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0070", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7758, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0302", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5341, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0129", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9494, "fp": 0.7667, "level": 3, "regex": true}
+{"id": "doc-0140", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6573, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0304", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6116, "fp": 0.0333, "level": 1, "regex": false}
+{"id": "doc-0201", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6535, "fp": 0.125, "level": 2, "regex": false}
+{"id": "doc-0157", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8924, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0117", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5395, "fp": 0.0882, "level": 0, "regex": false}
+{"id": "doc-0262", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6017, "fp": 0.0312, "level": 1, "regex": false}
+{"id": "doc-0189", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7459, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0086", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7862, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0091", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8244, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0179", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7688, "fp": 0.8491, "level": 3, "regex": false}
+{"id": "doc-0227", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8721, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0322", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4561, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0223", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8028, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0218", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.473, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0142", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.808, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0233", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6777, "fp": 0.2273, "level": 2, "regex": false}
+{"id": "doc-0006", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.849, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0076", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7337, "fp": 0.9444, "level": 3, "regex": false}
+{"id": "doc-0132", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7457, "fp": 0.1, "level": 3, "regex": false}
+{"id": "doc-0338", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6236, "fp": 0.0333, "level": 1, "regex": false}
+{"id": "doc-0111", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8435, "fp": 0.9322, "level": 3, "regex": false}
+{"id": "doc-0115", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.784, "fp": 0.1143, "level": 3, "regex": false}
+{"id": "doc-0332", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5431, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0312", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.445, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0137", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8562, "fp": 0.8841, "level": 3, "regex": true}
+{"id": "doc-0324", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4202, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0064", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7181, "fp": 0.04, "level": 2, "regex": false}
+{"id": "doc-0313", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4434, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0106", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5611, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0266", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.4969, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0021", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6058, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0090", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6045, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0214", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6176, "fp": 0.7045, "level": 3, "regex": false}
+{"id": "doc-0144", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6928, "fp": 0.88, "level": 3, "regex": true}
+{"id": "doc-0171", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7314, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0062", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9395, "fp": 0.6935, "level": 3, "regex": false}
+{"id": "doc-0150", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6513, "fp": 0.0, "level": 2, "regex": false}
+{"id": "doc-0337", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5094, "fp": 0.0588, "level": 0, "regex": false}
+{"id": "doc-0109", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8644, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0174", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8203, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0033", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.8106, "fp": 0.0588, "level": 3, "regex": false}
+{"id": "doc-0039", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.691, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0331", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4686, "fp": 0.0909, "level": 0, "regex": false}
+{"id": "doc-0275", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5519, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0204", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6535, "fp": 0.125, "level": 2, "regex": false}
+{"id": "doc-0250", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9016, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0279", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8458, "fp": 0.8462, "level": 3, "regex": false}
+{"id": "doc-0139", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8914, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0207", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9587, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0308", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4187, "fp": 0.0476, "level": 0, "regex": false}
+{"id": "doc-0063", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8894, "fp": 0.5614, "level": 3, "regex": false}
+{"id": "doc-0295", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4335, "fp": 0.0588, "level": 0, "regex": false}
+{"id": "doc-0083", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5683, "fp": 0.0968, "level": 0, "regex": true}
+{"id": "doc-0320", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4094, "fp": 0.0263, "level": 0, "regex": false}
+{"id": "doc-0153", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6468, "fp": 0.0, "level": 2, "regex": false}
+{"id": "doc-0079", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9135, "fp": 0.8667, "level": 3, "regex": false}
+{"id": "doc-0058", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8544, "fp": 0.9259, "level": 3, "regex": false}
+{"id": "doc-0247", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7065, "fp": 0.0263, "level": 2, "regex": false}
+{"id": "doc-0168", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.5437, "fp": 0.1111, "level": 0, "regex": false}
+{"id": "doc-0163", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7623, "fp": 0.8182, "level": 3, "regex": false}
+{"id": "doc-0011", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9017, "fp": 0.973, "level": 3, "regex": false}
+{"id": "doc-0177", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8708, "fp": 0.907, "level": 3, "regex": false}
+{"id": "doc-0249", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7162, "fp": 0.0769, "level": 2, "regex": false}
+{"id": "doc-0108", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.636, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0203", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.7456, "fp": 0.0714, "level": 3, "regex": false}
+{"id": "doc-0195", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7434, "fp": 0.8714, "level": 3, "regex": false}
+{"id": "doc-0152", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.489, "fp": 0.2083, "level": 0, "regex": false}
+{"id": "doc-0240", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5256, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0268", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6853, "fp": 0.3243, "level": 2, "regex": false}
+{"id": "doc-0310", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5524, "fp": 0.04, "level": 0, "regex": false}
+{"id": "doc-0114", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8584, "fp": 0.9556, "level": 3, "regex": true}
+{"id": "doc-0055", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8694, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0329", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4275, "fp": 0.05, "level": 0, "regex": false}
+{"id": "doc-0278", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9162, "fp": 0.8551, "level": 3, "regex": false}
+{"id": "doc-0099", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6661, "fp": 0.3214, "level": 2, "regex": false}
+{"id": "doc-0025", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8835, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0314", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4708, "fp": 0.0476, "level": 0, "regex": false}
+{"id": "doc-0224", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.729, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0288", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5236, "fp": 0.0476, "level": 0, "regex": false}
+{"id": "doc-0241", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7914, "fp": 0.8525, "level": 3, "regex": false}
+{"id": "doc-0032", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7749, "fp": 0.1111, "level": 3, "regex": false}
+{"id": "doc-0283", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6217, "fp": 0.0, "level": 1, "regex": false}
+{"id": "doc-0199", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5936, "fp": 0.6129, "level": 3, "regex": false}
+{"id": "doc-0082", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6397, "fp": 0.2571, "level": 2, "regex": false}
+{"id": "doc-0298", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6029, "fp": 0.0968, "level": 1, "regex": false}
+{"id": "doc-0014", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6617, "fp": 0.0857, "level": 2, "regex": false}
+{"id": "doc-0027", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8704, "fp": 0.7903, "level": 3, "regex": false}
+{"id": "doc-0170", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.5658, "fp": 0.1071, "level": 0, "regex": false}
+{"id": "doc-0013", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6013, "fp": 0.0741, "level": 1, "regex": false}
+{"id": "doc-0071", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9047, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0110", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9643, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0175", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6208, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0181", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9128, "fp": 0.931, "level": 3, "regex": false}
+{"id": "doc-0184", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.4824, "fp": 0.3871, "level": 2, "regex": false}
+{"id": "doc-0164", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7291, "fp": 0.75, "level": 3, "regex": false}
+{"id": "doc-0017", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6574, "fp": 0.0682, "level": 2, "regex": false}
+{"id": "doc-0096", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8769, "fp": 0.8889, "level": 3, "regex": false}
+{"id": "doc-0255", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7461, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0245", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7501, "fp": 0.1034, "level": 3, "regex": false}
+{"id": "doc-0216", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8316, "fp": 0.1579, "level": 3, "regex": false}
+{"id": "doc-0328", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3542, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0334", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4078, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0354", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.6707, "fp": 0.0, "level": 2, "regex": false}
+{"id": "doc-0087", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6456, "fp": 0.9459, "level": 3, "regex": false}
+{"id": "doc-0342", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4493, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0161", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8931, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0225", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5302, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0198", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.6423, "fp": 0.7273, "level": 3, "regex": false}
+{"id": "doc-0330", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4048, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0097", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7315, "fp": 0.7692, "level": 3, "regex": false}
+{"id": "doc-0089", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5895, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0107", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4996, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0209", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8812, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0282", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6538, "fp": 0.0811, "level": 2, "regex": false}
+{"id": "doc-0104", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6851, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0186", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6366, "fp": 0.0833, "level": 1, "regex": false}
+{"id": "doc-0206", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9115, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0315", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5702, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0041", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7908, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0007", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.907, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0101", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.6279, "fp": 0.0606, "level": 1, "regex": false}
+{"id": "doc-0213", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.6319, "fp": 0.9111, "level": 3, "regex": false}
+{"id": "doc-0336", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4341, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0246", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.747, "fp": 0.1, "level": 3, "regex": false}
+{"id": "doc-0316", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4298, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0341", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5104, "fp": 0.08, "level": 0, "regex": false}
+{"id": "doc-0280", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6878, "fp": 0.0312, "level": 2, "regex": false}
+{"id": "doc-0344", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5364, "fp": 0.037, "level": 0, "regex": false}
+{"id": "doc-0231", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7818, "fp": 0.0278, "level": 3, "regex": false}
+{"id": "doc-0155", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8931, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0257", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9158, "fp": 0.9143, "level": 3, "regex": false}
+{"id": "doc-0093", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6456, "fp": 0.9459, "level": 3, "regex": false}
+{"id": "doc-0264", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7244, "fp": 0.0976, "level": 2, "regex": false}
+{"id": "doc-0353", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6329, "fp": 0.0, "level": 1, "regex": false}
+{"id": "doc-0346", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3911, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0333", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5568, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0149", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.727, "fp": 0.0606, "level": 2, "regex": false}
+{"id": "doc-0188", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.907, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0317", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4614, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0270", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8797, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0100", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6049, "fp": 0.0811, "level": 1, "regex": false}
+{"id": "doc-0212", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7224, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0116", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6618, "fp": 0.08, "level": 2, "regex": false}
+{"id": "doc-0130", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8751, "fp": 0.8462, "level": 3, "regex": false}
+{"id": "doc-0228", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.925, "fp": 0.94, "level": 3, "regex": false}
+{"id": "doc-0256", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.708, "fp": 0.9231, "level": 3, "regex": false}
+{"id": "doc-0300", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4075, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0005", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6117, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0122", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7951, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0273", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 1.0, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0291", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4611, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0052", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8102, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0141", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.57, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0031", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6377, "fp": 0.0789, "level": 1, "regex": false}
+{"id": "doc-0237", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7948, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0290", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4562, "fp": 0.04, "level": 0, "regex": false}
+{"id": "doc-0294", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5063, "fp": 0.0357, "level": 0, "regex": false}
+{"id": "doc-0119", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6463, "fp": 0.069, "level": 2, "regex": false}
+{"id": "doc-0235", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7916, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0133", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6885, "fp": 0.0476, "level": 2, "regex": false}
+{"id": "doc-0182", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9247, "fp": 0.931, "level": 3, "regex": false}
+{"id": "doc-0285", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6, "fp": 0.0, "level": 1, "regex": false}
+{"id": "doc-0265", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7204, "fp": 0.0294, "level": 2, "regex": false}
+{"id": "doc-0211", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8559, "fp": 0.9111, "level": 3, "regex": true}
+{"id": "doc-0056", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7035, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0343", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4663, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0267", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.537, "fp": 0.1, "level": 0, "regex": false}
+{"id": "doc-0173", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8898, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0272", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8933, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0335", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.5611, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0274", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5641, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0124", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4443, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0004", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.4768, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0035", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8328, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0286", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5423, "fp": 0.0333, "level": 0, "regex": false}
+{"id": "doc-0160", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7825, "fp": 0.9333, "level": 3, "regex": true}
+{"id": "doc-0078", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7467, "fp": 0.7887, "level": 3, "regex": false}
+{"id": "doc-0350", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.3792, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0191", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.8492, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0311", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6202, "fp": 0.0, "level": 1, "regex": false}
+{"id": "doc-0066", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7145, "fp": 0.0882, "level": 2, "regex": false}
+{"id": "doc-0085", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6397, "fp": 0.2571, "level": 2, "regex": false}
+{"id": "doc-0038", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.591, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0296", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4752, "fp": 0.0323, "level": 0, "regex": false}
+{"id": "doc-0239", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7855, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0051", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7801, "fp": 0.2963, "level": 3, "regex": false}
+{"id": "doc-0165", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6853, "fp": 0.6154, "level": 3, "regex": false}
+{"id": "doc-0162", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7516, "fp": 0.7727, "level": 3, "regex": false}
+{"id": "doc-0158", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5954, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0297", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4673, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0197", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5997, "fp": 0.6591, "level": 3, "regex": false}
+{"id": "doc-0301", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4719, "fp": 0.1, "level": 0, "regex": false}
+{"id": "doc-0355", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3728, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0261", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.7162, "fp": 0.1143, "level": 2, "regex": false}
+{"id": "doc-0123", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5896, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0253", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6168, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0098", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6895, "fp": 0.4, "level": 2, "regex": false}
+{"id": "doc-0252", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7299, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0127", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5977, "fp": 0.8605, "level": 3, "regex": true}
+{"id": "doc-0276", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9489, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0289", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4143, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0190", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7481, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0060", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9079, "fp": 0.8101, "level": 3, "regex": false}
+{"id": "doc-0053", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9347, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0194", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.5498, "fp": 0.8732, "level": 3, "regex": false}
+{"id": "doc-0325", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3572, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0061", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9233, "fp": 0.8491, "level": 3, "regex": false}
+{"id": "doc-0068", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.3974, "fp": 0.1905, "level": 0, "regex": false}
+{"id": "doc-0217", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6659, "fp": 0.0238, "level": 2, "regex": true}
+{"id": "doc-0020", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8717, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0351", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3298, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0065", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.3974, "fp": 0.1905, "level": 0, "regex": false}
+{"id": "doc-0243", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7186, "fp": 0.8125, "level": 3, "regex": false}
+{"id": "doc-0034", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6377, "fp": 0.0789, "level": 1, "regex": false}
+{"id": "doc-0048", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.765, "fp": 0.2963, "level": 3, "regex": false}
+{"id": "doc-0309", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.492, "fp": 0.0435, "level": 0, "regex": false}
+{"id": "doc-0036", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9136, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0234", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.7818, "fp": 0.0278, "level": 3, "regex": false}
+{"id": "doc-0327", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6216, "fp": 0.0435, "level": 1, "regex": false}
+{"id": "doc-0303", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4464, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0251", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9056, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0345", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.457, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0010", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.847, "fp": 0.8776, "level": 3, "regex": false}
+{"id": "doc-0026", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8745, "fp": 0.9245, "level": 3, "regex": false}
+{"id": "doc-0232", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6524, "fp": 0.0714, "level": 2, "regex": false}
+{"id": "doc-0193", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6754, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0054", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9007, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0185", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6304, "fp": 0.075, "level": 1, "regex": false}
+{"id": "doc-0069", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9107, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0299", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4861, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0016", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.7529, "fp": 0.0426, "level": 3, "regex": false}
+{"id": "doc-0293", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4046, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0356", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4896, "fp": 0.125, "level": 0, "regex": false}
+{"id": "doc-0009", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8205, "fp": 0.8689, "level": 3, "regex": false}
+{"id": "doc-0323", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3988, "fp": 0.0625, "level": 0, "regex": false}
+{"id": "doc-0269", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.5248, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0352", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.4306, "fp": 0.1333, "level": 0, "regex": false}
+{"id": "doc-0306", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5127, "fp": 0.087, "level": 0, "regex": false}
+{"id": "doc-0220", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8431, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0263", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5867, "fp": 0.12, "level": 1, "regex": false}
+{"id": "doc-0023", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7359, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0075", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.88, "fp": 0.9167, "level": 3, "regex": true}
+{"id": "doc-0146", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7283, "fp": 0.7846, "level": 3, "regex": false}
+{"id": "doc-0077", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7742, "fp": 0.9032, "level": 3, "regex": false}
+{"id": "doc-0254", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.9016, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0167", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.5985, "fp": 0.1579, "level": 1, "regex": false}
+{"id": "doc-0200", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.648, "fp": 0.2609, "level": 2, "regex": false}
+{"id": "doc-0080", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8563, "fp": 0.8723, "level": 3, "regex": false}
+{"id": "doc-0271", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7077, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0340", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.5796, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0120", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6209, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0156", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8903, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0154", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 1.0, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0012", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.907, "fp": 0.973, "level": 3, "regex": false}
+{"id": "doc-0202", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.6088, "fp": 0.0256, "level": 1, "regex": false}
+{"id": "doc-0022", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.3871, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0205", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9609, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0074", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7765, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0046", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7013, "fp": 0.7037, "level": 3, "regex": false}
+{"id": "doc-0136", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6885, "fp": 0.0476, "level": 2, "regex": false}
+{"id": "doc-0047", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.639, "fp": 0.1724, "level": 1, "regex": false}
+{"id": "doc-0003", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7915, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0259", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7743, "fp": 0.5968, "level": 3, "regex": false}
+{"id": "doc-0128", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.9514, "fp": 0.7746, "level": 3, "regex": true}
+{"id": "doc-0103", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.7972, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0258", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8935, "fp": 0.9828, "level": 3, "regex": false}
+{"id": "doc-0143", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9574, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0244", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6554, "fp": 0.7222, "level": 3, "regex": false}
+{"id": "doc-0043", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8855, "fp": 0.9138, "level": 3, "regex": false}
+{"id": "doc-0339", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.3928, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0172", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.9008, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0001", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8757, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0094", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7957, "fp": 0.8841, "level": 3, "regex": false}
+{"id": "doc-0183", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.648, "fp": 0.2581, "level": 2, "regex": false}
+{"id": "doc-0112", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8427, "fp": 0.8393, "level": 3, "regex": false}
+{"id": "doc-0159", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.6984, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0018", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8348, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0126", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7483, "fp": 0.92, "level": 3, "regex": true}
+{"id": "doc-0166", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8152, "fp": 0.0968, "level": 3, "regex": false}
+{"id": "doc-0281", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6989, "fp": 0.1714, "level": 2, "regex": false}
+{"id": "doc-0169", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.4548, "fp": 0.0741, "level": 0, "regex": false}
+{"id": "doc-0187", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.4824, "fp": 0.3871, "level": 2, "regex": false}
+{"id": "doc-0135", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5129, "fp": 0.1, "level": 0, "regex": false}
+{"id": "doc-0002", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 1.0, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0229", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7654, "fp": 0.8913, "level": 3, "regex": false}
+{"id": "doc-0138", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.6826, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0081", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.8549, "fp": 0.4, "level": 3, "regex": true}
+{"id": "doc-0095", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.6899, "fp": 0.8636, "level": 3, "regex": false}
+{"id": "doc-0236", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.5955, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0024", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8533, "fp": 0.9467, "level": 3, "regex": false}
+{"id": "doc-0151", "kind": "doc", "label": "positive", "transform": "summary", "sim": 0.7775, "fp": 0.0606, "level": 3, "regex": true}
+{"id": "doc-0125", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.3786, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0307", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.6021, "fp": 0.1333, "level": 1, "regex": false}
+{"id": "doc-0145", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8827, "fp": 0.8923, "level": 3, "regex": false}
+{"id": "doc-0260", "kind": "doc", "label": "positive", "transform": "paraphrase", "sim": 0.6125, "fp": 0.1667, "level": 1, "regex": false}
+{"id": "doc-0196", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.7157, "fp": 0.8491, "level": 3, "regex": false}
+{"id": "doc-0044", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.9257, "fp": 0.8113, "level": 3, "regex": false}
+{"id": "doc-0029", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.7726, "fp": 0.9286, "level": 3, "regex": false}
+{"id": "doc-0084", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.5634, "fp": 0.0952, "level": 0, "regex": false}
+{"id": "doc-0221", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.8655, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0131", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8129, "fp": 0.6809, "level": 3, "regex": false}
+{"id": "doc-0321", "kind": "doc", "label": "negative", "transform": "public_text", "sim": 0.4478, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0037", "kind": "doc", "label": "positive", "transform": "verbatim", "sim": 0.5935, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0008", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8523, "fp": 1.0, "level": 3, "regex": true}
+{"id": "doc-0067", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.4982, "fp": 0.0625, "level": 0, "regex": false}
+{"id": "doc-0028", "kind": "doc", "label": "positive", "transform": "reordered_bullets", "sim": 0.8956, "fp": 0.9697, "level": 3, "regex": false}
+{"id": "doc-0178", "kind": "doc", "label": "positive", "transform": "wrapped_prompt", "sim": 0.8025, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0208", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.9409, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0072", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.7114, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0326", "kind": "doc", "label": "negative", "transform": "wrapped_public_text", "sim": 0.2728, "fp": 0.0, "level": 0, "regex": false}
+{"id": "doc-0102", "kind": "doc", "label": "positive", "transform": "wrapped_paraphrase", "sim": 0.6661, "fp": 0.3214, "level": 2, "regex": false}
+{"id": "doc-0176", "kind": "doc", "label": "positive", "transform": "partial_excerpt", "sim": 0.5722, "fp": 1.0, "level": 3, "regex": false}
+{"id": "doc-0118", "kind": "doc", "label": "positive", "transform": "tone_rewrite", "sim": 0.8879, "fp": 0.2778, "level": 3, "regex": false}

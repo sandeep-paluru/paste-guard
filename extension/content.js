@@ -150,7 +150,7 @@
     const matchHtml = m ? `
       <div class="pg-match">
         <div class="pg-src">${m.kind === "doc" ? "Document" : "Code"}: <b>${esc(m.source || m.path)}</b>
-          (${esc(m.unit || "lines")} ${m.lines[0]}-${m.lines[1]}, similarity ${m.similarity})</div>
+          (${esc(m.unit || "lines")} ${m.lines[0]}-${m.lines[1]}, ${m.method === "fingerprint" ? "word overlap" : "similarity"} ${m.similarity})</div>
         <blockquote>${esc(m.snippet || "")}</blockquote>
       </div>` : "";
     const isFile = title === "upload";

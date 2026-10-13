@@ -92,3 +92,47 @@ def doc_passages(text: str):
     a close neighbour). Yields (start_para, end_para, chunk)."""
     yield from doc_chunks(text)
     yield from doc_chunks(text, target=60, max_words=80, min_words=40, overlap=20)
+
+
+# Paste-side windows (used by the backend and by the eval and benchmark scripts).
+def prose_spans(text: str, words: int = 80, step: int = 40):
+    """Character spans of paste prose: paragraphs, long ones split into ~80 word windows."""
+    spans = []
+    for m in re.finditer(r"\S(?:.*?\S)?(?=\n\s*\n|\s*$)", text, flags=re.S):
+        toks = list(re.finditer(r"\S+", m.group(0)))
+        if len(toks) < 6:
+            continue
+        base = m.start()
+        if len(toks) <= words:
+            spans.append((m.start(), m.end()))
+            continue
+        i = 0
+        while True:
+            part = toks[i:i + words]
+            spans.append((base + part[0].start(), base + part[-1].end()))
+            if i + words >= len(toks):
+                break
+            i += step
+    return spans
+
+
+def line_spans(text: str):
+    """Character spans of 30-line windows (code mode)."""
+    offs = [0]
+    for ln in text.splitlines(keepends=True):
+        offs.append(offs[-1] + len(ln))
+    out = []
+    for s, e, _ in windows(text, size=30, step=15, min_chars=40):
+        out.append((offs[s - 1], offs[e]))
+    return out
+
+
+_TOK = re.compile(r"\w+")
+
+
+def shingles(text: str, n: int = 3) -> set:
+    """Hashed word n-gram fingerprint (lower-cased word 3-grams), used for exact and near-exact reuse."""
+    import hashlib
+    w = [x.lower() for x in _TOK.findall(text)]
+    return {int.from_bytes(hashlib.blake2b(" ".join(w[i:i + n]).encode(), digest_size=8).digest(), "big")
+            for i in range(len(w) - n + 1)}

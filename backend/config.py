@@ -2,7 +2,7 @@
 
 Environment variables override file values:
 PG_T_DOC_NUDGE / PG_T_DOC_COACH / PG_T_DOC_BLOCK, PG_T_CODE_* (and legacy PG_T_NUDGE etc. for code),
-PG_INDEX_DB, PG_AUDIT_DB.
+PG_FP_DOC_COACH / PG_FP_DOC_BLOCK / PG_FP_CODE_* (fingerprint), PG_INDEX_DB, PG_AUDIT_DB.
 """
 import os
 from pathlib import Path
@@ -19,8 +19,10 @@ VERSION = (ROOT / "VERSION").read_text().strip() if (ROOT / "VERSION").exists() 
 DEFAULTS = {
     "index": {"docs": [], "code": [], "db": "data/index.db"},
     "server": {"host": "127.0.0.1", "port": 8765},
-    "thresholds": {"doc": {"nudge": 0.62, "coach": 0.63, "block": 0.78},
+    "thresholds": {"doc": {"nudge": 0.58, "coach": 0.64, "block": 0.74},
                    "code": {"nudge": 0.55, "coach": 0.65, "block": 0.85}},
+    # Word 3-gram containment (share of the pasted window's 3-grams found in one indexed chunk).
+    "fingerprint": {"min_shingles": 8, "doc": {"coach": 0.25, "block": 0.5}, "code": {"coach": 0.25, "block": 0.5}},
     "sites": {"allowed": ["claude.ai", "chatgpt.com", "chat.openai.com"]},
     "audit": {"db": "data/audit.db", "keep_days": 30},
 }
@@ -49,6 +51,11 @@ def load() -> dict:
             v = os.environ.get(f"PG_T_{kind.upper()}_{lvl.upper()}") or (kind == "code" and os.environ.get(legacy[lvl]))
             if v:
                 levels[lvl] = float(v)
+    for kind in ("doc", "code"):
+        for lvl in ("coach", "block"):
+            v = os.environ.get(f"PG_FP_{kind.upper()}_{lvl.upper()}")
+            if v:
+                cfg["fingerprint"][kind][lvl] = float(v)
     return cfg
 
 

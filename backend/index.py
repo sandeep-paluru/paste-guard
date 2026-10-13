@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 import embedder
-from chunking import CODE_EXT, DOC_EXT, SKIP_DIRS, doc_chunks, doc_passages, extract_text, normalise, windows
+from chunking import CODE_EXT, DOC_EXT, SKIP_DIRS, doc_chunks, doc_passages, extract_text, normalise, shingles, windows
 
 from config import CONFIG
 
@@ -113,7 +113,7 @@ def _hit(kind, path, s, e, text, sim):
     snippet = text if len(text) <= 400 else text[:400].rsplit(" ", 1)[0] + " ..."
     return {"kind": kind, "path": path, "source": path, "lines": [s, e],
             "unit": "paragraphs" if kind == "doc" else "lines",
-            "similarity": round(float(sim), 4), "snippet": snippet}
+            "similarity": round(float(sim), 4), "snippet": snippet, "method": "embedding"}
 
 
 class Index:
@@ -125,6 +125,7 @@ class Index:
         self.mtime = os.path.getmtime(self.db_path) if os.path.exists(self.db_path) else None
         self.con = _connect(self.db_path) if self.mtime else None
         self._mat = None
+        self._fp = None
 
     def refresh(self):
         """Reopen the index if it was rebuilt on disk (e.g. by `pasteguard reindex`)."""
@@ -137,6 +138,29 @@ class Index:
             return {"built": False}
         meta = dict(self.con.execute("SELECT k, v FROM meta").fetchall())
         return {"built": True, "backend": "sqlite-vec" if HAVE_VEC else "numpy", **meta}
+
+    def fingerprint(self, text: str, min_shingles: int = 8) -> list[dict]:
+        """Best chunk per kind by word 3-gram containment. Catches verbatim and partial reuse that a
+        single sentence embedding blurs out. Sets are built in memory from the index on first use."""
+        if not self.con:
+            return []
+        if self._fp is None:
+            rows = self.con.execute("SELECT kind, path, start_line, end_line, text FROM chunks").fetchall()
+            self._fp = [(r, shingles(r[4])) for r in rows]
+        a = shingles(text)
+        if len(a) < min_shingles:
+            return []
+        best = {}
+        for r, b in self._fp:
+            c = len(a & b) / len(a)
+            if c > 0 and (r[0] not in best or c > best[r[0]][1]):
+                best[r[0]] = (r, c)
+        out = []
+        for r, c in best.values():
+            h = _hit(*r, c)
+            h["method"] = "fingerprint"
+            out.append(h)
+        return out
 
     def query(self, vec: np.ndarray, k: int = 5, kind: str | None = None) -> list[dict]:
         if not self.con:

@@ -18,11 +18,12 @@ import embedder
 import secrets_scan
 from audit import Audit
 from config import CONFIG, CONFIG_PATH, VERSION
-from chunking import DOC_EXT, extract_text, normalise, windows
+from chunking import DOC_EXT, extract_text, line_spans, normalise, prose_spans
 from index import Index
 
 
-THRESHOLDS = CONFIG["thresholds"]  # per kind; tuned with eval/run_eval.py (see eval/results.md)
+THRESHOLDS = CONFIG["thresholds"]  # embedding cosine bands per kind; see eval/results.md and eval/benchmarks.md
+FINGERPRINT = CONFIG["fingerprint"]  # word 3-gram containment levels per kind (hybrid matching)
 HARD_SECRETS = {"private_key", "aws_access_key", "github_token", "openai_key", "slack_token"}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
@@ -46,7 +47,7 @@ class CheckIn(BaseModel):
 def health():
     INDEX.refresh()
     return {"status": "ok", "version": VERSION, "model": embedder.MODEL_NAME, "index": INDEX.stats(),
-            "thresholds": THRESHOLDS, "sites": CONFIG["sites"]["allowed"]}
+            "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT, "sites": CONFIG["sites"]["allowed"]}
 
 
 def _local(request: Request):
@@ -65,40 +66,8 @@ def admin_api(request: Request):
     _local(request)
     INDEX.refresh()
     return {"version": VERSION, "config": str(CONFIG_PATH), "model": embedder.MODEL_NAME, "index": INDEX.stats(),
-            "thresholds": THRESHOLDS, "sites": CONFIG["sites"]["allowed"],
+            "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT, "sites": CONFIG["sites"]["allowed"],
             "counts_7d": AUDIT.counts(), "recent": AUDIT.recent(50)}
-
-
-def prose_spans(text: str, words: int = 80, step: int = 40):
-    """Character spans of paste prose: paragraphs, long ones split into ~80 word windows."""
-    spans = []
-    for m in re.finditer(r"\S(?:.*?\S)?(?=\n\s*\n|\s*$)", text, flags=re.S):
-        toks = list(re.finditer(r"\S+", m.group(0)))
-        if len(toks) < 6:
-            continue
-        base = m.start()
-        if len(toks) <= words:
-            spans.append((m.start(), m.end()))
-            continue
-        i = 0
-        while True:
-            part = toks[i:i + words]
-            spans.append((base + part[0].start(), base + part[-1].end()))
-            if i + words >= len(toks):
-                break
-            i += step
-    return spans
-
-
-def line_spans(text: str):
-    """Character spans of 30-line windows (code mode)."""
-    offs = [0]
-    for ln in text.splitlines(keepends=True):
-        offs.append(offs[-1] + len(ln))
-    out = []
-    for s, e, _ in windows(text, size=30, step=15, min_chars=40):
-        out.append((offs[s - 1], offs[e]))
-    return out
 
 
 def semantic(text: str):
@@ -110,20 +79,33 @@ def semantic(text: str):
     vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
     out = []
     for (s, e), v in zip(spans, vecs):
-        hits = INDEX.query(v, k=3)
+        hits = INDEX.query(v, k=3) + INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"])
+        hits.sort(key=lambda h: (RANK[level(h)], margin(h)), reverse=True)
         out.append({"span": [s, e], "hits": hits})
     return out
 
 
+RANK = {None: 0, "nudge": 1, "coach": 2, "block": 3}
+
+
+def _bands(hit):
+    if hit.get("method") == "fingerprint":
+        return FINGERPRINT[hit["kind"]]
+    return THRESHOLDS[hit["kind"]]
+
+
 def level(hit) -> str | None:
-    t = THRESHOLDS[hit["kind"]]
+    t = _bands(hit)
     for name in ("block", "coach", "nudge"):
-        if hit["similarity"] >= t[name]:
+        if name in t and hit["similarity"] >= t[name]:
             return name
     return None
 
 
-RANK = {None: 0, "nudge": 1, "coach": 2, "block": 3}
+def margin(hit) -> float:
+    """How far past its lowest band a hit is, comparable across methods."""
+    t = _bands(hit)
+    return hit["similarity"] - min(t.values())
 
 
 def decide(text: str) -> dict:
@@ -137,12 +119,11 @@ def decide(text: str) -> dict:
     best = {}
     for w in per_window:
         for h in w["hits"]:
-            key = (h["kind"], h["path"], tuple(h["lines"]))
+            key = (h["kind"], h["path"], tuple(h["lines"]), h.get("method"))
             if key not in best or h["similarity"] > best[key]["similarity"]:
                 best[key] = {**h, "paste_span": w["span"],
                              "paste_excerpt": text[w["span"][0]:w["span"][1]][:300]}
-    matches = sorted(best.values(), key=lambda h: (RANK[level(h)], h["similarity"] - THRESHOLDS[h["kind"]]["nudge"]),
-                     reverse=True)[:5]
+    matches = sorted(best.values(), key=lambda h: (RANK[level(h)], margin(h)), reverse=True)[:5]
     for m in matches:
         m["level"] = level(m)
     top = matches[0] if matches and matches[0]["level"] else None
@@ -166,50 +147,105 @@ def decide(text: str) -> dict:
     else:
         verdict, msg = "allow", "No issues found."
 
-    # One-click redaction: secrets first (character spans), then matched windows.
-    spans = [(f["start"], f["end"], f"[REDACTED:{f['type']}]") for f in findings]
+    # One-click redaction. Secrets are replaced in place. Lines covered by a matched window are replaced
+    # with a pointer to the matching source passage, but headings and code signatures are kept so the user
+    # still sees the structure of what they pasted and can ask a generic question about it.
+    secret_spans = [(f["start"], f["end"], f"[REDACTED:{f['type']}]") for f in findings]
+    flagged = []
     for w in per_window:
         hit = w["hits"][0] if w["hits"] else None
-        if hit and RANK[level(hit)] >= RANK["coach"] and w["span"] != [0, len(text)]:
-            spans.append((w["span"][0], w["span"][1], f"[REDACTED:{'confidential_doc' if hit['kind'] == 'doc' else 'company_code'}]"))
-    if top and RANK[sem] >= RANK["coach"] and not any(s[2].startswith("[REDACTED:c") for s in spans):
-        spans.append((0, len(text), f"[REDACTED:{'confidential_doc' if top['kind'] == 'doc' else 'company_code'}]"))
-    redacted = _apply(text, spans)
+        if hit and RANK[level(hit)] >= RANK["coach"]:
+            flagged.append((w["span"][0], w["span"][1], hit))
+    # The whole-paste view only counts when no narrower window matched.
+    narrow = [f for f in flagged if [f[0], f[1]] != [0, len(text)]]
+    redacted = redact(text, narrow or flagged, secret_spans)
     return {"verdict": verdict, "message": msg, "findings": findings + marks, "matches": matches,
             "semantic_match": top, "redacted": redacted}
 
 
-def _apply(text, spans):
-    """Merge overlapping spans and replace each merged run with one label."""
-    if not spans:
-        return text
-    spans.sort()
-    merged = [list(spans[0])]
-    for s, e, lab in spans[1:]:
-        if s <= merged[-1][1]:
-            merged[-1][1] = max(merged[-1][1], e)
-            if "confidential_doc" in lab or "company_code" in lab:
-                merged[-1][2] = lab
-        else:
-            merged.append([s, e, lab])
+KEEP_LINE = re.compile(r"^\s*(#{1,6}\s|(async\s+)?def\s|class\s|function\s|export\s|public\s|private\s|func\s|fn\s)")
+
+
+def _keep(line: str) -> bool:
+    """Headings and code signatures survive redaction; bodies do not."""
+    t = line.strip()
+    if not t:
+        return True
+    if KEEP_LINE.match(line):
+        return True
+    words = t.split()
+    return len(words) <= 8 and not t.endswith((".", ",", ";")) and not any(ch.isdigit() for ch in t) \
+        and t[0].isupper() and not ("=" in t or "(" in t or "|" in t)
+
+
+def _apply_spans(text, spans, offset=0):
     out, pos = [], 0
-    for s, e, lab in merged:
+    for s, e, lab in sorted(spans):
+        s, e = max(s - offset, 0), min(e - offset, len(text))
+        if s < pos or s >= len(text):
+            continue
         out.append(text[pos:s]); out.append(lab); pos = e
     out.append(text[pos:])
     return "".join(out)
 
 
+def redact(text: str, flagged, secret_spans) -> str:
+    """Line-level redaction with source pointers. flagged: (start, end, hit) character windows."""
+    lines = text.splitlines(keepends=True)
+    out, pos, run = [], 0, None  # run: {path: [unit, a, b]} for the current block of removed lines
+
+    def close():
+        if run:
+            parts = [f"{p} {u} {a}-{b}" for p, (u, a, b) in list(run.items())[:3]]
+            out.append("[REDACTED: matches " + "; ".join(parts) + "]\n")
+
+    for ln in lines:
+        s, e = pos, pos + len(ln)
+        pos = e
+        mid = (s + e) / 2
+        hits = [h for fs, fe, h in flagged if fs <= mid < fe] if ln.strip() else []
+        if hits and not _keep(ln):
+            run = run or {}
+            for h in hits:
+                u = "paragraphs" if h["kind"] == "doc" else "lines"
+                a, b = h["lines"]
+                if h["path"] in run:
+                    run[h["path"]][1] = min(run[h["path"]][1], a); run[h["path"]][2] = max(run[h["path"]][2], b)
+                else:
+                    run[h["path"]] = [u, a, b]
+            continue
+        if run and not ln.strip():
+            continue  # blank lines inside a removed block collapse into the label
+        close(); run = None
+        out.append(_apply_spans(ln, [x for x in secret_spans if s <= x[0] < e], s))
+    close()
+    res = "".join(out)
+    return res if text.endswith("\n") or not res.endswith("\n") else res[:-1]
+
+
+def _site(source: str, request: Request) -> str:
+    """Site for the verdict log: the extension sends the page hostname; direct API calls are labelled."""
+    site = (source or "").split(" ")[0].strip()
+    if site:
+        return site
+    ref = request.headers.get("referer") or request.headers.get("origin") or ""
+    host = re.sub(r"^[a-z-]+://", "", ref).split("/")[0]
+    if host and not ref.startswith("chrome-extension://"):
+        return host
+    return "direct API call"
+
+
 @app.post("/check")
-def check(req: CheckIn):
+def check(req: CheckIn, request: Request):
     t0 = time.time()
     res = decide(req.text)
     channel = "file" if " file:" in (req.source or "") else "paste"
-    AUDIT.record(channel, (req.source or "").split(" ")[0], req.text, res, int((time.time() - t0) * 1000))
+    AUDIT.record(channel, _site(req.source, request), req.text, res, int((time.time() - t0) * 1000))
     return res
 
 
 @app.post("/check_file")
-async def check_file(file: UploadFile = File(...), source: str = Form("")):
+async def check_file(request: Request, file: UploadFile = File(...), source: str = Form("")):
     t0 = time.time()
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in DOC_EXT:
@@ -223,5 +259,5 @@ async def check_file(file: UploadFile = File(...), source: str = Form("")):
         raise HTTPException(422, f"could not read {file.filename}: {ex}")
     res = decide(text)
     res["file"] = {"name": file.filename, "chars": len(text)}
-    AUDIT.record("file", source, text, res, int((time.time() - t0) * 1000))
+    AUDIT.record("file", _site(source, request), text, res, int((time.time() - t0) * 1000))
     return res
