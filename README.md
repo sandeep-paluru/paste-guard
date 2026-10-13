@@ -1,5 +1,7 @@
 # Paste Guard
 
+A proof of concept built by Sandeep Paluru for Eric at Sidekick Labs, to show how paste-level semantic matching could extend Sidekick's coverage. It is a working showcase, not a product.
+
 Stops confidential company documents, source code and secrets from being pasted or uploaded into AI chat tools such as Claude and ChatGPT. Matching runs on your own machine or server with a local embedding model, so nothing is sent anywhere else.
 
 - **Documents (primary):** board memos, contracts, pricing, HR and legal docs. Catches verbatim copies and also paraphrases, excerpts and summaries that keyword rules miss.
@@ -8,7 +10,7 @@ Stops confidential company documents, source code and secrets from being pasted 
 
 Each paste, file upload or drag-and-drop on a protected site gets a verdict: allow, nudge, coach or block. The overlay shows which document matched and the matching passage, and offers one-click redaction.
 
-## Install (one command)
+## Run it (one command)
 Requirements: Linux or macOS with Python 3.10+ (or Docker), about 600 MB RAM.
 
 1. Edit `paste-guard.toml` and point `docs` and `code` at your folders.
@@ -73,6 +75,3 @@ At the coach level, verbatim excerpts are caught 94% of the time (regex 14%), pr
 
 ## Tests
 `.venv/bin/python -m pytest -q tests` runs end-to-end checks against the real model and index.
-
-## License
-MIT, see `LICENSE`.
