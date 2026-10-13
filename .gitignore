@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 *.db
+demo/company-repo/
+backend/pg_index.db*
+.venv/

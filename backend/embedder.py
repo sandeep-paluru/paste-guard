@@ -1,10 +1,31 @@
-"""Local embedding model wrapper.
+"""Local embedding model wrapper (real model, CPU, ONNX via fastembed).
 
-TODO(day 2): load a small local code embedding model (for example a
-sentence-transformers model), chunk input into windows, return vectors.
-No network calls at check time.
+Default model: sentence-transformers/all-MiniLM-L6-v2 (384 dims, about 90 MB).
+Override with PG_MODEL. The model is downloaded once to PG_MODEL_CACHE and
+then runs fully offline; no paste text ever leaves the machine.
 """
+import os
+from functools import lru_cache
+
+import numpy as np
+
+MODEL_NAME = os.environ.get("PG_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+CACHE_DIR = os.environ.get("PG_MODEL_CACHE", os.path.expanduser("~/.cache/paste-guard/models"))
 
 
-def embed(texts: list[str]) -> list[list[float]]:
-    raise NotImplementedError("Embedder lands on Day 2")
+@lru_cache(maxsize=1)
+def _model():
+    from fastembed import TextEmbedding
+    return TextEmbedding(model_name=MODEL_NAME, cache_dir=CACHE_DIR, threads=int(os.environ.get("PG_THREADS", "2")))
+
+
+def dim() -> int:
+    return len(embed(["x"])[0])
+
+
+def embed(texts: list[str]) -> np.ndarray:
+    """Return L2-normalised float32 vectors, one row per text."""
+    vecs = np.array(list(_model().embed(texts, batch_size=16)), dtype=np.float32)
+    norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return vecs / norms

@@ -13,6 +13,5 @@ Question: does semantic matching catch disguised copies of private code that reg
 2. Run every sample through /check in regex-only mode and in semantic mode.
 3. Report precision, recall, and F1 per mode, plus a threshold sweep.
 
-## TODO
-- harness.py (Day 3)
-- dataset download scripts
+## Status
+Not built yet (Day 3): harness.py and dataset download scripts. `tests/test_check.py` already runs real end-to-end checks against the demo index.

@@ -1,19 +1,42 @@
 {
   "manifest_version": 3,
   "name": "Paste Guard with Prompt Diff",
-  "version": "0.1.0",
-  "description": "Checks pastes into AI tools against local secrets and code rules. Nothing leaves the machine.",
-  "background": { "service_worker": "service_worker.js" },
+  "version": "0.2.0",
+  "description": "Checks pastes into AI tools for secrets and company code. Local by default.",
+  "background": {
+    "service_worker": "service_worker.js"
+  },
   "host_permissions": [
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
     "http://localhost:8765/*"
   ],
-  "content_scripts": [{
-    "matches": ["https://claude.ai/*", "https://chatgpt.com/*", "https://chat.openai.com/*"],
-    "js": ["content.js"],
-    "css": ["overlay.css"],
-    "run_at": "document_idle"
-  }]
+  "content_scripts": [
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "overlay.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
 }

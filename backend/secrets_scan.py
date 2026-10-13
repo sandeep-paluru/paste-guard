@@ -1,7 +1,6 @@
-"""Secrets and PII scanner. Day 1: a few regex rules.
+"""Secrets and PII scanner..
 
-TODO(day 3): add entropy checks, more providers, and PII rules
-(emails, phone numbers, names) tuned on BigCode PII and ai4privacy.
+Regex rules for common credentials and password assignments.
 """
 import re
 
