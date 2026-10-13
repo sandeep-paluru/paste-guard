@@ -18,9 +18,9 @@ Plan structure. Calloway will move from three plans to four in 2027. The Starter
 
 Discount authority. Account executives may discount up to 12 percent off list without approval. Regional directors may approve up to 22 percent. Anything between 22 and 35 percent requires the VP of Sales. Discounts above 35 percent require CFO sign off and must be accompanied by a multi year commitment of at least 36 months. Our internal floor price for Enterprise seats is 88 dollars per seat per month; do not quote below this under any circumstances.
 
-Usage add ons. Real time streaming, launching with the Tidewater integration, will be priced at 0.042 dollars per thousand events, with the first 50 million events per month included in Enterprise. Our blended cost to serve is approximately 0.011 dollars per thousand events, giving a target gross margin of 74 percent on streaming. AI query assistant credits cost 0.90 dollars per hundred queries, against an inference cost of roughly 0.31 dollars.
+Usage add ons. Real time streaming, launching with the Riptrace integration, will be priced at 0.042 dollars per thousand events, with the first 50 million events per month included in Enterprise. Our blended cost to serve is approximately 0.011 dollars per thousand events, giving a target gross margin of 74 percent on streaming. AI query assistant credits cost 0.90 dollars per hundred queries, against an inference cost of roughly 0.31 dollars.
 
-Competitive positioning. Against Quillmark, lead with total cost of ownership; their list price is 15 percent lower but they charge separately for connectors. Against Brightlayer, we are 20 to 25 percent more expensive and should only discount aggressively when the deal includes the streaming add on. Do not mention Brightlayer's recent outage in writing.
+Competitive positioning. Against Varnetta, lead with total cost of ownership; their list price is 15 percent lower but they charge separately for connectors. Against Kestrova, we are 20 to 25 percent more expensive and should only discount aggressively when the deal includes the streaming add on. Do not mention Kestrova's recent outage in writing.
 
 Price increase for renewals. Existing customers on Business and Enterprise will see a 7 percent uplift at renewal. Customers in the top 40 accounts by ARR may be held flat at the discretion of their account director, but the uplift should be used as a negotiation lever for multi year extensions. We forecast that the uplift adds 4.8 million dollars of ARR in 2027 with an expected churn impact of 0.6 percentage points.
 
@@ -77,4 +77,6 @@ Date       | Version | Change                                       | By
 2026-10-01 | v3.0    | FINAL, Starter removed                       | T. Albrecht
 
 Questions about this sheet go to the Revenue Strategy channel only. Screenshots and exports of this sheet are prohibited. Partners receive a separate partner price list with a fixed 25 percent margin.
+
+FAQ FROM THE FIELD. Q: Customer on legacy Starter wants to stay past June 30. A: No extensions; offer Team at 46 (floor) for year one if they sign annual. Q: Can I bundle Lantern into a 2026 deal? A: Only as a pre commitment with a delivery date of Q3 2027 or later and no penalty clause. Q: Do usage overages get the seat discount? A: No, overages bill at list unless the order form says otherwise.
 

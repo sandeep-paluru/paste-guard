@@ -8,7 +8,7 @@ Distribution: incident file only
 
 CONFIDENTIAL. PRIVILEGED AND CONFIDENTIAL, PREPARED AT THE DIRECTION OF COUNSEL. Export generated 2026-08-03 by L. Brandt for incident file. Times in UTC. Some messages removed (bot noise, emoji reactions). Do not forward.
 
-[05:37] jonas.wallin: hey is anyone else seeing egress on nw-prod-exports-eu?? graph is way up since like 2am
+[05:37] jonas.wallin: hey is anyone else seeing egress on cm-prod-exports-eu?? graph is way up since like 2am
 [05:38] jonas.wallin: ~2GB out. thats not a normal export pattern, exports are scheduled for 06:00
 [05:39] jonas.wallin: paging secops
 [05:41] kenji.torres: here. looking
@@ -44,4 +44,16 @@ CONFIDENTIAL. PRIVILEGED AND CONFIDENTIAL, PREPARED AT THE DIRECTION OF COUNSEL.
 [22:05] kenji.torres: handing IC to sam overnight. nothing new in logs since 05:51. going to sleep
 
 End of export for 2026-07-28. Messages from July 29 onward are in part 2 of the export.
+
+[part 2 preview, 2026-07-29]
+[08:02] sam.okoye: overnight: no new access. github took down the fork at 01:14
+[08:15] kenji.torres: forensics vendor imaging the scheduler nodes, just to rule out compromise on our side
+[09:40] lena.brandt: we will NOT name the contractor anywhere outside this channel and the HR file. people team handling
+[10:12] mei.tanaka: per tenant file manifests done for all 37, in the incident doc. CS wants them for the notices
+[11:30] raj.okafor: credit policy: offer 1 month credit to all 37, case by case above that, legal to approve
+[14:05] dana.whitcombe: spoke to harborline, bramblewood, ostrander. bramblewood unhappy, asking for more credits. ostrander asked for the postmortem
+[14:07] lena.brandt: we can share a customer version of the postmortem, not the internal one. I'll draft
+[16:44] jonas.wallin: 2 legacy alert routes fixed, all routes now tested weekly by bot
+
+Note from Lena: the internal postmortem and this export are privileged. If a customer or auditor asks for incident records, send them to Legal rather than sharing anything from this channel.
 

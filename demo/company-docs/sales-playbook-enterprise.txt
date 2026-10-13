@@ -5,7 +5,7 @@ Version: FY27 v1
 Date: Sep 22, 2026
 Owner: Sales Enablement (J. Mercado)
 Distribution: All AEs, SEs, RVPs
-Change: new Brightlayer section
+Change: new Kestrova section
 
 CONFIDENTIAL. Calloway Metrics Sales Enablement. For internal use by account executives, sales engineers and sales leadership. Do not share with prospects, partners or recruiters.
 
@@ -19,9 +19,9 @@ Discovery questions. Ask how long it takes a business user to get a new metric a
   * Stage 4, Negotiate: legal redlines, procurement, executive sponsor call
   * Stage 5, Close: signed order form and kickoff date
 
-Handling Quillmark. Quillmark wins on price and on its embedded SDK. Our counter is that Quillmark charges for every connector and its semantic layer requires a dedicated engineer. Use the total cost of ownership calculator, which typically shows Calloway 18 percent cheaper over three years for a 500 seat deployment. Our internal win rate against Quillmark is 47 percent; against Brightlayer it is 58 percent.
+Handling Varnetta. Varnetta wins on price and on its embedded SDK. Our counter is that Varnetta charges for every connector and its semantic layer requires a dedicated engineer. Use the total cost of ownership calculator, which typically shows Calloway 18 percent cheaper over three years for a 500 seat deployment. Our internal win rate against Varnetta is 47 percent; against Kestrova it is 58 percent.
 
-Handling Brightlayer. Brightlayer is cheaper but has weak governance. Push row level security and audit logging early in the evaluation. Ask the prospect to request Brightlayer's SOC 2 bridge letter, which we understand has a gap of five months.
+Handling Kestrova. Kestrova is cheaper but has weak governance. Push row level security and audit logging early in the evaluation. Ask the prospect to request Kestrova's SOC 2 bridge letter, which we understand has a gap of five months.
 
 Pricing tactics. Never lead with discount. Offer the streaming add on free for the first six months instead of reducing seat price, because add on credits do not reset the renewal baseline. End of quarter concessions are permitted only in the final 10 days and must be logged in the deal desk.
 

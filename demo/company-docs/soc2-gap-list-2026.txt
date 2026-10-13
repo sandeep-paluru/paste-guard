@@ -59,3 +59,7 @@ FedRAMP readiness depends on closing these first. Do not start the FedRAMP gap a
 
 Next sync: Oct 21. Please update your rows in the tracker by Monday EOD, not in this doc.
 
+DECISIONS NEEDED THIS WEEK: (1) owner for G-06, (2) whether to delay the Ferrolake staging access cleanup until after close or do it now (Nadia recommends now, it takes a day), (3) approve combined pentest + export assessment budget of about 100k.
+
+APPENDIX: auditor contacts and PBC request list are in the GRC tracker under 2027 Type II. Please do not email the auditor directly about open gaps; all auditor communication goes through Nadia.
+

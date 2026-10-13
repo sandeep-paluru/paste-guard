@@ -30,7 +30,7 @@ Raj walked through the 2027 plan of 92M ending ARR. Abiodun pushed back that 49%
 
 ## 3. Ferrolake
 
-Discussion of the memo circulated Sept 14. Fairbanks asked why not just partner with Ferrolake. Dana: partnership means they remain acquirable by Quillmark, and their runway is 7 months. Lyle raised concern about paying 6.7x ARR for a company with 7 months of cash; Raj noted the earnout and that effective upfront multiple is closer to 5.7x. Saarinen asked about the GPL issue; Lena confirmed it will be a pre close covenant.
+Discussion of the memo circulated Sept 14. Fairbanks asked why not just partner with Ferrolake. Dana: partnership means they remain acquirable by Varnetta, and their runway is 7 months. Lyle raised concern about paying 6.7x ARR for a company with 7 months of cash; Raj noted the earnout and that effective upfront multiple is closer to 5.7x. Saarinen asked about the GPL issue; Lena confirmed it will be a pre close covenant.
 
 RESOLVED: the board authorizes the CEO to sign a non binding LOI with Ferrolake Data Systems at an enterprise value not to exceed 41.5M, substantially on the terms in the memo. Vote: 5 in favor, 1 abstain (Fairbanks, citing a potential conflict through a fund LP relationship).
 
@@ -61,4 +61,8 @@ Lyle reported 2027 bands approved Aug 29, merit budget 3.8%. The committee appro
 | 5 | Juniper written consent | L. Brandt | Nov 6 |
 
 Meeting adjourned 4:52 PM PT. Next regular meeting December 15, 2026. Minutes to be circulated for approval within two weeks; please send corrections to Lena directly and do not forward the draft.
+
+Post meeting note (Lena, Sept 23): Fairbanks has asked that his abstention reason be recorded more generally as 'potential conflict of interest' rather than referencing the fund LP relationship. Will reflect in final minutes. Also, Abiodun asked offline for the customer concentration analysis by sector, which Raj will include in the December pack.
+
+Written consent for Juniper (draft resolution): RESOLVED, that the Board approves the organizational restructuring plan presented on September 22, 2026, including the elimination of approximately 58 positions and an estimated restructuring charge of up to 3.8 million dollars, and authorizes the officers to take all actions necessary to implement the plan. To be circulated Nov 4 once the final role list is locked.
 

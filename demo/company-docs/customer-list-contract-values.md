@@ -12,13 +12,13 @@ Summary. Calloway ended Q3 2026 with 1,284 paying customers and 61.7 million dol
 
 - Harborline Logistics: 2.84 million dollars ACV, renews March 2027, risk LOW, expansion opportunity in APAC
 - Cedarpoint Health Network: 2.31 million dollars ACV, renews January 2027, risk HIGH, champion left in August
-- Bramblewood Retail Group: 1.97 million dollars ACV, renews June 2027, risk MEDIUM, evaluating Quillmark
+- Bramblewood Retail Group: 1.97 million dollars ACV, renews June 2027, risk MEDIUM, evaluating Varnetta
 - Ostrander Mutual Insurance: 1.66 million dollars ACV, renews November 2026, risk LOW
 - Kestrel Aerospace Components: 1.42 million dollars ACV, renews April 2027, risk MEDIUM, budget freeze
 - Velmont University System: 1.18 million dollars ACV, renews July 2027, risk LOW
 - Tallis Freight Partners: 0.96 million dollars ACV, renews December 2026, risk HIGH, payment 60 days late
 
-At risk accounts. Cedarpoint Health Network is the single largest renewal risk in the next two quarters. Their VP of Data, our executive sponsor, departed in August and the replacement has a history with Brightlayer. We have offered a 14 percent discount on a three year renewal and a free streaming pilot. If Cedarpoint churns, Q1 2027 net new ARR will be negative.
+At risk accounts. Cedarpoint Health Network is the single largest renewal risk in the next two quarters. Their VP of Data, our executive sponsor, departed in August and the replacement has a history with Kestrova. We have offered a 14 percent discount on a three year renewal and a free streaming pilot. If Cedarpoint churns, Q1 2027 net new ARR will be negative.
 
 Tallis Freight Partners has an outstanding receivable of 238,000 dollars. Collections has escalated twice. Recommendation is to suspend non production workspaces on November 15 if payment is not received, while protecting the production tenant to avoid breach of the SLA.
 
@@ -62,4 +62,12 @@ Rows 16 to 25 are in the source spreadsheet (CS Ops > QBR > top25_q3.xlsx). Comb
 Selwyn Pharma Services was added to HIGH this month. Their security team has opened a formal review after SEC-2026-014 even though their data was not in the affected bucket, and procurement has asked for a right to audit clause that legal has not agreed to before.
 
 Handling. Do not share this list with partners, resellers or prospects. Do not reference other customers by name in sales conversations without written permission from the reference program. This document is regenerated each quarter; destroy prior versions.
+
+## Account director notes (verbatim from CRM, lightly edited)
+
+Cedarpoint (S. Delgado, 10/02): new VP Data is Dr. Hal Brennan, ex Kestrova customer at previous job. Met him once, polite but noncommittal. He wants a bake off in Nov. I asked Dana to do an exec call. Need the streaming pilot running by Nov 20 or we lose the narrative. Honestly 50/50.
+
+Bramblewood (M. Quist, 09/28): they are fine on product but procurement got spooked by the incident, their marketing lists were in the bucket. Credits helped. Varnetta is in there doing a POC for the merchandising team, not the core data team. Keep an eye.
+
+Ostrander (R. Haines, 10/05): renewal paper is with their legal, expect signature by Nov 10 at +7% uplift, they pushed back but accepted a 2 yr term for 5% instead. Fine.
 

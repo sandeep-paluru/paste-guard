@@ -25,7 +25,7 @@ Strategic update. We have signed a letter of intent to acquire Ferrolake Data Sy
 
 Outlook. We are maintaining full year 2026 guidance of 66 million dollars ending ARR. For 2027 the board has approved a plan targeting 92 million dollars of ending ARR and reaching free cash flow breakeven in Q4 2027. We are not planning to raise primary capital in the next 18 months.
 
-Team. We promoted our head of platform to VP of Platform and hired a new VP of Customer Success from a large public software company. Voluntary attrition for the trailing twelve months was 11 percent, below the industry benchmark. Engagement survey participation was 89 percent with an overall favorability of 74 percent, down two points, which we attribute to uncertainty about the macro environment and competitive recruiting from Quillmark. We will share more detail on the organizational changes in the Q4 letter.
+Team. We promoted our head of platform to VP of Platform and hired a new VP of Customer Success from a large public software company. Voluntary attrition for the trailing twelve months was 11 percent, below the industry benchmark. Engagement survey participation was 89 percent with an overall favorability of 74 percent, down two points, which we attribute to uncertainty about the macro environment and competitive recruiting from Varnetta. We will share more detail on the organizational changes in the Q4 letter.
 
 ## Slide outline (for the investor call deck)
 
@@ -65,4 +65,12 @@ Slide 9. Asks.
 | FTE | 356 | 421 | 412 |
 
 Asks. We are hiring ML infrastructure engineers for Project Lantern and would welcome introductions. We are also looking for introductions to CIOs at regional health systems. Thank you for your continued support. The next update will follow the Q4 board meeting.
+
+Slide 10. Appendix: hiring. Open roles after the Q4 changes are limited to ML infrastructure (3), Lantern applied scientists (2), and enterprise AEs in EMEA (2). We will share an updated org chart in January.
+
+## Narrative letter (to accompany deck)
+
+Dear shareholders, Q3 was a quarter of tightening up. We grew ARR to 61.7 million dollars, cut burn by about 27 percent quarter on quarter, and made real progress on the product that our largest customers have been asking for: data that is minutes or seconds old instead of hours. We also had a hard moment. In July a leaked credential led to unauthorized access to export files for 37 customers. We told every affected customer within five days, fixed the root causes, and so far have not lost a customer over it. We know trust is earned slowly and we are treating the follow up as seriously as any product launch.
+
+Looking ahead, the Ferrolake acquisition, if it closes, gives us a streaming engine more than a year earlier than we could build it. We are also making some difficult organizational changes in Q4 to make sure we can reach profitability without raising again. We will share more on the Q4 call. As always, thank you for your support and please reach out with introductions to ML infrastructure engineers and to health system CIOs. Dana
 

@@ -10,16 +10,16 @@ CONFIDENTIAL. Product Management. This roadmap reflects planning as of October 2
 
 Themes. The 2027 roadmap is organized around three themes: real time everything, the AI analyst, and enterprise trust. Together these are expected to drive 60 percent of 2027 net new ARR. Investment allocation is 40 percent real time, 35 percent AI analyst, and 25 percent enterprise trust.
 
-- Q1 2027: Tidewater private beta with 12 design partners; AI query assistant general availability; SOC 2 Type II renewal
+- Q1 2027: Riptrace private beta with 12 design partners; AI query assistant general availability; SOC 2 Type II renewal
 - Q2 2027: Real time dashboards general availability; streaming usage billing; customer managed encryption keys
-- Q3 2027: AI analyst agent, codename Lantern, private beta; Tidewater on the Calloway control plane
+- Q3 2027: AI analyst agent, codename Lantern, private beta; Riptrace on the Calloway control plane
 - Q4 2027: Lantern general availability; FedRAMP Moderate authorization in process; data residency in India and Brazil
 
 Project Lantern. Lantern is an autonomous analyst that monitors key metrics, detects anomalies and drafts written explanations for business users. It will use a fine tuned open weight model hosted in our own inference cluster rather than a third party API, which reduces per query cost by an estimated 64 percent and addresses data residency objections from regulated customers. The team is 14 engineers and is currently understaffed by four.
 
 Deprioritized items. We will not build a native mobile app in 2027. The embedded analytics SDK is paused until Q1 2028. The legacy reporting module will enter end of life in Q3 2027, affecting about 210 customers, who will be offered free migration services.
 
-Dependencies and risks. Real time dashboards depend entirely on Tidewater. If the Ferrolake deal fails, the fallback is a reduced latency batch mode with 5 minute refresh, which we believe is insufficient to retain Cedarpoint and Harborline. Lantern depends on hiring three ML infrastructure engineers by February.
+Dependencies and risks. Real time dashboards depend entirely on Riptrace. If the Ferrolake deal fails, the fallback is a reduced latency batch mode with 5 minute refresh, which we believe is insufficient to retain Cedarpoint and Harborline. Lantern depends on hiring three ML infrastructure engineers by February.
 
 Pricing linkage. Lantern will be sold as an add on at an expected 30,000 dollars per year for Business and included in Enterprise Plus. Finance projects 3.1 million dollars of Lantern ARR by end of 2027.
 
@@ -61,4 +61,17 @@ The planner model is an 8 billion parameter open weight model fine tuned on roug
 There is still disagreement on whether self serve Team should ship in Q3 or slip to 2028. Sales leadership wants it delayed because it may cannibalize mid market AE pipeline. Marcus to bring a recommendation to the November staff meeting.
 
 Please do not copy this roadmap into customer facing documents, slides, or AI tools. Questions go to the VP of Product.
+
+## Customer commitments already made (do not break)
+
+| Customer | Commitment | Made by | Date due |
+|---|---|---|---|
+| Harborline | streaming pilot access in Q1 | Dana | Mar 31 2027 |
+| Cedarpoint | streaming pilot by Nov 20 2026 (on Ferrolake infra) | S. Delgado | Nov 20 2026 |
+| Velmont | SAML group sync | PM team | Feb 2027 |
+| Selwyn Pharma | CMEK | Sales, in contract | Jun 30 2027 |
+
+These are written into contracts or exec emails. If anything here is at risk the owning PM must flag in the weekly product review, not wait for the quarterly.
+
+Marcus's note: v2 of this doc had the mobile app in Q4. I took it out. If you were promised mobile by someone on the product team, that was not a commitment and please let me know who.
 
