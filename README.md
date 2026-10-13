@@ -58,13 +58,13 @@ From `eval/results.md` (472 samples, 18 confidential documents, one code reposit
 
 | Kind | Method | Precision | Recall | F1 | False positive rate |
 |---|---|---|---|---|---|
-| Documents | Paste Guard (coach level) | 0.99 | 0.75 | 0.85 | 0.04 |
-| Documents | Paste Guard (any warning, nudge level) | 0.97 | 0.82 | 0.89 | 0.08 |
+| Documents | Paste Guard (coach level) | 0.99 | 0.80 | 0.88 | 0.03 |
+| Documents | Paste Guard (any warning, nudge level) | 0.98 | 0.81 | 0.89 | 0.07 |
 | Documents | Regex and keyword baseline | 1.00 | 0.11 | 0.20 | 0.00 |
 | Code | Paste Guard (coach level) | 0.97 | 0.92 | 0.95 | 0.04 |
 | Code | Regex and keyword baseline | 0.00 | 0.00 | 0.00 | 0.00 |
 
-At the coach level, verbatim excerpts are caught 96% of the time (regex 14%), prompt-wrapped pastes 92% (regex 19%) and paraphrases 61% (regex 3%). Summaries (50%) and tone rewrites (39%) are the hardest. The top match names the right source document 96% of the time. Thresholds were tuned on this set, so treat these as in-sample numbers. Full breakdown and chart: `eval/results.md`.
+At the coach level, verbatim excerpts are caught 94% of the time (regex 14%), prompt-wrapped pastes 92% (regex 19%) and paraphrases 81% (regex 3%). Summaries (56%), partial excerpts (57%) and tone rewrites (50%) are the hardest. The top match names the right source document 95% of the time. Thresholds were tuned on this set, so treat these as in-sample numbers. Full breakdown and chart: `eval/results.md`.
 
 ## Privacy
 - Paste text is processed in memory and never written to disk.

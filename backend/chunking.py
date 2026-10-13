@@ -41,9 +41,9 @@ def doc_chunks(text: str, target: int = 160, max_words: int = 200, min_words: in
     units = []  # (para_index, words)
     for i, p in enumerate(paras):
         w = p.split()
-        while len(w) > max_words:
+        while len(w) > max_words:  # packing below adds the overlap, so split cleanly here
             units.append((i, w[:target]))
-            w = w[target - overlap:]
+            w = w[target:]
         units.append((i, w))
     buf, start, last = [], None, None
     for i, w in units:

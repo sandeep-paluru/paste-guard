@@ -17,7 +17,7 @@ port = 8765
 # Values are tuned with eval/run_eval.py; see eval/results.md.
 [thresholds.doc]
 nudge = 0.62
-coach = 0.65
+coach = 0.63
 block = 0.78
 
 [thresholds.code]

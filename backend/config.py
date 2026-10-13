@@ -19,7 +19,7 @@ VERSION = (ROOT / "VERSION").read_text().strip() if (ROOT / "VERSION").exists() 
 DEFAULTS = {
     "index": {"docs": [], "code": [], "db": "data/index.db"},
     "server": {"host": "127.0.0.1", "port": 8765},
-    "thresholds": {"doc": {"nudge": 0.62, "coach": 0.65, "block": 0.78},
+    "thresholds": {"doc": {"nudge": 0.62, "coach": 0.63, "block": 0.78},
                    "code": {"nudge": 0.55, "coach": 0.65, "block": 0.85}},
     "sites": {"allowed": ["claude.ai", "chatgpt.com", "chat.openai.com"]},
     "audit": {"db": "data/audit.db", "keep_days": 30},
