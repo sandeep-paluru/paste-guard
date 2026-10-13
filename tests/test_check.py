@@ -130,3 +130,16 @@ def test_log_site_never_empty():
     rows = client.get("/admin/api").json()["recent"]
     assert rows[0]["site"] == "direct API call"
     assert all(r["site"] for r in rows[:5])
+
+
+def test_accurate_profile_loads():
+    import os, subprocess
+    out = subprocess.run([sys.executable, "-c", "from config import CONFIG; print(CONFIG['profile'], CONFIG['tfidf']['enabled'])"],
+                         cwd=Path(__file__).resolve().parents[1] / "backend", env={**os.environ, "PG_PROFILE": "accurate"},
+                         capture_output=True, text=True)
+    assert out.stdout.split() == ["accurate", "True"]
+
+
+def test_tfidf_hits_reworded_doc():
+    hits = app.INDEX.tfidf(["Board summary: Calloway Metrics plans to reduce headcount next quarter."])
+    assert isinstance(hits, list) and len(hits) == 1

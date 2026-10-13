@@ -89,3 +89,9 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 
 ## Tests
 `.venv/bin/python -m pytest -q tests` runs end-to-end checks against the real model and index.
+
+## Profiles
+
+`profile = "default"` (MiniLM OR 3-gram) fits a 1 GB VM. `profile = "accurate"` (or `PG_PROFILE=accurate`) adds a
+TF-IDF check for documents: held-out document F1 0.97, recall 0.94, false alarms 2.8%, /check p95 56 ms on a desktop CPU.
+Windows setup for it: `deploy/windows/`. Numbers: `eval/benchmarks.md`, reasoning: `docs/OPTIMIZATION_LOG.md`.

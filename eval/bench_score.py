@@ -24,6 +24,11 @@ MODELS = {
     "bge-base": "BAAI/bge-base-en-v1.5",
     "jina-code": "jinaai/jina-embeddings-v2-base-code",
     "nomic": "nomic-ai/nomic-embed-text-v1.5",
+    "bge-large": "BAAI/bge-large-en-v1.5",
+    "mxbai-large": "mixedbread-ai/mxbai-embed-large-v1",
+    "gte-large": "thenlper/gte-large",
+    "arctic-l": "snowflake/snowflake-arctic-embed-l",
+    "mpnet-para": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
 }
 PREFIX = {"nomic": "search_query: "}  # symmetric use: same prefix on both sides
 CACHE = os.path.expanduser("~/.cache/paste-guard/models")

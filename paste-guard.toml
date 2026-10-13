@@ -1,6 +1,11 @@
 # Paste Guard configuration. Paths are relative to this file.
 # After changing [index] paths, run:  ./pasteguard reindex
 
+# Matching profile. "default" = MiniLM OR 3-gram (fits the 1 GB VM).
+# "accurate" = MiniLM OR 3-gram OR TF-IDF (best held-out accuracy among configs with full-check p95 under 100 ms).
+# Switch here or with PG_PROFILE=accurate. See eval/benchmarks.md.
+profile = "default"
+
 [index]
 # Folders with confidential documents (.md .txt .pdf .docx)
 docs = ["demo/company-docs"]
@@ -48,3 +53,12 @@ allowed = ["claude.ai", "chatgpt.com", "chat.openai.com"]
 # Verdict log for the /admin page. Stores hashes, lengths and verdicts only, never content.
 db = "data/audit.db"
 keep_days = 30
+
+[profiles.accurate]
+# Same model and index as default (no reindex needed); adds a TF-IDF cosine check (word 1-2 grams) for documents.
+# Thresholds from eval/bench_report.py (3-way OR, best F1 with false alarms at most 3%).
+# TF-IDF is off for code (coach above 1): on code it added false alarms without adding recall.
+[profiles.accurate.tfidf]
+enabled = true
+doc = { coach = 0.23, block = 0.45 }
+code = { coach = 1.01, block = 1.01 }

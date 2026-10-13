@@ -126,6 +126,7 @@ class Index:
         self.con = _connect(self.db_path) if self.mtime else None
         self._mat = None
         self._fp = None
+        self._tf = None
 
     def refresh(self):
         """Reopen the index if it was rebuilt on disk (e.g. by `pasteguard reindex`)."""
@@ -160,6 +161,30 @@ class Index:
             h = _hit(*r, c)
             h["method"] = "fingerprint"
             out.append(h)
+        return out
+
+    def tfidf(self, texts: list[str]) -> list[list[dict]]:
+        """Best chunk per kind by TF-IDF cosine (word 1-2 grams, sublinear tf), one list per text.
+        Vocabulary and IDF weights come from the indexed chunks only; nothing is trained."""
+        if not self.con or not texts:
+            return [[] for _ in texts]
+        if self._tf is None:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            rows = self.con.execute("SELECT kind, path, start_line, end_line, text FROM chunks").fetchall()
+            v = TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True, token_pattern=r"\w+", lowercase=True)
+            self._tf = (rows, v, v.fit_transform([r[4] for r in rows]), np.array([r[0] for r in rows]))
+        rows, v, M, kinds = self._tf
+        S = (v.transform(texts) @ M.T).toarray()
+        out = []
+        for srow in S:
+            hits = []
+            for kd in ("doc", "code"):
+                idx = np.where(kinds == kd)[0]
+                if len(idx):
+                    j = idx[int(srow[idx].argmax())]
+                    if srow[j] > 0:
+                        h = _hit(*rows[j], srow[j]); h["method"] = "tfidf"; hits.append(h)
+            out.append(hits)
         return out
 
     def query(self, vec: np.ndarray, k: int = 5, kind: str | None = None) -> list[dict]:

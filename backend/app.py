@@ -24,6 +24,8 @@ from index import Index
 
 THRESHOLDS = CONFIG["thresholds"]  # embedding cosine bands per kind; see eval/results.md and eval/benchmarks.md
 FINGERPRINT = CONFIG["fingerprint"]  # word 3-gram containment levels per kind (hybrid matching)
+TFIDF = CONFIG["tfidf"]  # TF-IDF cosine levels per kind; only used when the profile enables it
+PROFILE = CONFIG["profile"]
 HARD_SECRETS = {"private_key", "aws_access_key", "github_token", "openai_key", "slack_token"}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
@@ -47,7 +49,8 @@ class CheckIn(BaseModel):
 def health():
     INDEX.refresh()
     return {"status": "ok", "version": VERSION, "model": embedder.MODEL_NAME, "index": INDEX.stats(),
-            "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT, "sites": CONFIG["sites"]["allowed"]}
+            "profile": PROFILE, "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT,
+            "tfidf": TFIDF if TFIDF["enabled"] else None, "sites": CONFIG["sites"]["allowed"]}
 
 
 def _local(request: Request):
@@ -66,7 +69,8 @@ def admin_api(request: Request):
     _local(request)
     INDEX.refresh()
     return {"version": VERSION, "config": str(CONFIG_PATH), "model": embedder.MODEL_NAME, "index": INDEX.stats(),
-            "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT, "sites": CONFIG["sites"]["allowed"],
+            "profile": PROFILE, "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT,
+            "tfidf": TFIDF if TFIDF["enabled"] else None, "sites": CONFIG["sites"]["allowed"],
             "counts_7d": AUDIT.counts(), "recent": AUDIT.recent(50)}
 
 
@@ -77,9 +81,10 @@ def semantic(text: str):
         spans.append((0, len(text)))  # whole paste as one more view
     spans = list(dict.fromkeys(spans))[:MAX_WINDOWS] or [(0, len(text))]
     vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
+    lex = INDEX.tfidf([text[s:e] for s, e in spans]) if TFIDF["enabled"] else [[] for _ in spans]
     out = []
-    for (s, e), v in zip(spans, vecs):
-        hits = INDEX.query(v, k=3) + INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"])
+    for (s, e), v, tf in zip(spans, vecs, lex):
+        hits = INDEX.query(v, k=3) + INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"]) + tf
         hits.sort(key=lambda h: (RANK[level(h)], margin(h)), reverse=True)
         out.append({"span": [s, e], "hits": hits})
     return out
@@ -91,6 +96,8 @@ RANK = {None: 0, "nudge": 1, "coach": 2, "block": 3}
 def _bands(hit):
     if hit.get("method") == "fingerprint":
         return FINGERPRINT[hit["kind"]]
+    if hit.get("method") == "tfidf":
+        return TFIDF[hit["kind"]]
     return THRESHOLDS[hit["kind"]]
 
 

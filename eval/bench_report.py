@@ -1,7 +1,7 @@
 """Aggregate eval/bench/*.json into eval/benchmarks.md and chart PNGs.
 
 Two ways of scoring every method:
-  in-sample : threshold tuned on all samples (best F1 with FPR <= 5%), scored on the same samples.
+  in-sample : threshold tuned on all samples (best F1 with FPR <= 3%), scored on the same samples.
   held-out  : 2-fold split BY SOURCE DOCUMENT (code: by source file). The threshold is tuned on the
               samples from one half of the documents and applied to the other half, then swapped.
               Negatives are split into the two folds by id. Every index still contains all documents,
@@ -24,6 +24,14 @@ LABEL = {"minilm": "all-MiniLM-L6-v2", "bge-small": "bge-small-en-v1.5", "bge-ba
          "jina-code": "jina-embeddings-v2-base-code", "nomic": "nomic-embed-text-v1.5", "tfidf": "TF-IDF cosine (1-2 grams)",
          "ngram": "Word 3-gram containment", "minhash": "MinHash Jaccard (128 perms)", "regex": "Regex and keyword DLP",
          "hybrid": "Hybrid: MiniLM OR 3-gram containment", "hybrid_tfidf": "Hybrid: MiniLM OR TF-IDF",
+         "bge-large": "bge-large-en-v1.5", "mxbai-large": "mxbai-embed-large-v1", "gte-large": "gte-large",
+         "arctic-l": "snowflake-arctic-embed-l", "mpnet-para": "paraphrase-multilingual-mpnet-base-v2",
+         "bge-base+ngram": "Hybrid: bge-base OR 3-gram", "bge-base+tfidf": "Hybrid: bge-base OR TF-IDF",
+         "bge-base+ngram+tfidf": "Hybrid: bge-base OR 3-gram OR TF-IDF", "minilm+ngram+tfidf": "Hybrid: MiniLM OR 3-gram OR TF-IDF",
+         "bge-large+ngram": "Hybrid: bge-large OR 3-gram", "bge-large+ngram+tfidf": "Hybrid: bge-large OR 3-gram OR TF-IDF",
+         "mxbai-large+ngram": "Hybrid: mxbai-large OR 3-gram", "mxbai-large+ngram+tfidf": "Hybrid: mxbai-large OR 3-gram OR TF-IDF",
+         "gte-large+ngram+tfidf": "Hybrid: gte-large OR 3-gram OR TF-IDF", "arctic-l+ngram+tfidf": "Hybrid: arctic-l OR 3-gram OR TF-IDF",
+         "mpnet-para+ngram+tfidf": "Hybrid: mpnet-para OR 3-gram OR TF-IDF",
          "minilm_long_only": "MiniLM, 120-200 word chunks only (v0.3 before short passages)",
          "minilm_bugged_split": "MiniLM, pre-fix splitter (duplicated overlap)"}
 
@@ -36,7 +44,10 @@ def prf(lab, pred):
             "tp": tp, "fp": fp, "fn": fn, "tn": tn}
 
 
-def tune1(lab, sim, max_fpr=0.05):
+MAX_FPR = 0.03  # false alarm budget used for every tuned threshold
+
+
+def tune1(lab, sim, max_fpr=MAX_FPR):
     best = (None, {"f1": -1})
     for t in GRID:
         m = prf(lab, sim >= t)
@@ -45,13 +56,30 @@ def tune1(lab, sim, max_fpr=0.05):
     return best[0] if best[0] is not None else 1.01
 
 
-def tune2(lab, a, b, max_fpr=0.05):
+def tune2(lab, a, b, max_fpr=MAX_FPR):
     best = ((1.01, 1.01), -1)
     for t1 in GRID[30:]:
         for t2 in GRID:
             m = prf(lab, (a >= t1) | (b >= t2))
             if m["fpr"] <= max_fpr and m["f1"] > best[1]:
                 best = ((t1, t2), m["f1"])
+    return best[0]
+
+
+def tune3(lab, a, b, c, max_fpr=MAX_FPR):
+    """Coarse 3-way OR grid (step 0.02), then refine the embedding threshold at 0.01."""
+    g = [x / 100 for x in range(5, 100, 2)]
+    best = ((1.01, 1.01, 1.01), -1)
+    for t1 in [x / 100 for x in range(35, 100, 2)]:
+        A = a >= t1
+        for t2 in g:
+            AB = A | (b >= t2)
+            if prf(lab, AB)["fpr"] > max_fpr:
+                continue
+            for t3 in g:
+                m = prf(lab, AB | (c >= t3))
+                if m["fpr"] <= max_fpr and m["f1"] > best[1]:
+                    best = ((t1, t2, t3), m["f1"])
     return best[0]
 
 
@@ -105,7 +133,7 @@ def model_mb(name):
 
 
 def main():
-    runs = {p.stem: json.loads(p.read_text()) for p in sorted(B.glob("*.json")) if not p.stem.endswith("_latency")}
+    runs = {p.stem: json.loads(p.read_text()) for p in sorted(B.glob("*.json")) if "_latency" not in p.stem}
     base = runs["minilm"]["samples"]
     by_id = {r["id"]: r for r in base}
     texts = {}
@@ -122,15 +150,19 @@ def main():
         return sc, tu
 
     results = {}
-    order = ["minilm", "bge-small", "bge-base", "jina-code", "nomic", "tfidf", "ngram", "minhash"]
+    order = ["minilm", "bge-small", "bge-base", "bge-large", "mxbai-large", "gte-large", "arctic-l", "mpnet-para",
+             "jina-code", "nomic", "tfidf", "ngram", "minhash"]
     order = [o for o in order if o in runs]
     for name in order + [n for n in runs if n not in order]:
         results[name] = evaluate(base, *single(name))
     rx = {i: regex_flag(texts[i]) for i in by_id}
     results["regex"] = evaluate(base, lambda sub, t: np.array([rx[s["id"]] for s in sub]), lambda lab, sub: 0)
     hy = None
-    for key, (e, f) in {"hybrid": ("minilm", "ngram"), "hybrid_tfidf": ("minilm", "tfidf")}.items():
-        if f not in runs:
+    combos = {"hybrid": ("minilm", "ngram"), "hybrid_tfidf": ("minilm", "tfidf"),
+              "bge-base+ngram": ("bge-base", "ngram"), "bge-base+tfidf": ("bge-base", "tfidf"),
+              "bge-large+ngram": ("bge-large", "ngram"), "mxbai-large+ngram": ("mxbai-large", "ngram")}
+    for key, (e, f) in combos.items():
+        if f not in runs or e not in runs:
             continue
 
         def hsc(sub, t, e=e, f=f):
@@ -140,6 +172,20 @@ def main():
             return tune2(lab, np.array([sim[e][s["id"]] for s in sub]), np.array([sim[f][s["id"]] for s in sub]))
         results[key] = evaluate(base, hsc, htu)
         hy = hy or results[key]
+    for key, (e, f, g) in {"minilm+ngram+tfidf": ("minilm", "ngram", "tfidf"), "bge-base+ngram+tfidf": ("bge-base", "ngram", "tfidf"),
+                           "bge-large+ngram+tfidf": ("bge-large", "ngram", "tfidf"), "mxbai-large+ngram+tfidf": ("mxbai-large", "ngram", "tfidf"),
+                           "gte-large+ngram+tfidf": ("gte-large", "ngram", "tfidf"), "arctic-l+ngram+tfidf": ("arctic-l", "ngram", "tfidf"),
+                           "mpnet-para+ngram+tfidf": ("mpnet-para", "ngram", "tfidf")}.items():
+        if e not in runs:
+            continue
+
+        def h3(sub, t, e=e, f=f, g=g):
+            return np.array([(sim[e][s["id"]] >= t[0]) | (sim[f][s["id"]] >= t[1]) | (sim[g][s["id"]] >= t[2]) for s in sub])
+
+        def t3(lab, sub, e=e, f=f, g=g):
+            return tune3(lab, *[np.array([sim[x][s["id"]] for s in sub]) for x in (e, f, g)])
+        results[key] = evaluate(base, h3, t3)
+        print("done", key, file=sys.stderr)
     md = ["# Paste Guard benchmarks", "",
           "Everything on this page was produced by `eval/bench_all.sh` (scoring in `eval/bench_score.py`, "
           "report in `eval/bench_report.py`) on CPU, 2 ONNX threads per model, on the same 472 samples as "
@@ -147,7 +193,7 @@ def main():
           "**No model was trained or fine-tuned.** Every embedding model is a public pretrained checkpoint used zero-shot "
           "through fastembed (ONNX). The only values fitted to our data are similarity thresholds (and, for TF-IDF, the IDF "
           "weights of the indexed corpus).", "",
-          "**In-sample** = threshold tuned and scored on all samples (best F1 with false positive rate at most 5%). "
+          "**In-sample** = threshold tuned and scored on all samples (best F1 with false positive rate at most 3%). "
           "**Held-out** = 2-fold split by source document: thresholds tuned on pastes from 9 documents (code: half the source "
           "files) and scored on pastes from the other 9, then swapped. Negatives are split between folds by id. Held-out is the "
           "honest estimate of how the tuned thresholds carry over to documents they were never tuned on.", "",
@@ -157,12 +203,12 @@ def main():
     def row(name, kind):
         r = results[name][kind]
         t = r["t_all"]
-        ts = "n/a" if name == "regex" else (f"{t[0]:.2f} / {t[1]:.2f}" if isinstance(t, tuple) else f"{t:.2f}")
+        ts = "n/a" if name == "regex" else (" / ".join(f"{x:.2f}" for x in t) if isinstance(t, tuple) else f"{t:.2f}")
         i, h = r["in"], r["held"]
         return (f"| {LABEL.get(name, name)} | {ts} | {i['precision']:.2f} | {i['recall']:.2f} | {i['f1']:.2f} | {i['fpr']:.2f} "
                 f"| {h['precision']:.2f} | {h['recall']:.2f} | {h['f1']:.2f} | {h['fpr']:.2f} |")
 
-    names = order + [h for h in ("hybrid", "hybrid_tfidf") if h in results] + ["regex"]
+    names = order + [h for h in combos if h in results] + [h for h in results if "+" in h and h not in combos] + ["regex"]
     for kind, title in (("doc", "Documents"), ("code", "Code")):
         md += [f"## {title}: accuracy", "", "| Method | Threshold | P (in) | R (in) | F1 (in) | FPR (in) | P (held-out) | R (held-out) | F1 (held-out) | FPR (held-out) |",
                "|---|---|---|---|---|---|---|---|---|---|"]
@@ -224,6 +270,32 @@ def main():
         v = json.loads(bx.read_text())
         md += ["", f"Same HTTP test against the backend on this box ({v['cpus']} vCPU): p50 {v['p50']:.0f} ms, p95 {v['p95']:.0f} ms, "
                f"backend RSS {v['rss_mb']:.0f} MB."]
+    # Real-time selection: embedding latency plus the lexical checks it is combined with.
+    lat = {n: (np.percentile(runs[n]["lat_ms"], 50), np.percentile(runs[n]["lat_ms"], 95)) for n in order}
+    parts = {"hybrid": ("minilm", "ngram"), "hybrid_tfidf": ("minilm", "tfidf")}
+    parts.update({h: tuple(h.split("+")) for h in results if "+" in h})
+    md += ["", "## Accuracy next to speed (documents, held-out)", "",
+           "Hard requirement: full check p95 under 100 ms on a normal CPU, false alarms at most 3%. Latency of a hybrid = sum of "
+           "its parts (scoring only, this box, 2 threads); the HTTP rows below include the whole /check request.", "",
+           "| Config | F1 | Recall | Precision | False alarms | Summary recall | Tone rewrite recall | p50 | p95 | Meets both? |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
+    for n in names:
+        if n == "regex":
+            continue
+        ps = parts.get(n, (n,))
+        if any(x not in lat for x in ps):
+            continue
+        p50 = sum(lat[x][0] for x in ps); p95 = sum(lat[x][1] for x in ps)
+        h = results[n]["doc"]["held"]
+        ok = p95 < 100 and h["fpr"] <= MAX_FPR + 1e-9
+        md.append(f"| {LABEL.get(n, n)} | {h['f1']:.3f} | {h['recall']:.2f} | {h['precision']:.2f} | {h['fpr']:.1%} | "
+                  f"{tf_tab[('doc', 'summary', 'positive')][n]:.2f} | {tf_tab[('doc', 'tone_rewrite', 'positive')][n]:.2f} | "
+                  f"{p50:.0f} ms | {p95:.0f} ms | {'yes' if ok else 'no'} |")
+    acc = ROOT / "eval" / "bench" / "box_latency_accurate.json"
+    if acc.exists():
+        v = json.loads(acc.read_text())
+        md += ["", f"Accurate profile (MiniLM OR 3-gram OR TF-IDF), {v['n']} real `/check` calls over HTTP on this box ({v['cpus']} vCPU, "
+               f"PG_THREADS=2): p50 {v['p50']:.0f} ms, p95 {v['p95']:.0f} ms, backend RSS {v['rss_mb']:.0f} MB."]
     (ROOT / "eval" / "bench_summary.json").write_text(json.dumps(
         {n: {k: {"t": results[n][k]["t_all"], "in": results[n][k]["in"], "held": results[n][k]["held"], "t_folds": results[n][k]["t_folds"]}
              for k in ("doc", "code")} for n in names}, default=str, indent=1))

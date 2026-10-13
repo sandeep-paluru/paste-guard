@@ -1,7 +1,7 @@
 """Local embedding model wrapper (real model, CPU, ONNX via fastembed).
 
 Default model: sentence-transformers/all-MiniLM-L6-v2 (384 dims, about 90 MB).
-Override with PG_MODEL. The model is downloaded once to PG_MODEL_CACHE and
+Set [model] name in paste-guard.toml (or a profile), or override with PG_MODEL. The model is downloaded once to PG_MODEL_CACHE and
 then runs fully offline; no paste text ever leaves the machine.
 """
 import os
@@ -9,7 +9,9 @@ from functools import lru_cache
 
 import numpy as np
 
-MODEL_NAME = os.environ.get("PG_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+from config import CONFIG
+
+MODEL_NAME = CONFIG["model"]["name"]
 CACHE_DIR = os.environ.get("PG_MODEL_CACHE", os.path.expanduser("~/.cache/paste-guard/models"))
 
 

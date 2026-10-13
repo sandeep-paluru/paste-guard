@@ -1,5 +1,8 @@
 """Loads paste-guard.toml (path from PG_CONFIG, default: repo root).
 
+A top-level `profile = "name"` (or PG_PROFILE) merges [profiles.<name>] over the base settings,
+so one file can carry the small-VM default and the accurate desktop profile side by side.
+
 Environment variables override file values:
 PG_T_DOC_NUDGE / PG_T_DOC_COACH / PG_T_DOC_BLOCK, PG_T_CODE_* (and legacy PG_T_NUDGE etc. for code),
 PG_FP_DOC_COACH / PG_FP_DOC_BLOCK / PG_FP_CODE_* (fingerprint), PG_INDEX_DB, PG_AUDIT_DB.
@@ -17,12 +20,16 @@ CONFIG_PATH = Path(os.environ.get("PG_CONFIG", ROOT / "paste-guard.toml")).resol
 VERSION = (ROOT / "VERSION").read_text().strip() if (ROOT / "VERSION").exists() else "0.0.0"
 
 DEFAULTS = {
+    "profile": "default",
+    "model": {"name": "sentence-transformers/all-MiniLM-L6-v2"},
     "index": {"docs": [], "code": [], "db": "data/index.db"},
     "server": {"host": "127.0.0.1", "port": 8765},
     "thresholds": {"doc": {"nudge": 0.58, "coach": 0.64, "block": 0.74},
                    "code": {"nudge": 0.55, "coach": 0.65, "block": 0.85}},
     # Word 3-gram containment (share of the pasted window's 3-grams found in one indexed chunk).
     "fingerprint": {"min_shingles": 8, "doc": {"coach": 0.25, "block": 0.5}, "code": {"coach": 0.25, "block": 0.5}},
+    # TF-IDF cosine (word 1-2 grams) over the indexed chunks. Off unless a profile turns it on.
+    "tfidf": {"enabled": False, "doc": {"coach": 0.23, "block": 0.45}, "code": {"coach": 0.5, "block": 0.7}},
     "sites": {"allowed": ["claude.ai", "chatgpt.com", "chat.openai.com"]},
     "audit": {"db": "data/audit.db", "keep_days": 30},
 }
@@ -39,6 +46,14 @@ def load() -> dict:
     cfg = DEFAULTS
     if CONFIG_PATH.exists():
         cfg = _merge(DEFAULTS, tomllib.loads(CONFIG_PATH.read_text()))
+    cfg = dict(cfg)
+    cfg["profile"] = os.environ.get("PG_PROFILE") or cfg.get("profile", "default")
+    profiles = cfg.pop("profiles", {})
+    if cfg["profile"] != "default":
+        if cfg["profile"] not in profiles:
+            raise SystemExit(f"paste-guard.toml: unknown profile {cfg['profile']!r} (have: {', '.join(profiles) or 'none'})")
+        cfg = _merge(cfg, profiles[cfg["profile"]])
+    cfg["model"]["name"] = os.environ.get("PG_MODEL") or cfg["model"]["name"]
     base = CONFIG_PATH.parent
     res = lambda p: str((base / p).resolve())  # noqa: E731
     cfg["index"]["docs"] = [res(p) for p in cfg["index"]["docs"]]
@@ -56,6 +71,9 @@ def load() -> dict:
             v = os.environ.get(f"PG_FP_{kind.upper()}_{lvl.upper()}")
             if v:
                 cfg["fingerprint"][kind][lvl] = float(v)
+            v = os.environ.get(f"PG_TFIDF_{kind.upper()}_{lvl.upper()}")
+            if v:
+                cfg["tfidf"][kind][lvl] = float(v)
     return cfg
 
 

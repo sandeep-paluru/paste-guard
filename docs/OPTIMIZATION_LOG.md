@@ -142,3 +142,39 @@ restart takes about 10 seconds while the model loads.
   `[REDACTED: matches <source> paragraphs a-b]` or `lines a-b`. v0.3 replaced each matched window with a bare marker.
 - The verdict log always fills the site column: the extension's hostname, else the request's referer, else
   `direct API call`.
+
+## v0.5: an "accurate" profile for a desktop PC (2026-10-13)
+
+Question: with RAM no longer a limit (backend on a desktop instead of the 1 GB VM), what is the most accurate setup?
+Second constraint added during the work: it has to stay real-time, full `/check` p95 under 100 ms on a normal CPU,
+and false alarms at most 3%.
+
+What changed in the method: the false alarm budget used when tuning every threshold went from 5% to 3%, and all
+earlier numbers were recomputed with it. Still no training or fine-tuning anywhere. Every embedding model is a public
+pretrained checkpoint used zero-shot; only thresholds (and TF-IDF's vocabulary and IDF weights from the indexed
+corpus) are fitted. Held-out = 2-fold split by source document.
+
+Tried: bge-base, bge-large, mxbai-embed-large, gte-large, each alone and OR-combined with 3-gram and TF-IDF, plus
+MiniLM OR TF-IDF and MiniLM OR 3-gram OR TF-IDF. arctic-embed-l and paraphrase-mpnet were queued but dropped once
+the latency rule came in, since they are the same size class as the large models that already failed it.
+
+What we learned:
+- The large models do not win. bge-large, mxbai-large and gte-large alone reach held-out doc F1 0.88 to 0.89, barely
+  above MiniLM (0.87), at 190 to 210 ms p50 and over 1 s p95 per check, and about 4 GB RAM. They help summaries
+  (0.72 to 0.83 vs 0.50) but that is not worth 20x the latency.
+- bge-base looks best on raw recall (0.96 in hybrids) but its false alarm rate on held-out negatives is 7% to 8%,
+  mostly on public text wrapped in a prompt (14% flagged). It fails the 3% rule before speed even matters, so ONNX
+  quantization to make it faster would not rescue it.
+- TF-IDF alone is a surprisingly strong baseline on documents (F1 0.95, 1.4% false alarms) because most real leaks
+  keep the document's distinctive vocabulary: product names, numbers, people. It is weak on summaries (0.28).
+- The three signals are complementary. MiniLM covers meaning (paraphrase, summary), 3-gram covers exact excerpts,
+  TF-IDF covers reworded text that keeps the rare words (tone rewrites 0.50 to 0.72).
+
+Decision: profile `accurate` = MiniLM OR 3-gram OR TF-IDF. Held-out documents: F1 0.966, recall 0.94, precision
+0.99, false alarms 2.8% (2 of 72 negatives), vs 0.943 / 0.90 / 0.99 / 2.8% for the default. Summaries 0.56,
+tone rewrites 0.72. Full `/check` over HTTP on the box: p50 19 ms, p95 56 ms, 379 MB RSS. Same model and index as
+the default, so no reindex. TF-IDF is turned off for code in this profile: on code it added false alarms (6% held-out
+on 50 negatives) without adding recall, which was already 1.00.
+
+Honest limits: 72 document negatives means one false alarm moves the rate by 1.4 points, so 2.8% vs 4.2% is a
+one-sample difference. Summaries remain the weak spot at 56%. The default profile on the VM is unchanged.
