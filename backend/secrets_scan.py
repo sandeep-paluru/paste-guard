@@ -36,16 +36,20 @@ RULES = {
 }
 
 
+GENERIC = {"password_assignment"}  # catch-all rules that yield to specific credential rules
+
+
 def scan(text: str) -> list[dict]:
-    """Return non-overlapping findings. On overlap the longest span wins;
-    ties go to the rule defined first (the more specific one)."""
+    """Return non-overlapping findings. A specific credential rule always beats the generic
+    password_assignment rule on overlap (so api_key="sk-ant-..." reports anthropic_key and blocks);
+    otherwise the longest span wins, ties going to the rule defined first."""
     cands = []
     for order, (name, rx) in enumerate(RULES.items()):
         for m in rx.finditer(text):
-            cands.append((m.start() - m.end(), order, m.start(), m.end(), name))
+            cands.append((name in GENERIC, m.start() - m.end(), order, m.start(), m.end(), name))
     cands.sort()
     findings = []
-    for _, _, start, end, name in cands:
+    for _, _, _, start, end, name in cands:
         if all(end <= f["start"] or start >= f["end"] for f in findings):
             findings.append({"type": name, "start": start, "end": end})
     return sorted(findings, key=lambda f: f["start"])

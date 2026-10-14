@@ -54,7 +54,7 @@ def collect(code_dirs=(), doc_dirs=()):
             continue
         for f in iter_files(root, CODE_EXT):
             for s, e, chunk in windows(f.read_text(errors="ignore")):
-                rows.append(("code", str(f.relative_to(root)), s, e, chunk))
+                rows.append(("code", f.relative_to(root).as_posix(), s, e, chunk))
     for d in doc_dirs:
         root = Path(d).resolve()
         if not root.is_dir():
@@ -67,7 +67,7 @@ def collect(code_dirs=(), doc_dirs=()):
                 print(f"skip {f}: {ex}", file=sys.stderr)
                 continue
             for s, e, chunk in doc_passages(text):
-                rows.append(("doc", str(f.relative_to(root)), s, e, chunk))
+                rows.append(("doc", f.relative_to(root).as_posix(), s, e, chunk))
     return rows
 
 

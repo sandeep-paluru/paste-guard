@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 Windows follow-up (2026-10-14)
+- Secrets scanner: a specific credential rule now wins over the generic `password_assignment` rule when they overlap. Before, `api_key="sk-ant-..."` (the usual way a key appears in code) was reported as a password assignment and only coached; now it is `anthropic_key` and blocks. Same for OpenAI, AWS and other keys inside `password = '...'`. Test added.
+- `deploy/windows/setup.ps1` tested end to end on Windows 10 with Python 3.13.7, no admin: no winget, finds the per-user python.org Python and git outside PATH, autostarts via a Startup-folder shortcut instead of a Scheduled Task, and does not start a second server if port 8765 is taken.
+- `eval/http_latency.py` runs on Windows (latency only there). Windows PC (8 CPU, 15.6 GB): p50 21 ms, p95 46 ms over 200 `/check` calls, warm-up 1.9 s at startup.
+- Index paths are stored with forward slashes on every OS.
+
 ## 0.6.0 (2026-10-14)
 - Two-step fast path in `semantic()` (`backend/app.py`). Step 1 runs 3-gram containment and TF-IDF on every window, which takes a few ms. MiniLM is skipped when a cheap check already reaches block (the embedding cannot raise the verdict past block), or when the best TF-IDF score against any indexed passage is below 0.10. Config: `[fast_path] enabled = true, skip_below = 0.10`. `PG_FAST_PATH=0` turns it off. The idea comes from the two-stage design of Google DeepMind's on-device Gemma scam detector (October 2026): a cheap classifier first, the heavier model only when needed.
 - Measured with the new `eval/fastpath_eval.py` on all 472 eval pastes, fast path off and on, deployed thresholds, flagged = coach or block. Recall 0.946 and false alarm rate 2.5% both ways. In-process p50 11.0 ms to 3.6 ms, p95 70.1 ms to 21.9 ms. MiniLM skipped on 58.5% of the eval pastes. One verdict changed out of 472: a negative went from nudge to allow. Results in `eval/bench/fastpath.json`, chart `eval/bench_fastpath.png`.

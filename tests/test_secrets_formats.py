@@ -70,9 +70,10 @@ def test_no_overlap_and_redact():
     assert "[REDACTED:anthropic_key]" in out
 
 
-def test_longest_wins_on_overlap():
+def test_specific_rule_wins_over_generic_on_overlap():
+    # A real key inside password = '...' is reported as the key (a hard block), not the generic coach rule.
     pw = "pass" + "word = '" + "sk" + "-proj-" + A + "'"
-    assert types(pw) == ["password_assignment"]
+    assert types(pw) == ["openai_key"]
 
 
 NEGATIVE = [
@@ -114,3 +115,11 @@ def test_anthropic_key_blocks_end_to_end():
     out = app.decide("Here is my config, why does it fail?\nANTHROPIC_API_KEY=" + key)
     assert out["verdict"] == "block"
     assert key not in out["redacted"]
+
+
+def test_specific_key_beats_generic_assignment():
+    # api_key="<anthropic key>" used to be reported as the generic password_assignment (coach only)
+    key = "sk-ant-" + "api03-" + "Ab3dE" * 18 + "-xyzAA"
+    for line in (f'client = Anthropic(api_key="{key}")', f"api_key = '{key}'", f'secret: "{key}"'):
+        assert [f["type"] for f in scan(line)] == ["anthropic_key"], line
+    assert [f["type"] for f in scan('password = "hunter22-not-a-key"')] == ["password_assignment"]
