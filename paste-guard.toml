@@ -1,10 +1,10 @@
 # Paste Guard configuration. Paths are relative to this file.
 # After changing [index] paths, run:  ./pasteguard reindex
 
-# Matching profile. "default" = MiniLM OR 3-gram (fits the 1 GB VM).
-# "accurate" = MiniLM OR 3-gram OR TF-IDF (best held-out accuracy among configs with full-check p95 under 100 ms).
-# Switch here or with PG_PROFILE=accurate. See eval/benchmarks.md.
-profile = "default"
+# Matching profile. "accurate" (default) = MiniLM OR 3-gram OR TF-IDF for documents: best held-out
+# accuracy among configs with full-check p95 under 100 ms, about 400 MB RAM, fits the 1 GB VM.
+# "fast" = MiniLM OR 3-gram only (the v0.4 setup). Switch here or with PG_PROFILE=fast. See eval/benchmarks.md.
+profile = "accurate"
 
 [index]
 # Folders with confidential documents (.md .txt .pdf .docx)
@@ -54,11 +54,15 @@ allowed = ["claude.ai", "chatgpt.com", "chat.openai.com"]
 db = "data/audit.db"
 keep_days = 30
 
-[profiles.accurate]
-# Same model and index as default (no reindex needed); adds a TF-IDF cosine check (word 1-2 grams) for documents.
+# TF-IDF cosine check (word 1-2 grams) for documents, part of the accurate profile.
 # Thresholds from eval/bench_report.py (3-way OR, best F1 with false alarms at most 3%).
 # TF-IDF is off for code (coach above 1): on code it added false alarms without adding recall.
-[profiles.accurate.tfidf]
+[tfidf]
 enabled = true
 doc = { coach = 0.23, block = 0.45 }
 code = { coach = 1.01, block = 1.01 }
+
+[profiles.fast]
+# Same model and index (no reindex needed); drops the TF-IDF check. Slightly faster, lower recall.
+[profiles.fast.tfidf]
+enabled = false

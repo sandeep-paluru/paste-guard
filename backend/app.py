@@ -12,13 +12,13 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import embedder
 import secrets_scan
 from audit import Audit
 from config import CONFIG, CONFIG_PATH, VERSION
-from chunking import DOC_EXT, extract_text, line_spans, normalise, prose_spans
+from chunking import UPLOAD_EXT, NotText, clean, extract_text, line_spans, normalise, prose_spans
 from index import Index
 
 
@@ -29,6 +29,7 @@ PROFILE = CONFIG["profile"]
 HARD_SECRETS = {"private_key", "aws_access_key", "github_token", "openai_key", "slack_token"}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
+MAX_CHARS = int(os.environ.get("PG_MAX_CHARS", str(2 * 1024 * 1024)))  # longer pastes are rejected with HTTP 422
 LABEL = {"doc": "a confidential company document", "code": "company code"}
 
 app = FastAPI(title="Paste Guard", version=VERSION)
@@ -41,7 +42,7 @@ ADMIN_HTML = (Path(__file__).with_name("admin.html")).read_text()
 
 
 class CheckIn(BaseModel):
-    text: str
+    text: str = Field(max_length=MAX_CHARS)
     source: str | None = None
 
 
@@ -79,9 +80,21 @@ def semantic(text: str):
     spans = list(dict.fromkeys(prose_spans(text) + line_spans(text)))
     if len(text.split()) <= 400:
         spans.append((0, len(text)))  # whole paste as one more view
-    spans = list(dict.fromkeys(spans))[:MAX_WINDOWS] or [(0, len(text))]
+    spans = list(dict.fromkeys(spans))
+    if len(spans) > MAX_WINDOWS:
+        # Huge paste or file: embedding every window would be slow, so pick which ones to embed.
+        # Half go to the windows with the highest TF-IDF score against the index (a sparse product,
+        # a few ms even for thousands of windows), half are sampled evenly across the text.
+        # This way a confidential section buried at the end of a long paste is still seen.
+        scores = [max((h["similarity"] for h in hs), default=0.0)
+                  for hs in INDEX.tfidf([clean(text[s:e]) for s, e in spans])]
+        top = sorted(range(len(spans)), key=lambda i: scores[i], reverse=True)[:MAX_WINDOWS // 2]
+        step = len(spans) / (MAX_WINDOWS - len(top))
+        pick = set(top) | {int(i * step) for i in range(MAX_WINDOWS - len(top))}
+        spans = [spans[i] for i in sorted(pick)]
+    spans = spans or [(0, len(text))]
     vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
-    lex = INDEX.tfidf([text[s:e] for s, e in spans]) if TFIDF["enabled"] else [[] for _ in spans]
+    lex = INDEX.tfidf([clean(text[s:e]) for s, e in spans]) if TFIDF["enabled"] else [[] for _ in spans]
     out = []
     for (s, e), v, tf in zip(spans, vecs, lex):
         hits = INDEX.query(v, k=3) + INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"]) + tf
@@ -120,7 +133,7 @@ def decide(text: str) -> dict:
     findings = secrets_scan.scan(text)
     marks = secrets_scan.markers(text)
     types = {f["type"] for f in findings}
-    per_window = semantic(text) if len(text.strip()) >= 20 else []
+    per_window = semantic(text) if len(clean(text).strip()) >= 20 else []
 
     # Best hit per (source, location), ranked by how far past its own kind threshold it is.
     best = {}
@@ -255,15 +268,17 @@ def check(req: CheckIn, request: Request):
 async def check_file(request: Request, file: UploadFile = File(...), source: str = Form("")):
     t0 = time.time()
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in DOC_EXT:
-        raise HTTPException(415, f"unsupported file type {suffix or '(none)'}; supported: {sorted(DOC_EXT)}")
+    if suffix not in UPLOAD_EXT:
+        raise HTTPException(415, f"unsupported file type {suffix or '(none)'}; supported: {sorted(UPLOAD_EXT)}")
     data = await file.read(MAX_FILE_BYTES + 1)
     if len(data) > MAX_FILE_BYTES:
         raise HTTPException(413, "file too large")
     try:
         text = extract_text(data, suffix)
+    except NotText as ex:
+        raise HTTPException(422, f"could not check {file.filename}: {ex}")
     except Exception as ex:
-        raise HTTPException(422, f"could not read {file.filename}: {ex}")
+        raise HTTPException(422, f"could not read {file.filename}: {type(ex).__name__}")
     res = decide(text)
     res["file"] = {"name": file.filename, "chars": len(text)}
     AUDIT.record("file", _site(source, request), text, res, int((time.time() - t0) * 1000))

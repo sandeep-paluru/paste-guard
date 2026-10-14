@@ -28,8 +28,10 @@
     send({ type: "PG_CHECK", text, source: location.hostname }).then((resp) => {
       if (!resp || !resp.ok) {
         console.warn("[Paste Guard] backend not reachable", resp?.error);
-        if (settings.failOpen) insert(target, text);
-        else toast("Paste Guard backend is not reachable, so the paste was held back.");
+        if (settings.failOpen) {
+          insert(target, text);
+          toast("Paste Guard is offline, so this paste was not checked.");
+        } else toast("Paste Guard backend is not reachable, so the paste was held back.");
         return;
       }
       const v = resp.verdict;
@@ -63,7 +65,14 @@
     for (const f of files) {
       if (!checkable(f)) continue;
       const r = await checkFile(f);
-      if (!r || !r.ok) { console.warn("[Paste Guard] could not check", f.name, r?.error); continue; }
+      if (!r || !r.ok) {
+        console.warn("[Paste Guard] could not check", f.name, r?.error);
+        const err = String(r?.error || "");
+        toast(/HTTP 4\d\d/.test(err)
+          ? `Paste Guard could not read ${f.name} (${err.replace(/^Error: /, "").slice(0, 120)}). It was not checked.`
+          : `Paste Guard is offline, so ${f.name} was not checked.`);
+        continue;
+      }
       const v = r.verdict;
       v.file = v.file || { name: f.name };
       if (!worst || rank[v.verdict] > rank[worst.verdict]) worst = v;

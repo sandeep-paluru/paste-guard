@@ -5,3 +5,4 @@ demo/company-repo/
 backend/pg_index.db*
 .venv/
 data/
+tests/js/node_modules/

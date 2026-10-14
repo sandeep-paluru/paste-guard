@@ -6,9 +6,22 @@ CODE_EXT = {".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".java", ".rb", ".rs", "
 SKIP_DIRS = {".git", "node_modules", "venv", ".venv", "__pycache__", "dist", "build", ".tox"}
 
 
+_ZW = re.compile("[\u200b-\u200f\u2060-\u2064\ufeff\u00ad\u034f\u180e]")
+# Latin look-alikes that NFKC leaves alone (Cyrillic and Greek). Small on purpose: the common swaps only.
+_HOMO = str.maketrans("\u0430\u0435\u043e\u0440\u0441\u0443\u0445\u0456\u0458\u0410\u0412\u0415\u041a\u041c\u041d\u041e\u0420\u0421\u0422\u0425\u03bf\u039f\u0391\u0392\u0395\u0397\u0399\u039a\u039c\u039d\u03a1\u03a4\u03a7",
+                      "aeopcyxijABEKMHOPCTXoOABEHIKMNPTX")
+
+
+def clean(text: str) -> str:
+    """Undo cheap evasion tricks before matching: zero-width characters, full-width and other
+    compatibility forms (NFKC), and the common Cyrillic or Greek look-alikes of Latin letters."""
+    import unicodedata
+    return unicodedata.normalize("NFKC", _ZW.sub("", text)).translate(_HOMO)
+
+
 def normalise(text: str) -> str:
     # Collapse whitespace so reformatting does not change the vector much.
-    return re.sub(r"\s+", " ", text).strip()
+    return re.sub(r"\s+", " ", clean(text)).strip()
 
 
 def windows(text: str, size: int = 30, step: int = 15, min_chars: int = 40):
@@ -28,6 +41,13 @@ def windows(text: str, size: int = 30, step: int = 15, min_chars: int = 40):
 
 
 DOC_EXT = {".md", ".txt", ".pdf", ".docx"}
+# Plain text types the extension can also send to /check_file (the drop and picker paths).
+TEXT_EXT = {".md", ".markdown", ".txt", ".csv", ".json", ".log", ".yaml", ".yml", ".html"} | CODE_EXT
+UPLOAD_EXT = DOC_EXT | TEXT_EXT
+
+
+class NotText(ValueError):
+    pass
 
 
 def doc_chunks(text: str, target: int = 160, max_words: int = 200, min_words: int = 120, overlap: int = 30):
@@ -74,6 +94,13 @@ def extract_text(path_or_bytes, suffix: str) -> str:
     if suffix == ".pdf":
         from pypdf import PdfReader
         r = PdfReader(io.BytesIO(data))
+        if r.is_encrypted:
+            try:
+                ok = r.decrypt("")  # owner-password-only PDFs open with an empty user password
+            except Exception:
+                ok = 0
+            if not ok:
+                raise NotText("the PDF is password protected")
         return "\n\n".join((pg.extract_text() or "") for pg in r.pages)
     if suffix == ".docx":
         import docx
@@ -83,7 +110,9 @@ def extract_text(path_or_bytes, suffix: str) -> str:
             for row in t.rows:
                 parts.append(" | ".join(c.text for c in row.cells))
         return "\n\n".join(parts)
-    return data.decode("utf-8", errors="ignore")
+    if b"\x00" in data[:8192]:
+        raise NotText("the file looks binary, not text")
+    return data.decode("utf-8", errors="replace").replace("\ufffd", "")
 
 
 def doc_passages(text: str):
@@ -133,6 +162,6 @@ _TOK = re.compile(r"\w+")
 def shingles(text: str, n: int = 3) -> set:
     """Hashed word n-gram fingerprint (lower-cased word 3-grams), used for exact and near-exact reuse."""
     import hashlib
-    w = [x.lower() for x in _TOK.findall(text)]
+    w = [x.lower() for x in _TOK.findall(clean(text))]
     return {int.from_bytes(hashlib.blake2b(" ".join(w[i:i + n]).encode(), digest_size=8).digest(), "big")
             for i in range(len(w) - n + 1)}
