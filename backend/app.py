@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import embedder
+import explain
 import secrets_scan
 from audit import Audit
 from config import CONFIG, CONFIG_PATH, VERSION
@@ -128,6 +129,8 @@ def semantic(text: str):
         # Step 2: MiniLM only when step 1 is uncertain.
         vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
     STATS[STATS["last_path"]] = STATS.get(STATS["last_path"], 0) + 1
+    if STATS["last_path"] == "embedding":
+        explain.seed([text[s:e] for s, e in spans], vecs)
     out = []
     for (s, e), v, fp, tf in zip(spans, vecs, fps, lex):
         hits = (INDEX.query(v, k=3) if v is not None else []) + fp + tf
@@ -179,6 +182,7 @@ def decide(text: str) -> dict:
     matches = sorted(best.values(), key=lambda h: (RANK[level(h)], margin(h)), reverse=True)[:5]
     for m in matches:
         m["level"] = level(m)
+    explain.explain(text, matches)  # "why this matched" pairs, only for hits with a level (flagged pastes)
     top = matches[0] if matches and matches[0]["level"] else None
     sem = top["level"] if top else None
 

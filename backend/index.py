@@ -113,7 +113,8 @@ def _hit(kind, path, s, e, text, sim):
     snippet = text if len(text) <= 400 else text[:400].rsplit(" ", 1)[0] + " ..."
     return {"kind": kind, "path": path, "source": path, "lines": [s, e],
             "unit": "paragraphs" if kind == "doc" else "lines",
-            "similarity": round(float(sim), 4), "snippet": snippet, "method": "embedding"}
+            "similarity": round(float(sim), 4), "snippet": snippet, "method": "embedding",
+            "_text": text}  # full chunk, used by explain.py and removed before the response is sent
 
 
 class Index:
