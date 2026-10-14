@@ -6,3 +6,4 @@ backend/pg_index.db*
 .venv/
 data/
 tests/js/node_modules/
+deploy/windows/run.cmd
