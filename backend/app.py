@@ -26,6 +26,8 @@ THRESHOLDS = CONFIG["thresholds"]  # embedding cosine bands per kind; see eval/r
 FINGERPRINT = CONFIG["fingerprint"]  # word 3-gram containment levels per kind (hybrid matching)
 TFIDF = CONFIG["tfidf"]  # TF-IDF cosine levels per kind; only used when the profile enables it
 PROFILE = CONFIG["profile"]
+FAST = CONFIG["fast_path"]  # two-step matching: cheap lexical checks first, MiniLM only when uncertain
+STATS = {}  # fast path counters, shown on /health
 HARD_SECRETS = {"private_key", "aws_access_key", "github_token", "openai_key", "slack_token"}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
@@ -33,6 +35,16 @@ MAX_CHARS = int(os.environ.get("PG_MAX_CHARS", str(2 * 1024 * 1024)))  # longer 
 LABEL = {"doc": "a confidential company document", "code": "company code"}
 
 app = FastAPI(title="Paste Guard", version=VERSION)
+
+
+@app.on_event("startup")
+def _warm_up():
+    """Load the model and run one embedding at startup so the first real paste is not slow."""
+    if os.environ.get("PG_NO_WARMUP"):
+        return
+    t0 = time.time()
+    embedder.embed(["warm up"])
+    STATS["warmup_ms"] = round((time.time() - t0) * 1000)
 _extra = [o for o in os.environ.get("PG_CORS_ORIGINS", "").split(",") if o]
 app.add_middleware(CORSMiddleware, allow_origin_regex=r"chrome-extension://.*", allow_origins=_extra,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
@@ -51,7 +63,8 @@ def health():
     INDEX.refresh()
     return {"status": "ok", "version": VERSION, "model": embedder.MODEL_NAME, "index": INDEX.stats(),
             "profile": PROFILE, "thresholds": THRESHOLDS, "fingerprint": FINGERPRINT,
-            "tfidf": TFIDF if TFIDF["enabled"] else None, "sites": CONFIG["sites"]["allowed"]}
+            "tfidf": TFIDF if TFIDF["enabled"] else None, "fast_path": {**FAST, "stats": STATS},
+            "sites": CONFIG["sites"]["allowed"]}
 
 
 def _local(request: Request):
@@ -93,11 +106,26 @@ def semantic(text: str):
         pick = set(top) | {int(i * step) for i in range(MAX_WINDOWS - len(top))}
         spans = [spans[i] for i in sorted(pick)]
     spans = spans or [(0, len(text))]
-    vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
-    lex = INDEX.tfidf([clean(text[s:e]) for s, e in spans]) if TFIDF["enabled"] else [[] for _ in spans]
+    # Step 1 (cheap, a few ms): 3-gram containment and TF-IDF on every window.
+    fps = [INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"]) for s, e in spans]
+    lex_all = INDEX.tfidf([clean(text[s:e]) for s, e in spans])
+    lex = lex_all if TFIDF["enabled"] else [[] for _ in spans]
+    vecs = [None] * len(spans)
+    STATS["last_path"] = "embedding"
+    if FAST["enabled"]:
+        cheap = [h for hs in fps + lex for h in hs]
+        top_tf = max((h["similarity"] for hs in lex_all for h in hs), default=0.0)
+        if any(level(h) == "block" for h in cheap):
+            STATS["last_path"] = "cheap_block"  # already the strongest verdict; the embedding cannot raise it
+        elif top_tf < FAST["skip_below"]:
+            STATS["last_path"] = "cheap_clear"  # almost no shared vocabulary with any indexed passage
+    if STATS["last_path"] == "embedding":
+        # Step 2: MiniLM only when step 1 is uncertain.
+        vecs = embedder.embed([normalise(text[s:e]) for s, e in spans])
+    STATS[STATS["last_path"]] = STATS.get(STATS["last_path"], 0) + 1
     out = []
-    for (s, e), v, tf in zip(spans, vecs, lex):
-        hits = INDEX.query(v, k=3) + INDEX.fingerprint(text[s:e], FINGERPRINT["min_shingles"]) + tf
+    for (s, e), v, fp, tf in zip(spans, vecs, fps, lex):
+        hits = (INDEX.query(v, k=3) if v is not None else []) + fp + tf
         hits.sort(key=lambda h: (RANK[level(h)], margin(h)), reverse=True)
         out.append({"span": [s, e], "hits": hits})
     return out

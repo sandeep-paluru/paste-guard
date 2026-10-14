@@ -31,6 +31,9 @@ DEFAULTS = {
     # TF-IDF cosine (word 1-2 grams) over the indexed chunks. Off unless a profile turns it on.
     # On in the default (accurate) profile; the fast profile turns it off.
     "tfidf": {"enabled": True, "doc": {"coach": 0.23, "block": 0.45}, "code": {"coach": 1.01, "block": 1.01}},
+    # Two-step matching. Skip MiniLM when the cheap step already says block, or when the best TF-IDF
+    # score is below skip_below (chosen on the eval so no positive is lost; see eval/benchmarks.md).
+    "fast_path": {"enabled": True, "skip_below": 0.10},
     "sites": {"allowed": ["claude.ai", "chatgpt.com", "chat.openai.com"]},
     "audit": {"db": "data/audit.db", "keep_days": 30},
 }
@@ -77,6 +80,8 @@ def load() -> dict:
             v = os.environ.get(f"PG_TFIDF_{kind.upper()}_{lvl.upper()}")
             if v:
                 cfg["tfidf"][kind][lvl] = float(v)
+    if os.environ.get("PG_FAST_PATH") is not None:
+        cfg["fast_path"]["enabled"] = os.environ["PG_FAST_PATH"] not in ("0", "false", "")
     return cfg
 
 

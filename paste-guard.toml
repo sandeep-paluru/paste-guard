@@ -66,3 +66,10 @@ code = { coach = 1.01, block = 1.01 }
 # Same model and index (no reindex needed); drops the TF-IDF check. Slightly faster, lower recall.
 [profiles.fast.tfidf]
 enabled = false
+
+# Two-step matching (0.6.0). Step 1 runs the cheap checks (3-gram containment and TF-IDF, a few ms).
+# MiniLM runs only when step 1 is uncertain: skipped when a cheap check already says block, or when
+# the best TF-IDF score is below skip_below. Turn off with PG_FAST_PATH=0. See eval/benchmarks.md.
+[fast_path]
+enabled = true
+skip_below = 0.10
