@@ -89,9 +89,9 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 - The admin page is only served to local connections.
 
 ## Tests
-Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 39 tests against the real model and index:
-26 backend edge-case and end-to-end tests in `tests/`, and 13 jsdom tests of the extension content script
-(`tests/js/content.test.mjs`, started from `tests/test_extension_js.py`). The JS tests need `node`; `npm install` runs
+Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 39 pytest tests against the real model and index:
+14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, and one test
+(`tests/test_extension_js.py`) that runs the 13 jsdom tests of the extension content script in `tests/js/content.test.mjs`. The JS tests need `node`; `npm install` runs
 automatically in `tests/js` the first time. If node or npm is missing, those tests are skipped. `pytest.ini` limits
 collection to `tests/` and ignores `demo/`.
 

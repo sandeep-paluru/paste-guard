@@ -19,7 +19,7 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 </style></head><body><h1>Paste Guard</h1>
 <p class="subtitle">Checking what gets pasted into AI chat tools against a company's own documents and code</p>
 
-<p class="meta">Sandeep Paluru, for Eric McIntyre (VP of Technology, Sidekick Labs)<br>13 October 2026. Version 0.5.0. Repo: github.com/sandeep-paluru/paste-guard</p>
+<p class="meta">Sandeep Paluru, for Eric McIntyre (VP of Technology, Sidekick Labs)<br>13 October 2026. Version 0.5.1. Repo: github.com/sandeep-paluru/paste-guard</p>
 
 <div class="note">Paste Guard is a proof of concept I built to show how I work on a problem like this. It is not a product, and the company in it, Calloway Metrics, is fictional.</div>
 
@@ -30,8 +30,8 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 <thead>
 <tr>
 <th></th>
-<th>Default profile (fits a 1 GB VM)</th>
-<th>Accurate profile (v0.5)</th>
+<th>Fast profile (previous default)</th>
+<th>Accurate profile (default since v0.5.1)</th>
 </tr>
 </thead>
 <tbody>
@@ -67,7 +67,7 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 </tr>
 </tbody>
 </table>
-<p>Latency figures are from my 8 vCPU machine. On the 1 GB VM the default profile runs at p50 208 ms and p95 995 ms (more on that under limitations).</p>
+<p>Latency figures are from my 8 vCPU machine. On the 1 GB VM the fast profile ran at p50 208 ms and p95 995 ms (more on that under limitations).</p>
 <h2>How the idea came about</h2>
 <p>On our call on 9 October you described a very ordinary way data leaves a company: someone has a confidential document, wants a quick summary, and pastes it or drops the file into Claude or ChatGPT. You also described Sidekick's approach of stepping in at that moment with a nudge, some coaching or a block, rather than banning the tools outright.</p>
 <p>That raised a question I wanted to answer properly: at the moment of the paste, can you tell whether the content is <em>ours</em>, and not just whether it looks sensitive? People rarely paste a document with "CONFIDENTIAL" on top. They paste a paragraph, reword it, trim it or wrap it in "summarize this for me". I built Paste Guard over 12 and 13 October to see how far a local, cheap approach gets on that question and where it breaks.</p>
@@ -246,7 +246,7 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 <td>yes</td>
 </tr>
 <tr>
-<td>MiniLM OR 3-gram (default)</td>
+<td>MiniLM OR 3-gram (fast)</td>
 <td>0.943</td>
 <td>0.90</td>
 <td>2.8%</td>
@@ -302,14 +302,14 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 <li><strong>Bigger is not better here.</strong> The large models (bge-large, mxbai-large, gte-large) reach held-out F1 of 0.88 to 0.89, barely above MiniLM's 0.87, at about 200 ms p50, over 1 second p95 and about 4 GB of RAM. They help on summaries (0.72 to 0.83 against 0.50), but not enough to justify 20 times the latency.</li>
 <li><strong>bge-base fails on false alarms, not just speed.</strong> It has the best raw recall, but flags 7% to 8% of held-out negatives, mostly public text wrapped in a prompt (14% flagged). Making it faster would not fix that.</li>
 <li><strong>The code-specialised model is a poor fit.</strong> jina code is worst on prose (0.56) and no better than MiniLM on code.</li>
-<li><strong>MiniLM fits the box.</strong> 91 MB on disk, 0.4 s to load, 18 s to index all 594 chunks, and the full backend with the default hybrid used 280 MB of RAM on my machine. bge-base needs 1.4 GB, which does not fit the 1 GB VM.</li>
+<li><strong>MiniLM fits the box.</strong> 91 MB on disk, 0.4 s to load, 18 s to index all 594 chunks, and the full backend with the fast hybrid used 280 MB of RAM on my machine. bge-base needs 1.4 GB, which does not fit the 1 GB VM.</li>
 <li><strong>Lexical methods are strong on this data, and that needs a caveat.</strong> TF-IDF alone beats every embedding model, because most of my leaked text keeps names, figures and product terms, exactly what TF-IDF weights. Lexical methods fail on summaries (3-gram 0.00, TF-IDF 0.28). That is where the embedding earns its place.</li>
 </ul>
 <figure style="break-inside:avoid;margin:10px 0"><img alt="Held-out and in-sample F1 for every method, documents and code" src="../eval/bench_f1.png" /><figcaption style="text-align:center;font-size:8.8pt;color:#627d98">Held-out and in-sample F1 for every method, documents and code</figcaption></figure>
 <figure style="break-inside:avoid;margin:10px 0"><img alt="Accuracy against latency. Bubble size is peak RAM." src="../eval/bench_speed.png" /><figcaption style="text-align:center;font-size:8.8pt;color:#627d98">Accuracy against latency. Bubble size is peak RAM.</figcaption></figure>
 <h2>The v0.5 accurate profile</h2>
 <p>Once RAM stopped being the constraint (backend on a desktop instead of the VM), I asked what the most accurate setup is that still meets both rules. The answer was MiniLM OR 3-gram OR TF-IDF. The three signals cover different kinds of paste: MiniLM covers meaning (paraphrase, summary), 3-gram covers exact excerpts, and TF-IDF covers rewording that keeps the rare words.</p>
-<p>Held-out documents: <strong>F1 0.966, recall 0.94, precision 0.99, false alarms 2.8% (2 of 72)</strong>, against 0.943, 0.90, 0.99 and 2.8% for the default. Tone rewrites go from 0.50 to 0.72 and summaries from 0.50 to 0.56. Over 120 real /check requests over HTTP on my machine (8 vCPU, 2 threads) it measured <strong>p50 19 ms and p95 56 ms</strong>, with the backend at 379 MB. It uses the same model and index as the default, so switching needs no reindex (<code>profile = "accurate"</code> or <code>PG_PROFILE=accurate</code>). TF-IDF is turned off for code in this profile, because on code it added false alarms (6% held-out on 50 negatives) without adding recall, which was already 1.00.</p>
+<p>Held-out documents: <strong>F1 0.966, recall 0.94, precision 0.99, false alarms 2.8% (2 of 72)</strong>, against 0.943, 0.90, 0.99 and 2.8% for the fast profile. Tone rewrites go from 0.50 to 0.72 and summaries from 0.50 to 0.56. Over 120 real /check requests over HTTP on my machine (8 vCPU, 2 threads) it measured <strong>p50 19 ms and p95 56 ms</strong>, with the backend at 379 MB. It uses the same model and index as the fast profile, so switching needs no reindex. Since v0.5.1 it is the default; the old setup is <code>profile = "fast"</code> or <code>PG_PROFILE=fast</code>. TF-IDF is turned off for code in this profile, because on code it added false alarms (6% held-out on 50 negatives) without adding recall, which was already 1.00.</p>
 <figure style="break-inside:avoid;margin:10px 0"><img alt="Held-out recall by paste type for documents" src="../eval/bench_transforms.png" /><figcaption style="text-align:center;font-size:8.8pt;color:#627d98">Held-out recall by paste type for documents</figcaption></figure>
 <h2>How the numbers moved</h2>
 <p>Every number in this section comes from a committed results file or the benchmark script, which can be re-run.</p>
@@ -362,8 +362,8 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 <p>Step 3 lowered the numbers on purpose. The bigger corpus and harder eval set are closer to reality, and the earlier 0.82 recall was on an easier set.</p>
 <p><strong>A correction on short passages.</strong> Adding the 60 word passages next to the long chunks is the largest single gain I found. A short excerpt or a one-paragraph summary has no close neighbour among 160 word chunks, because the rest of the chunk dilutes its vector. At one point I summarised this gain as "30% to 80%". When I went back to check, no recorded run supported that figure. The measured result is <strong>51% to 80% recall at a fixed threshold of 0.63</strong>, or 69% to 80% when each index gets its own best threshold. I corrected it in the log, and the measured figure is the one I stand behind.</p>
 <p><strong>Threshold bands.</strong> v0.3 shipped document bands of nudge 0.62 and coach 0.63, one hundredth apart, so nudge almost never fired on its own. In v0.4 I read the bands off the score distribution: nudge 0.58 (a soft "double check", recall 0.89 but FPR 0.13 in-sample), coach 0.64 (the best-F1 point) and block 0.74 (above every negative I have seen). The 3-gram bands are coach 0.25 and block 0.50. The best tuned value was 0.14, but the highest negative scored 0.13, so I left a margin. Code bands are 0.55, 0.65 and 0.85.</p>
-<figure style="break-inside:avoid;margin:10px 0"><img alt="Paste Guard default hybrid against the regex baseline, by paste type (v0.4, in-sample, coach level)" src="../eval/results.png" /><figcaption style="text-align:center;font-size:8.8pt;color:#627d98">Paste Guard default hybrid against the regex baseline, by paste type (v0.4, in-sample, coach level)</figcaption></figure>
-<p>In-sample, the top match named the right source document 98% of the time (314 detected positives). On held-out thresholds the default hybrid named the right one 93% of the time (255 detected).</p>
+<figure style="break-inside:avoid;margin:10px 0"><img alt="Paste Guard v0.4 hybrid against the regex baseline, by paste type (v0.4, in-sample, coach level)" src="../eval/results.png" /><figcaption style="text-align:center;font-size:8.8pt;color:#627d98">Paste Guard v0.4 hybrid against the regex baseline, by paste type (v0.4, in-sample, coach level)</figcaption></figure>
+<p>In-sample, the top match named the right source document 98% of the time (314 detected positives). On held-out thresholds the v0.4 hybrid named the right one 93% of the time (255 detected).</p>
 <h2>Live test in ChatGPT and Claude</h2>
 <p>Beyond the offline eval, I ran it by hand in both ChatGPT and Claude:</p>
 <table>
@@ -413,7 +413,7 @@ code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #f
 <ul>
 <li><strong>Summaries are the weak spot.</strong> Even the accurate profile catches 56% of summaries. A summary shares meaning with the source but few specific phrases, and that is the paste you described on our call.</li>
 <li><strong>The negative set is small and easy.</strong> There are 72 document negatives, so one false alarm moves the rate by 1.4 points. 2.8% against 4.2% is a one-sample difference. The negatives are also public text and public code, not same-topic internal text that is not confidential, so the false alarm rates are optimistic for a real company. The strong lexical results could partly be an effect of these easy negatives.</li>
-<li><strong>Timing is from my machine.</strong> The 16 to 19 ms p50 and 56 to 58 ms p95 figures are on an 8 vCPU desktop CPU. On the shared 1 GB VM the default profile measured p50 208 ms and p95 995 ms. With about 130 MB free next to the other services, part of the process gets paged out, and that drives the p95. The first check after a restart takes about 10 seconds while the model loads.</li>
+<li><strong>Timing is from my machine.</strong> The 16 to 19 ms p50 and 56 to 58 ms p95 figures are on an 8 vCPU desktop CPU. On the shared 1 GB VM the fast profile measured p50 208 ms and p95 995 ms. With about 130 MB free next to the other services, part of the process gets paged out, and that drives the p95. The first check after a restart takes about 10 seconds while the model loads.</li>
 <li><strong>One synthetic company.</strong> The corpus and the eval pastes were generated with Claude for one fictional company. Real documents may land in a different similarity range.</li>
 <li><strong>Coverage.</strong> Chrome only, on two AI sites. Not desktop apps, Claude's own browser agent, mobile, or text typed in by hand.</li>
 </ul>
