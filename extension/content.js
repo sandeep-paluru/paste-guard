@@ -162,21 +162,49 @@
           (${esc(m.unit || "lines")} ${m.lines[0]}-${m.lines[1]}, ${m.method === "fingerprint" ? "word overlap" : "similarity"} ${m.similarity})</div>
         <blockquote>${esc(m.snippet || "")}</blockquote>
       </div>` : "";
+    const whyHtml = whyThisMatched(m);
     const isFile = title === "upload";
     box.innerHTML = `
       <div class="pg-title">Paste Guard: ${esc(v.verdict.toUpperCase())}${v.file ? " (" + esc(v.file.name) + ")" : ""}</div>
       <div class="pg-msg">${esc(v.message || "")}</div>
       ${matchHtml}
+      ${whyHtml}
       <ul>${items.join("")}</ul>
       <div class="pg-actions">
         <button id="pg-redact">${isFile ? "Copy redacted text" : "Paste redacted"}</button>
         ${v.verdict === "block" ? "" : `<button id="pg-anyway">${isFile ? "Upload anyway" : "Paste anyway"}</button>`}
         <button id="pg-cancel">Cancel</button>
       </div>`;
+    if (whyHtml) box.classList.add("pg-wide");
     document.body.appendChild(box);
     box.querySelector("#pg-cancel").onclick = () => { box.remove(); onCancel?.(); };
     box.querySelector("#pg-redact").onclick = () => { box.remove(); onRedacted(); };
     box.querySelector("#pg-anyway")?.addEventListener("click", () => { box.remove(); onAnyway(); });
+  }
+
+  // Escape text and wrap the [start, end] spans in <mark>. Spans index into the plain text.
+  function highlight(text, marks) {
+    text = String(text || "");
+    let out = "", pos = 0;
+    for (const [a, b] of [...(marks || [])].sort((x, y) => x[0] - y[0])) {
+      const s = Math.max(a, pos), e = Math.min(b, text.length);
+      if (!(e > s)) continue;
+      out += esc(text.slice(pos, s)) + "<mark>" + esc(text.slice(s, e)) + "</mark>";
+      pos = e;
+    }
+    return out + esc(text.slice(pos));
+  }
+
+  // Compact side-by-side "Your paste" vs "Source" rows (at most 3) from the hit's matches list.
+  function whyThisMatched(m) {
+    const rows = (m && Array.isArray(m.matches) ? m.matches : []).slice(0, 3);
+    if (!rows.length) return "";
+    const kinds = { ngram: "same phrase", tfidf: "same wording", semantic: "same meaning" };
+    return `<div class="pg-why"><div class="pg-why-head"><span>Your paste</span><span>Source: ${esc(m.source || m.path || "")}</span></div>` +
+      rows.map((r) => `<div class="pg-why-row" data-kind="${esc(r.kind)}">
+        <div class="pg-why-cell">${highlight(r.paste_text, r.paste_marks)}</div>
+        <div class="pg-why-cell">${highlight(r.source_text, r.source_marks)}</div>
+        <div class="pg-why-kind">${esc(kinds[r.kind] || r.kind)}</div></div>`).join("") + "</div>";
   }
 
   function esc(s) {

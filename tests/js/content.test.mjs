@@ -167,3 +167,33 @@ test("file picker: worst verdict across files wins and Cancel clears the input",
   ov.querySelector("#pg-cancel").click();
   assert.equal(input.value, "");
 });
+
+test("why-this-matched panel: side by side rows, marks highlighted, HTML escaped, max 3 rows", async () => {
+  const at = (t) => { const i = t.indexOf("the quick brown"); return [[i, i + 15]]; };
+  const row = (i, extra = {}) => { const pt = `<img src=x onerror=alert(${i})> the quick brown fox & more`, st = `<b>src</b> the quick brown fox ${i}`;
+    return { paste_span: [0, 5], paste_text: pt, paste_marks: at(pt), source_doc: "a.md", source_text: st, source_span: [0, 9],
+      source_marks: at(st), kind: "ngram", score: 0.9, ...extra }; };
+  const sm = { kind: "doc", path: "<i>memo.md</i>", source: "<i>memo.md</i>", lines: [1, 2], unit: "paragraphs", similarity: 0.8,
+    method: "fingerprint", snippet: "s", matches: [row(1), row(2), row(3, { kind: "semantic", paste_marks: [], source_marks: [] }), row(4)] };
+  const { w, ta } = setup(() => verdict("coach", { semantic_match: sm }));
+  paste(w, ta, LONG);
+  await tick();
+  const ov = w.document.getElementById("pg-overlay");
+  assert.equal(ov.querySelectorAll(".pg-why-row").length, 3);
+  assert.equal(ov.querySelector("img"), null);
+  assert.equal(ov.querySelector(".pg-why b"), null);
+  assert.equal(ov.querySelector(".pg-why-head").textContent, "Your pasteSource: <i>memo.md</i>");
+  const cells = ov.querySelectorAll(".pg-why-row")[0].querySelectorAll(".pg-why-cell");
+  assert.equal(cells[0].querySelector("mark").textContent, "the quick brown");
+  assert.equal(cells[1].querySelector("mark").textContent, "the quick brown");
+  assert.ok(cells[0].textContent.includes("<img src=x onerror=alert(1)>"));
+  assert.equal(ov.querySelectorAll(".pg-why-row")[2].querySelector("mark"), null);
+  assert.ok(ov.classList.contains("pg-wide"));
+});
+
+test("no matches list: overlay has no why-panel", async () => {
+  const { w, ta } = setup(() => verdict("coach", { semantic_match: { kind: "doc", path: "a.md", lines: [1, 2], similarity: 0.7, method: "embedding", snippet: "x" } }));
+  paste(w, ta, LONG);
+  await tick();
+  assert.equal(w.document.querySelector("#pg-overlay .pg-why"), null);
+});
