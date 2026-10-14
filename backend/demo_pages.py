@@ -91,7 +91,7 @@ def make_router(decide) -> APIRouter:
             n, hit = by_type.get(ex.get("eval_transform"), [0, 0])
             rows.append({
                 "id": ex["id"], "type": ex["type"], "text": ex["text"], "origin": ex["origin"], "expected": ex["expected"],
-                "regex": {"flagged": bool(reasons), "verdict": "flagged" if reasons else "missed", "reasons": reasons[:4],
+                "regex": {"flagged": bool(reasons), "verdict": "flagged" if reasons else ("allowed" if ex["expected"] == "benign" else "missed"), "reasons": reasons[:4],
                           "eval_flagged": hit, "eval_total": n},
                 "paste_guard": {"verdict": res["verdict"], "flagged": res["verdict"] in FLAGGED, "message": res["message"],
                                 "doc": (top or {}).get("path"), "method": (top or {}).get("method"),
