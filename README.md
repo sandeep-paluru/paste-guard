@@ -8,7 +8,22 @@ Stops confidential company documents, source code and secrets from being pasted 
 - **Code (second mode):** catches renamed and reformatted copies of functions from your repositories.
 - **Secrets:** cloud keys, API keys (Anthropic, OpenAI, GitHub, Google, Stripe, Slack, Hugging Face, GitLab, npm, SendGrid, Twilio, Azure, xAI and others), private keys and database URLs with a password are always blocked. JWTs and password assignments are coached.
 
-Each paste, file upload or drag-and-drop on a protected site gets a verdict: allow, nudge, coach or block. The overlay shows which document matched and the matching passage, and offers one-click redaction.
+Each paste, file upload or drag-and-drop on a protected site gets a verdict: allow, nudge, coach or block. The overlay shows which document matched and why: a side-by-side "Your paste" and "Source" panel with the matching phrases highlighted. It also offers one-click redaction.
+
+## Why this matched (0.7.0)
+Every flagged hit in the `/check` and `/check_file` response has a `matches` list of up to three sentence pairs, so a reviewer (or a screen recording) can see the evidence instead of a bare score:
+
+```
+{"paste_span": [start, end], "paste_text": "...", "paste_marks": [[a, b]],      # indexes into the paste / the snippet
+ "source_doc": "board-memo-acquisition-ferrolake.md", "source_text": "...", "source_span": [start, end],  # in the indexed passage
+ "source_marks": [[a, b]], "kind": "ngram" | "tfidf" | "semantic", "score": 0.0-1.0}
+```
+`ngram` pairs share exact or near-exact phrases (word 3-grams), `tfidf` pairs share vocabulary, and `semantic` pairs are the best sentence alignment by MiniLM cosine for rewrites that share neither (they have no highlighted phrases, because there is no shared phrase to show). Snippets are sentence level and at most 240 characters. This only runs for flagged pastes; a benign paste has `matches: []` on every hit and pays nothing. `PG_EXPLAIN_HITS=0` turns it off. Latency numbers, including that the p95 under 100 ms goal is not met on the 2 vCPU VM, are in `eval/benchmarks.md`.
+
+## Demo pages
+Served by the backend, offline, no CDNs and no API key (the same host and port as the API, `http://127.0.0.1:8765` by default):
+- `/demo/compare`: seven fixed example pastes (verbatim, paraphrase, partial excerpt, summary, code, secret, benign) through the regex and keyword baseline and through Paste Guard, with the matched document and latency. The header totals are read from `eval/bench_summary.json` and `eval/bench/fastpath.json` (regex recall 9.1% overall and 11.3% on documents, Paste Guard 94.6%). The examples were picked as the first of their type that regex misses and Paste Guard flags, and the page says so; the per-row note shows how often regex flags that type across the whole eval.
+- `/demo/redteam`: press Start and 37 adversarial rewrites of the confidential acquisition memo (paraphrase, summary, translation, bullets, synonym swaps, typos, homoglyphs, splitting and more) go through `/check` at about one per second, with a live caught, nudged and slipped counter. The rewrites were generated in advance by Claude (Anthropic) and are labelled synthetic in `demo/redteam/rewrites.json`. Some of them do slip through, and the page shows that.
 
 ## Run it (one command)
 Requirements: Linux or macOS with Python 3.10+ (or Docker), about 600 MB RAM.
@@ -91,9 +106,9 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 - The admin page is only served to local connections.
 
 ## Tests
-Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 84 pytest tests against the real model and index:
-14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, 45 secret format tests in `tests/test_secrets_formats.py` (fake keys are built at runtime, so no key-shaped literal is committed), and one test
-(`tests/test_extension_js.py`) that runs the 13 jsdom tests of the extension content script in `tests/js/content.test.mjs`. The JS tests need `node`; `npm install` runs
+Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 101 pytest tests against the real model and index:
+14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, 7 'why this matched' tests in `tests/test_explain.py`, 4 and 5 demo page tests in `tests/test_demo_compare.py` and `tests/test_demo_redteam.py`, 46 secret format tests in `tests/test_secrets_formats.py` (fake keys are built at runtime, so no key-shaped literal is committed), and one test
+(`tests/test_extension_js.py`) that runs the 16 jsdom tests of the extension content script in `tests/js/content.test.mjs`. The JS tests need `node`; `npm install` runs
 automatically in `tests/js` the first time. If node or npm is missing, those tests are skipped. `pytest.ini` limits
 collection to `tests/` and ignores `demo/`.
 

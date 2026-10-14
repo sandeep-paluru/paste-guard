@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 (2026-10-14)
+- **Why this matched.** Flagged hits in `/check` and `/check_file` carry a `matches` list: up to three sentence pairs with `paste_span`, `paste_text`, `source_doc`, `source_text`, `source_span`, highlight marks, `kind` (`ngram`, `tfidf` or `semantic`) and `score`. Phrase spans come from the existing 3-gram and TF-IDF overlap; rewrites that share neither get the best sentence alignment by MiniLM cosine, in one embedding batch with cached vectors and the window vectors the matcher already has. Benign pastes never pay for it. `PG_EXPLAIN_HITS=0` turns it off. New `backend/explain.py`.
+- Extension overlay: side-by-side "Your paste" and "Source" panel, at most three rows, 14 px text, matched phrases in `<mark>`, everything HTML escaped.
+- `/demo/compare`: regex baseline versus Paste Guard on seven fixed examples, with totals read from the eval result files. The baseline moved to `backend/regex_baseline.py` (`eval/baseline.py` re-exports it) so the server and the eval share one implementation.
+- `/demo/redteam`: 37 pre-generated adversarial rewrites of the acquisition memo (`demo/redteam/rewrites.json`, generated in advance by Claude, labelled synthetic) replayed through `/check` with a live counter. No API key or model call at runtime.
+- `eval/http_latency.py` also reports p50 and p95 for flagged pastes only. Dockerfile ships the demo data.
+- Latency, measured honestly: on the 2 vCPU, 0.9 GB VM, which was swapping heavily, flagged p95 was 290 ms in the calmest run and over 1 s in the worst, with and without the feature, so the goal of p95 under 100 ms for flagged pastes is not met there. The feature adds about 2 ms at p50 once sentence vectors are cached and 83 ms at p50 the first time a passage is explained. Details in `eval/benchmarks.md`.
+- Tests: 101 pytest tests (was 84), 16 jsdom tests (was 13). Version is 0.7.0 in `VERSION`, the extension manifest, `/health` and the compose image tag.
+
 ## 0.6.0 Windows follow-up (2026-10-14)
 - Secrets scanner: a specific credential rule now wins over the generic `password_assignment` rule when they overlap. Before, `api_key="sk-ant-..."` (the usual way a key appears in code) was reported as a password assignment and only coached; now it is `anthropic_key` and blocks. Same for OpenAI, AWS and other keys inside `password = '...'`. Test added.
 - `deploy/windows/setup.ps1` tested end to end on Windows 10 with Python 3.13.7, no admin: no winget, finds the per-user python.org Python and git outside PATH, autostarts via a Startup-folder shortcut instead of a Scheduled Task, and does not start a second server if port 8765 is taken.
