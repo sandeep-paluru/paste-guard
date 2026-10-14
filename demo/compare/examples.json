@@ -1,0 +1,61 @@
+{
+ "note": "Fixed examples taken from eval/data and demo/company-docs. Each was picked as the first of its type that the regex baseline misses and Paste Guard flags, except Secret and Benign.",
+ "examples": [
+  {
+   "type": "Verbatim",
+   "text": "Competitive positioning. Against Varnetta, lead with total cost of ownership; their list price is 15 percent lower but they charge separately for connectors. Against Kestrova, we are 20 to 25 percent more expensive and should only discount aggressively when the deal includes the streaming add on. Do not mention Kestrova's recent outage in writing.",
+   "expected": "confidential",
+   "origin": "eval/data/doc_pastes.jsonl doc-0019 (source: pricing-sheet-2027.txt)",
+   "id": "ex1",
+   "eval_transform": "verbatim"
+  },
+  {
+   "type": "Paraphrase",
+   "text": "For 2027 the Team tier is 54 per seat monthly on annual billing with a 10 seat minimum, Business is 118, and Enterprise is a 96k platform fee plus 142 per seat.",
+   "expected": "confidential",
+   "origin": "eval/data/doc_pastes.jsonl doc-0030 (source: pricing-sheet-2027.txt)",
+   "id": "ex2",
+   "eval_transform": "paraphrase"
+  },
+  {
+   "type": "Partial excerpt",
+   "text": "Fairbanks asked why not just partner with Ferrolake. Dana: partnership means they remain acquirable by Varnetta, and their runway is 7 months.",
+   "expected": "confidential",
+   "origin": "eval/data/doc_pastes.jsonl doc-0210 (source: board-deck-notes-q3-2026.md)",
+   "id": "ex3",
+   "eval_transform": "partial_excerpt"
+  },
+  {
+   "type": "Summary",
+   "text": "Key takeaways: Cedarpoint is the biggest churn risk (offered 14% off for 3 years), Tallis Freight owes 238k and may get non prod workspaces suspended Nov 15, and Harborline plus Velmont could add around 1.35M in expansion.",
+   "expected": "confidential",
+   "origin": "eval/data/doc_pastes.jsonl doc-0049 (source: customer-list-contract-values.md)",
+   "id": "ex4",
+   "eval_transform": "summary"
+  },
+  {
+   "type": "Code, renamed and reformatted",
+   "text": "def do_validate_x(self, v1_si: str | bytes, v0_ma: int | None=None) -> bool:\n\t\"\"\"Only validates the given signed value. Returns ``True`` if\n\t\tthe signature exists and is valid.\"\"\"\n\ttry:\n\t\tself.unsign(v1_si, max_age=v0_ma)\n\t\treturn True\n\texcept BadSignature:\n\t\treturn False",
+   "expected": "confidential",
+   "origin": "eval/data/code_pastes.jsonl code-0043 (source: src/itsdangerous/timed.py)",
+   "id": "ex5",
+   "eval_transform": "rename+reformat"
+  },
+  {
+   "type": "Secret",
+   "text": "import boto3\nclient = boto3.client(\"s3\", aws_access_key_id=\"AKIAIOSFODNN7EXAMPLE\")\nprint(client.list_buckets())",
+   "expected": "confidential",
+   "origin": "synthetic (AWS documentation example key)",
+   "id": "ex6",
+   "eval_transform": null
+  },
+  {
+   "type": "Benign",
+   "text": "A proof of concept should have clear success criteria agreed in advance, a fixed timeline, and a limited scope to avoid endless evaluations.",
+   "expected": "benign",
+   "origin": "eval/data/doc_pastes.jsonl doc-0305 (public text)",
+   "id": "ex7",
+   "eval_transform": null
+  }
+ ]
+}

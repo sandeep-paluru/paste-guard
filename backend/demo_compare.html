@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Regex vs Paste Guard</title>
+<style>
+:root { --ink:#16202e; --mute:#5b6779; --line:#dde3ec; --bg:#f4f6fa; --card:#fff; --ok:#1f7a45; --okbg:#e4f4ea; --bad:#b3261e; --badbg:#fbe7e5; --warn:#a15c00; --warnbg:#fff1d6; --acc:#2554d6; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+main { max-width:1180px; margin:0 auto; padding:28px 20px 48px; }
+h1 { font-size:30px; margin:0 0 4px; letter-spacing:-.01em; }
+.sub { color:var(--mute); margin:0 0 22px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-bottom:26px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+.card .lab { color:var(--mute); font-size:14px; }
+.card .big { font-size:44px; font-weight:750; line-height:1.1; margin:4px 0; font-variant-numeric:tabular-nums; }
+.card.regex .big { color:var(--bad); } .card.pg .big { color:var(--ok); }
+.card .small { color:var(--mute); font-size:13px; }
+table { width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+th, td { text-align:left; vertical-align:top; padding:14px 16px; border-bottom:1px solid var(--line); }
+th { background:#eef1f7; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); }
+tr:last-child td { border-bottom:0; }
+td.type { font-weight:650; white-space:nowrap; }
+td.snip { max-width:420px; }
+.snip pre { margin:0; white-space:pre-wrap; word-break:break-word; font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; color:#2b3647; }
+.origin { color:var(--mute); font-size:12px; margin-top:6px; }
+.pill { display:inline-block; padding:3px 11px; border-radius:999px; font-weight:700; font-size:14px; }
+.pill.ok { background:var(--okbg); color:var(--ok); } .pill.bad { background:var(--badbg); color:var(--bad); } .pill.warn { background:var(--warnbg); color:var(--warn); }
+.detail { color:var(--mute); font-size:13px; margin-top:6px; overflow-wrap:anywhere; }
+.ms { font-variant-numeric:tabular-nums; }
+footer { color:var(--mute); font-size:13px; margin-top:18px; }
+#err { color:var(--bad); font-weight:600; }
+@media (max-width:760px) { td.snip { max-width:none; } th:nth-child(2), td.snip { display:none; } }
+</style></head>
+<body><main>
+<h1>Regex vs Paste Guard</h1>
+<p class="sub">The same pastes through a regex and keyword DLP rule set and through Paste Guard. Live, running on this machine, nothing leaves it.</p>
+<div id="err"></div>
+<div class="cards" id="cards"></div>
+<table><thead><tr><th>Example</th><th>Snippet</th><th>Regex baseline</th><th>Paste Guard</th></tr></thead><tbody id="rows"><tr><td colspan="4">Running the examples...</td></tr></tbody></table>
+<footer id="foot"></footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+const pct = (x) => (x * 100).toFixed(1) + "%";
+
+function card(cls, lab, big, small) {
+  const c = el("div", "card " + cls);
+  c.append(el("div", "lab", lab), el("div", "big", big), el("div", "small", small));
+  return c;
+}
+
+function pill(verdict, flagged, expectedBenign) {
+  const good = expectedBenign ? !flagged : flagged;
+  return el("span", "pill " + (good ? "ok" : (flagged ? "warn" : "bad")), verdict);
+}
+
+function render(d) {
+  const t = d.totals;
+  $("cards").replaceChildren();
+  if (t) {
+    $("cards").append(
+      card("regex", "Regex and keyword DLP: recall", pct(t.regex.recall),
+        `${t.positives} confidential pastes. Documents ${pct(t.regex.doc_recall)}, code ${pct(t.regex.code_recall)}. False alarms ${pct(t.regex.fpr)}.`),
+      card("pg", "Paste Guard: recall", pct(t.paste_guard.recall),
+        `Same ${t.positives} pastes, ${t.pastes} in total with the clean ones. False alarms ${pct(t.paste_guard.fpr)}. In-process p50 ${t.paste_guard.p50_ms.toFixed(1)} ms, p95 ${t.paste_guard.p95_ms.toFixed(1)} ms.`));
+  }
+  const body = $("rows"); body.replaceChildren();
+  for (const r of d.examples) {
+    const tr = el("tr");
+    tr.append(el("td", "type", r.type));
+    const sn = el("td", "snip"), pre = el("pre", "", r.text.length > 260 ? r.text.slice(0, 260) + " ..." : r.text);
+    sn.append(pre, el("div", "origin", r.origin)); tr.append(sn);
+    const rx = el("td"), benign = r.expected === "benign";
+    rx.append(pill(r.regex.verdict, r.regex.flagged, benign));
+    if (r.regex.reasons.length) rx.append(el("div", "detail", r.regex.reasons.join(", ")));
+    if (r.regex.eval_total) rx.append(el("div", "detail", `Flags ${r.regex.eval_flagged} of ${r.regex.eval_total} pastes of this type in the eval.`));
+    tr.append(rx);
+    const pg = el("td"), p = r.paste_guard;
+    pg.append(pill(p.verdict, p.flagged, benign));
+    const bits = [];
+    if (p.doc) bits.push("Matched " + p.doc + (p.similarity != null ? ` (${p.method}, ${p.similarity})` : ""));
+    if (p.secrets.length) bits.push("Found " + p.secrets.join(", "));
+    bits.push(p.ms + " ms");
+    pg.append(el("div", "detail ms", bits.join(". ")));
+    tr.append(pg); body.append(tr);
+  }
+  $("foot").textContent = (d.note || "") + " Totals come from eval/bench_summary.json and eval/bench/fastpath.json. Paste Guard " + d.version + ".";
+}
+
+fetch("/demo/compare/api").then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))).then(render)
+  .catch((e) => { $("err").textContent = "Could not load the comparison: " + e.message; $("rows").replaceChildren(); });
+</script></body></html>

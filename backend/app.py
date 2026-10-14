@@ -21,6 +21,7 @@ from audit import Audit
 from config import CONFIG, CONFIG_PATH, VERSION
 from chunking import UPLOAD_EXT, NotText, clean, extract_text, line_spans, normalise, prose_spans
 from index import Index
+from demo_pages import make_router
 
 
 THRESHOLDS = CONFIG["thresholds"]  # embedding cosine bands per kind; see eval/results.md and eval/benchmarks.md
@@ -62,6 +63,9 @@ ADMIN_HTML = (Path(__file__).with_name("admin.html")).read_text()
 class CheckIn(BaseModel):
     text: str = Field(max_length=MAX_CHARS)
     source: str | None = None
+
+
+app.include_router(make_router(lambda text: decide(text)))  # /demo/compare and /demo/redteam
 
 
 @app.get("/health")
