@@ -199,3 +199,18 @@ The VM tail is memory pressure and swap, not the model.
 Cold start (first `/check` after a restart, with the 0.6.0 warm-up at startup): box 1.29 s to 0.024 s, with startup itself going from 0.45 s to 1.75 s; VM about 8.5 s to 0.18 s, with an 18 s warm-up at startup.
 
 Rejected: int8 dynamic quantization of MiniLM. The model went from 90.4 MB to 22.9 MB and 6.6 ms to 3.9 ms per text, but cosine to the fp32 vectors averaged 0.952 and fell to 0.888 on 120 doc pastes, more than the gap between the coach and block bands. fp32 stays.
+
+## "Why this matched" evidence (0.7.0)
+
+Flagged hits in `/check` and `/check_file` now carry up to three sentence pairs (`backend/explain.py`). Benign pastes skip it entirely. Pairs come from shared word 3-gram runs first, then shared content words (TF-IDF hits), then MiniLM sentence alignment only when fewer than two pairs were found. The semantic step runs for the top flagged hit that needs it, embeds at most 3 paste sentences and 4 source sentences (picked by vocabulary overlap) in one batch, reuses the window vectors the matcher already computed, and caches sentence vectors. Verbatim and partial pastes never touch MiniLM here.
+
+Measured on the Techvista VM (2 vCPU, 0.9 GB RAM, shared, swapping heavily during these runs: iowait up to 67%). `eval/http_latency.py`, 150 real `/check` calls over HTTP, 107 of them flagged (coach or block), three consecutive runs per mode against a private server on port 8777 (`eval/bench/vm_latency_0.7.json`):
+
+| Mode | Flagged p50 (3 runs) | Flagged p95 (3 runs) |
+|---|---|---|
+| With "why this matched" | 94.0 / 94.9 / 91.3 ms | 1215.7 / 594.2 / 289.7 ms |
+| Without (`PG_EXPLAIN_HITS=0`) | 103.0 / 86.7 / 92.7 ms | 986.5 / 291.8 / 521.6 ms |
+
+In-process cost of the feature on the same flagged pastes (explain on minus explain off, same paste back to back): first time a source passage is explained, p50 +83 ms and p95 +1623 ms; once the sentence vectors are cached, p50 +2 ms and p95 +88 ms.
+
+What this does and does not show: **the p95 < 100 ms goal for flagged pastes is not met on this VM, with or without the feature.** Flagged p95 here is 290 ms in the calmest run and over 1 s when the box swaps, because a single MiniLM call costs about 100 ms on this machine while it is under memory pressure; the 0.6.0 VM run (p95 397 ms over all pastes) was already above 100 ms. The feature's own overhead is within the run to run noise on p50 (about 2 ms warm), and it is the cold sentence embedding that produces the tail. I did not re-measure on the 8 CPU box, so I make no claim about p95 there.

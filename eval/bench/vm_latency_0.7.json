@@ -1,0 +1,59 @@
+{
+ "version": "0.7.0",
+ "host": "techvista-vm",
+ "cpus": 2,
+ "ram": "0.9 GB, shared, swapping",
+ "n": 150,
+ "flagged_n": 107,
+ "http_explain_on": [
+  {
+   "p50": 98.6,
+   "p95": 1381.0,
+   "flagged_p50": 94.0,
+   "flagged_p95": 1215.7
+  },
+  {
+   "p50": 103.8,
+   "p95": 713.4,
+   "flagged_p50": 94.9,
+   "flagged_p95": 594.2
+  },
+  {
+   "p50": 94.4,
+   "p95": 405.3,
+   "flagged_p50": 91.3,
+   "flagged_p95": 289.7
+  }
+ ],
+ "http_explain_off": [
+  {
+   "p50": 117.4,
+   "p95": 1004.6,
+   "flagged_p50": 103.0,
+   "flagged_p95": 986.5
+  },
+  {
+   "p50": 88.7,
+   "p95": 375.9,
+   "flagged_p50": 86.7,
+   "flagged_p95": 291.8
+  },
+  {
+   "p50": 97.5,
+   "p95": 613.5,
+   "flagged_p50": 92.7,
+   "flagged_p95": 521.6
+  }
+ ],
+ "in_process_flagged_delta_ms": {
+  "cold_first_explain": {
+   "p50": 83,
+   "p95": 1623
+  },
+  "warm_vector_cache": {
+   "p50": 2,
+   "p95": 88
+  }
+ },
+ "note": "three consecutive runs per mode against a private uvicorn on port 8777, PG_EXPLAIN_HITS=3 vs 0, PG_THREADS default 2. The box was swapping (iowait up to 67%), so tails are noisy."
+}
