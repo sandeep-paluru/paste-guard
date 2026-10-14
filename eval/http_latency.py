@@ -22,12 +22,15 @@ def call(t):
     req = urllib.request.Request(a.url + "/check", data=json.dumps({"text": t, "source": "benchmark"}).encode(),
                                  headers={"Content-Type": "application/json"})
     t0 = time.time()
-    urllib.request.urlopen(req, timeout=60).read()
-    return (time.time() - t0) * 1000
+    verdict = json.loads(urllib.request.urlopen(req, timeout=60).read())["verdict"]
+    return (time.time() - t0) * 1000, verdict
 
 
 call("warm up")
-lat = sorted(call(t) for t in texts)
+runs = [call(t) for t in texts]
+lat = sorted(ms for ms, _ in runs)
+flagged = sorted(ms for ms, v in runs if v in ("coach", "block"))  # these also pay for the "why this matched" pairs
+pct = lambda xs, q: xs[int(q * (len(xs) - 1))] if xs else None  # noqa: E731
 rss, ram = 0, "?"
 try:  # Linux: server RSS and total RAM from /proc
     pid = subprocess.run(["pgrep", "-f", "port 8765|pasteguard serve|uvicorn app:app"], capture_output=True, text=True).stdout.split()
@@ -40,7 +43,8 @@ try:  # Linux: server RSS and total RAM from /proc
 except Exception:  # Windows/macOS: no pgrep or /proc; report latency only
     pass
 res = {"host": platform.node(), "cpus": os.cpu_count(), "ram": ram, "n": len(lat),
-       "p50": statistics.median(lat), "p95": lat[int(0.95 * (len(lat) - 1))], "mean": statistics.mean(lat), "rss_mb": rss}
+       "p50": statistics.median(lat), "p95": pct(lat, 0.95), "mean": statistics.mean(lat), "rss_mb": rss,
+       "flagged_n": len(flagged), "flagged_p50": pct(flagged, 0.5), "flagged_p95": pct(flagged, 0.95)}
 print(json.dumps(res))
 if a.out:
     Path(a.out).write_text(json.dumps(res))
