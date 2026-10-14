@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 (2026-10-14)
+- Two-step fast path in `semantic()` (`backend/app.py`). Step 1 runs 3-gram containment and TF-IDF on every window, which takes a few ms. MiniLM is skipped when a cheap check already reaches block (the embedding cannot raise the verdict past block), or when the best TF-IDF score against any indexed passage is below 0.10. Config: `[fast_path] enabled = true, skip_below = 0.10`. `PG_FAST_PATH=0` turns it off. The idea comes from the two-stage design of Google DeepMind's on-device Gemma scam detector (October 2026): a cheap classifier first, the heavier model only when needed.
+- Measured with the new `eval/fastpath_eval.py` on all 472 eval pastes, fast path off and on, deployed thresholds, flagged = coach or block. Recall 0.946 and false alarm rate 2.5% both ways. In-process p50 11.0 ms to 3.6 ms, p95 70.1 ms to 21.9 ms. MiniLM skipped on 58.5% of the eval pastes. One verdict changed out of 472: a negative went from nudge to allow. Results in `eval/bench/fastpath.json`, chart `eval/bench_fastpath.png`.
+- HTTP latency of real `/check` calls (`eval/http_latency.py`). This box (8 CPU): p50 19.1 ms to 7.3 ms, p95 56.1 ms to 22.5 ms. Techvista VM (2 CPU, 0.9 GB, shared, PG_THREADS=1): p50 130.6 ms to 84.0 ms, p95 801.9 ms to 397.2 ms. The VM tail is memory pressure and swap, not the model.
+- Cold start: the backend loads the model and runs one warm-up check at startup (`PG_NO_WARMUP=1` skips it). First `/check` after a restart: 1.29 s to 0.024 s on this box (startup itself 0.45 s to 1.75 s), about 8.5 s to 0.18 s on the VM (warm-up takes 18 s at startup there). `/health` now shows the fast path settings and counters, and `warmup_ms`.
+- Secrets scanner: new rules for Anthropic keys (`sk-ant-api03-`, `sk-ant-admin01-`, any `sk-ant-<name><2 digits>-`), OpenAI `sk-proj-`, `sk-svcacct-` and `sk-admin-` (`openai_key` no longer matches Anthropic keys), GitHub fine-grained tokens (`github_pat_`), AWS temporary keys (`ASIA`), Google API keys (`AIza`) and OAuth client secrets (`GOCSPX-`), Stripe `sk_` and `rk_` live and test keys, Slack webhooks, JWTs, Hugging Face (`hf_`), GitLab (`glpat-`), npm (`npm_`), SendGrid, Twilio (`SK`), Azure storage `AccountKey=`, xAI (`xai-`) and database URLs with an inline password. Overlapping matches keep only the longest span. All new credential types are hard blocks, except JWTs and password assignments, which coach.
+- Tests: `tests/test_secrets_formats.py` builds its fake keys at runtime, so no key-shaped literal is committed. Plain `pytest` at the repo root now runs 84 tests (was 39).
+- Tried and rejected: int8 dynamic quantization of MiniLM. See `docs/OPTIMIZATION_LOG.md`. The model stays fp32.
+- Version is 0.6.0 in `VERSION`, the extension manifest and `/health`.
+
 ## 0.5.1 (2026-10-14)
 - The accurate profile (MiniLM OR word 3-gram OR TF-IDF for documents) is now the default. The previous setup stays available as `profile = "fast"`. `"default"` is accepted as an alias for `accurate`.
 - Unicode cleanup before matching: zero-width characters are stripped, text is NFKC normalized, and common Cyrillic and Greek look-alike letters are mapped to Latin.

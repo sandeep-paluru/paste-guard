@@ -6,7 +6,7 @@ Everything on this page was produced by `eval/bench_all.sh` (scoring in `eval/be
 
 **In-sample** = threshold tuned and scored on all samples (best F1 with false positive rate at most 3%). **Held-out** = 2-fold split by source document: thresholds tuned on pastes from 9 documents (code: half the source files) and scored on pastes from the other 9, then swapped. Negatives are split between folds by id. Held-out is the honest estimate of how the tuned thresholds carry over to documents they were never tuned on.
 
-Charts: `bench_f1.png` (F1 in-sample vs held-out), `bench_transforms.png` (recall by transform), `bench_speed.png` (accuracy vs latency and RAM). Decisions taken from these numbers are in `docs/OPTIMIZATION_LOG.md`.
+Charts: `bench_f1.png` (F1 in-sample vs held-out), `bench_transforms.png` (recall by transform), `bench_speed.png` (accuracy vs latency and RAM), `bench_fastpath.png` (fast path off vs on, 0.6.0). Decisions taken from these numbers are in `docs/OPTIMIZATION_LOG.md`.
 
 ## Documents: accuracy
 
@@ -170,3 +170,32 @@ Hard requirement: full check p95 under 100 ms on a normal CPU, false alarms at m
 | Hybrid: gte-large OR 3-gram OR TF-IDF | 0.971 | 0.95 | 0.99 | 2.8% | 0.72 | 0.78 | 213 ms | 1343 ms | no |
 
 Accurate profile (MiniLM OR 3-gram OR TF-IDF), 120 real `/check` calls over HTTP on this box (8 vCPU, PG_THREADS=2): p50 19 ms, p95 56 ms, backend RSS 379 MB.
+
+## Two-step fast path (0.6.0)
+
+Produced by `eval/fastpath_eval.py`, which runs `app.decide()` on all 472 eval pastes with the fast path off and on (`eval/bench/fastpath.json`). Deployed thresholds, flagged = coach or block verdict. Timings are in-process backend logic on this box (8 cores). The fast path runs 3-gram containment and TF-IDF first and skips MiniLM when a cheap check already reaches block, or when the best TF-IDF score against any indexed passage is below 0.10 (`[fast_path] skip_below`, `PG_FAST_PATH=0` turns it off). 0.10 was chosen because no positive with a MiniLM score of 0.60 or more has TF-IDF below 0.12, in either held-out fold.
+
+| Set | Recall off | Recall on | False alarms off | False alarms on | p50 off | p50 on | p95 off | p95 on |
+|---|---|---|---|---|---|---|---|---|
+| All 472 pastes | 0.946 | 0.946 | 2.5% | 2.5% | 11.0 ms | 3.6 ms | 70.1 ms | 21.9 ms |
+| Documents | 0.933 | 0.933 | 1.4% | 1.4% | 9.8 ms | 3.3 ms | 44.0 ms | 16.2 ms |
+| Code | 1.00 | 1.00 | 4% (2 of 50) | 4% (2 of 50) | 17.6 ms | 5.2 ms | 132.3 ms | 46.7 ms |
+
+MiniLM was skipped on 58.5% of the eval pastes. One verdict changed out of 472: a negative went from nudge to allow (nudge is not a flag). Per held-out fold, recall and false alarm rate are identical off and on: document fold A recall 0.939, FPR 0.0; fold B recall 0.927, FPR 2.7%. The code false alarm rate of 4% is unchanged from 0.5.1 and is a known limit.
+
+![Fast path off vs on: latency and accuracy](bench_fastpath.png)
+
+The eval set is mostly near-matches, so in daily use, where most pastes are unrelated text, the skip rate should be higher. I did not measure that.
+
+Real `/check` calls over HTTP (`eval/http_latency.py`):
+
+| Machine | 0.5.1 p50 | 0.5.1 p95 | 0.6.0 p50 | 0.6.0 p95 | File |
+|---|---|---|---|---|---|
+| This box (8 CPU, 15.6 GB) | 19.1 ms | 56.1 ms | 7.3 ms | 22.5 ms | `eval/bench/box_latency_0.6.json` |
+| Techvista VM (2 CPU, 0.9 GB RAM, shared, PG_THREADS=1) | 130.6 ms | 801.9 ms | 84.0 ms | 397.2 ms | `eval/bench/vm_latency_0.6.json` |
+
+The VM tail is memory pressure and swap, not the model.
+
+Cold start (first `/check` after a restart, with the 0.6.0 warm-up at startup): box 1.29 s to 0.024 s, with startup itself going from 0.45 s to 1.75 s; VM about 8.5 s to 0.18 s, with an 18 s warm-up at startup.
+
+Rejected: int8 dynamic quantization of MiniLM. The model went from 90.4 MB to 22.9 MB and 6.6 ms to 3.9 ms per text, but cosine to the fp32 vectors averaged 0.952 and fell to 0.888 on 120 doc pastes, more than the gap between the coach and block bands. fp32 stays.

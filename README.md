@@ -6,7 +6,7 @@ Stops confidential company documents, source code and secrets from being pasted 
 
 - **Documents (primary):** board memos, contracts, pricing, HR and legal docs. Catches verbatim copies and also paraphrases, excerpts and summaries that keyword rules miss.
 - **Code (second mode):** catches renamed and reformatted copies of functions from your repositories.
-- **Secrets:** cloud keys, tokens, private keys and password assignments are always blocked or redacted.
+- **Secrets:** cloud keys, API keys (Anthropic, OpenAI, GitHub, Google, Stripe, Slack, Hugging Face, GitLab, npm, SendGrid, Twilio, Azure, xAI and others), private keys and database URLs with a password are always blocked. JWTs and password assignments are coached.
 
 Each paste, file upload or drag-and-drop on a protected site gets a verdict: allow, nudge, coach or block. The overlay shows which document matched and the matching passage, and offers one-click redaction.
 
@@ -31,8 +31,9 @@ Requirements: Linux or macOS with Python 3.10+ (or Docker), about 600 MB RAM.
 | `[thresholds.doc]`, `[thresholds.code]` | `nudge`, `coach`, `block` | Cosine similarity levels per content kind |
 | `[sites]` | `allowed` | AI sites to protect |
 | `[audit]` | `db`, `keep_days` | Verdict log for the admin page |
+| `[fast_path]` | `enabled`, `skip_below` | Two-step fast path (default on, `skip_below = 0.10`), see Fast path |
 
-Environment variables override thresholds (`PG_T_DOC_COACH`, `PG_T_CODE_BLOCK`, and so on).
+Environment variables override thresholds (`PG_T_DOC_COACH`, `PG_T_CODE_BLOCK`, and so on). `PG_FAST_PATH=0` turns the fast path off. `PG_NO_WARMUP=1` skips the model warm-up at startup.
 
 ## Commands
 ```
@@ -53,6 +54,7 @@ Open `http://127.0.0.1:8765/admin` on the backend machine (or through an SSH tun
  overlay: allow, nudge, coach, block  <-  windows of the paste embedded (all-MiniLM-L6-v2, ONNX, CPU)
  matched passage + source document        nearest passages in sqlite-vec (docs + code)
                                           + word 3-gram overlap with each passage
+                                          (3-gram and TF-IDF run first; MiniLM only if needed)
  one-click redaction that keeps            per-kind bands -> verdict, matches, redacted text
  headings and signatures
 ```
@@ -80,8 +82,8 @@ match names the right source document 98% of the time.
 
 Model benchmark (`eval/benchmarks.md`, charts `eval/bench_*.png`): MiniLM, bge-small, bge-base, jina code, nomic,
 TF-IDF, 3-gram containment and MinHash on the same data, with latency and RAM. MiniLM plus the 3-gram fingerprint was
-kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. Latency over HTTP: p50 16 ms on an
-8 vCPU machine, p50 208 ms on the 2 vCPU, 1 GB Techvista VM. How we got here, with numbers: `docs/OPTIMIZATION_LOG.md`.
+kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. Latency over HTTP in 0.5.1: p50 16 ms on an
+8 vCPU machine, p50 208 ms on the 2 vCPU, 1 GB Techvista VM. Since 0.6.0 see Fast path below. How we got here, with numbers: `docs/OPTIMIZATION_LOG.md`.
 
 ## Privacy
 - Paste text is processed in memory and never written to disk.
@@ -89,8 +91,8 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 - The admin page is only served to local connections.
 
 ## Tests
-Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 39 pytest tests against the real model and index:
-14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, and one test
+Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 84 pytest tests against the real model and index:
+14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, 45 secret format tests in `tests/test_secrets_formats.py` (fake keys are built at runtime, so no key-shaped literal is committed), and one test
 (`tests/test_extension_js.py`) that runs the 13 jsdom tests of the extension content script in `tests/js/content.test.mjs`. The JS tests need `node`; `npm install` runs
 automatically in `tests/js` the first time. If node or npm is missing, those tests are skipped. `pytest.ini` limits
 collection to `tests/` and ignores `demo/`.
@@ -110,9 +112,19 @@ collection to `tests/` and ignores `demo/`.
 ## Profiles
 
 `profile = "accurate"` is the default: MiniLM OR 3-gram OR TF-IDF for documents. Held-out document F1 0.97, recall 0.94,
-false alarms 2.8%, /check p95 56 ms on a desktop CPU. On the 1 GB Techvista VM a short document paste check takes about
+false alarms 2.8%, /check p95 56 ms on a desktop CPU in 0.5.1 (22.5 ms in 0.6.0 with the fast path). On the 1 GB Techvista VM a short document paste check takes about
 0.10 s end to end and the service uses about 370 MB of RAM.
 
 `profile = "fast"` (or `PG_PROFILE=fast`) is the previous setup, MiniLM OR 3-gram without TF-IDF: held-out document
 F1 0.94, recall 0.90, false alarms 2.8%. `"default"` is accepted as an alias for `accurate`.
 Windows setup: `deploy/windows/`. Numbers: `eval/benchmarks.md`, reasoning: `docs/OPTIMIZATION_LOG.md`.
+
+## Fast path (0.6.0)
+
+Step 1 runs word 3-gram containment and TF-IDF on every window, which takes a few ms. The MiniLM embedding is skipped when a cheap check already reaches block (the embedding cannot raise the verdict past block, so the outcome is the same), or when the best TF-IDF score against any indexed passage is below 0.10 (almost no shared vocabulary). I took the idea from Google DeepMind's on-device Gemma scam detector: cheap classifier first, the heavier model only when needed. The model is still pretrained all-MiniLM-L6-v2 used zero-shot; only thresholds are tuned.
+
+Measured on all 472 eval pastes with `eval/fastpath_eval.py` (deployed thresholds, flagged = coach or block): recall 0.946 and false alarm rate 2.5% with the fast path off and on. In-process p50 11.0 ms to 3.6 ms, p95 70.1 ms to 21.9 ms. MiniLM was skipped on 58.5% of the eval pastes. One verdict changed out of 472, a negative that went from nudge to allow. The eval set is mostly near-matches, so in daily use, where most pastes are unrelated text, the skip rate should be higher. I did not measure that.
+
+Real `/check` calls over HTTP: on an 8 CPU box p50 19.1 ms to 7.3 ms and p95 56.1 ms to 22.5 ms. On the 2 CPU, 0.9 GB Techvista VM (shared, PG_THREADS=1) p50 130.6 ms to 84.0 ms and p95 801.9 ms to 397.2 ms. The VM tail comes from memory pressure and swap, not the model; on a normal laptop it meets p95 under 100 ms.
+
+The backend now loads the model and runs one warm-up check at startup. The first `/check` after a restart went from 1.29 s to 0.024 s on the box (startup itself 0.45 s to 1.75 s) and from about 8.5 s to 0.18 s on the VM. `/health` shows the fast path settings and counters and `warmup_ms`.

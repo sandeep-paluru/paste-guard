@@ -2,7 +2,7 @@
 
 <p class="subtitle">Checking what gets pasted into AI chat tools against a company's own documents and code</p>
 
-<p class="meta">Sandeep Paluru, for Eric McIntyre (VP of Technology, Sidekick Labs)<br>13 October 2026. Version 0.5.1. Repo: github.com/sandeep-paluru/paste-guard</p>
+<p class="meta">Sandeep Paluru, for Eric McIntyre (VP of Technology, Sidekick Labs)<br>14 October 2026. Version 0.6.0. Repo: github.com/sandeep-paluru/paste-guard</p>
 
 <div class="note">Paste Guard is a proof of concept I built to show how I work on a problem like this. It is not a product, and the company in it, Calloway Metrics, is fictional.</div>
 
@@ -12,16 +12,16 @@ Paste Guard is a Chrome extension plus a small backend. When someone pastes text
 
 Nothing is trained. It uses a public pretrained embedding model (all-MiniLM-L6-v2) as-is, next to two cheap lexical checks. The only things I fitted to my data are the thresholds, and I report accuracy on documents the thresholds were never tuned on.
 
-| | Fast profile (previous default) | Accurate profile (default since v0.5.1) |
-|---|---|---|
-| Signals for documents | MiniLM OR word 3-gram | MiniLM OR word 3-gram OR TF-IDF |
-| Held-out document F1 | 0.943 | 0.966 |
-| Held-out recall / precision | 0.90 / 0.99 | 0.94 / 0.99 |
-| False alarms on document negatives | 2.8% | 2.8% (2 of 72) |
-| Full /check request, p50 / p95 | 16 ms / 58 ms | 19 ms / 56 ms |
-| Regex and keyword baseline, document F1 | 0.20 | 0.20 |
+| | Fast profile (previous default) | Accurate profile (default since v0.5.1) | Accurate with two-step fast path (v0.6.0) |
+|---|---|---|---|
+| Signals for documents | MiniLM OR word 3-gram | MiniLM OR word 3-gram OR TF-IDF | same, MiniLM skipped when not needed |
+| Held-out document F1 | 0.943 | 0.966 | same thresholds, not re-tuned |
+| Held-out recall / precision | 0.90 / 0.99 | 0.94 / 0.99 | recall 0.946 on all 472 pastes, same as without |
+| False alarms on document negatives | 2.8% | 2.8% (2 of 72) | 2.5% on all 472 pastes, same as without |
+| Full /check request, p50 / p95 (8 CPU box) | 16 ms / 58 ms | 19 ms / 56 ms | 7 ms / 22 ms |
+| Regex and keyword baseline, document F1 | 0.20 | 0.20 | 0.20 |
 
-Latency figures are from my 8 vCPU machine. On the 1 GB VM the fast profile ran at p50 208 ms and p95 995 ms (more on that under limitations).
+Latency figures are from my 8 vCPU machine. On the 1 GB VM the fast profile ran at p50 208 ms and p95 995 ms. In 0.6.0 the accurate profile on the VM went from p50 131 ms and p95 802 ms to p50 84 ms and p95 397 ms (more on that under limitations).
 
 ## How the idea came about
 
@@ -47,8 +47,8 @@ That raised a question I wanted to answer properly: at the moment of the paste, 
 
 **Backend (FastAPI).** It runs on the same machine or a company server. For the demo it runs on a 2 vCPU, 1 GB Oracle VM that also hosts my existing Techvista services. Each check does the following:
 
-1. Secrets and marker scan. Cloud keys, tokens, private keys and password assignments are always blocked or redacted.
-2. The paste is cut into windows and each window is embedded with all-MiniLM-L6-v2 (ONNX on CPU through fastembed).
+1. Secrets and marker scan. Cloud keys, API keys for the common providers (Anthropic, OpenAI, GitHub, Google, Stripe, Slack, Hugging Face and others), private keys and database URLs with a password are always blocked. JWTs and password assignments are coached.
+2. The paste is cut into windows. Since 0.6.0, steps 4 and 5 run first and the embedding is skipped when it cannot change the verdict. Each window is otherwise embedded with all-MiniLM-L6-v2 (ONNX on CPU through fastembed).
 3. Nearest passages are found in a sqlite-vec index of documents and code.
 4. Word 3-gram containment is computed: the share of the window's 3-word sequences that appear in one indexed passage.
 5. In the accurate profile, a TF-IDF cosine check (word 1 and 2 grams) also runs for documents.
@@ -122,6 +122,16 @@ Held-out documents: **F1 0.966, recall 0.94, precision 0.99, false alarms 2.8% (
 
 ![Held-out recall by paste type for documents](../eval/bench_transforms.png)
 
+## The 0.6 fast path
+
+The accurate profile spends most of its time in the MiniLM embedding, and many pastes share almost no vocabulary with any indexed document. I took the idea from Google DeepMind's on-device Gemma scam detector (October 2026): run a cheap classifier first and the heavier model only when needed. In 0.6.0, 3-gram containment and TF-IDF run on every window first, which takes a few ms. MiniLM is skipped when a cheap check already reaches block (the embedding cannot raise the verdict past block, so the outcome is identical), or when the best TF-IDF score against any indexed passage is below 0.10. I picked 0.10 because on the eval no positive with a MiniLM score of 0.60 or more has TF-IDF below 0.12, in either held-out fold. `PG_FAST_PATH=0` turns it off.
+
+On all 472 eval pastes, with it off and on, recall is 0.946 and the false alarm rate 2.5% both ways. In-process p50 goes from 11.0 ms to 3.6 ms and p95 from 70.1 ms to 21.9 ms. MiniLM was skipped on 58.5% of the pastes. One verdict of 472 changed: a negative went from nudge to allow. Over HTTP on my 8 CPU machine p50 went from 19.1 ms to 7.3 ms and p95 from 56.1 ms to 22.5 ms. On the Techvista VM p50 went from 130.6 ms to 84.0 ms and p95 from 801.9 ms to 397.2 ms; the VM tail is memory pressure and swap, not the model. The eval set is mostly near-matches, so in daily use, where most pastes are unrelated text, the skip rate should be higher, but I did not measure that.
+
+![Fast path off vs on](../eval/bench_fastpath.png)
+
+Two smaller changes. The backend now loads the model and runs one warm-up check at startup, so the first check after a restart takes 0.024 s on my machine instead of 1.29 s, and about 0.18 s on the VM instead of about 8.5 s. And the secrets scanner covers many more credential formats, with 84 pytest tests in total now. I also tried int8 quantization of MiniLM and dropped it: the model shrank from 90 MB to 23 MB and ran about 3 ms faster per text, but the embeddings drifted (cosine to the fp32 vectors averaged 0.952, as low as 0.888), more than the gap between the coach and block bands. The fast path already saves more than that without touching the thresholds.
+
 ## How the numbers moved
 
 Every number in this section comes from a committed results file or the benchmark script, which can be re-run.
@@ -167,7 +177,7 @@ Drag-and-drop is implemented in the extension, but I have not checked it end to 
 
 - **Summaries are the weak spot.** Even the accurate profile catches 56% of summaries. A summary shares meaning with the source but few specific phrases, and that is the paste you described on our call.
 - **The negative set is small and easy.** There are 72 document negatives, so one false alarm moves the rate by 1.4 points. 2.8% against 4.2% is a one-sample difference. The negatives are also public text and public code, not same-topic internal text that is not confidential, so the false alarm rates are optimistic for a real company. The strong lexical results could partly be an effect of these easy negatives.
-- **Timing is from my machine.** The 16 to 19 ms p50 and 56 to 58 ms p95 figures are on an 8 vCPU desktop CPU. On the shared 1 GB VM the fast profile measured p50 208 ms and p95 995 ms. With about 130 MB free next to the other services, part of the process gets paged out, and that drives the p95. The first check after a restart takes about 10 seconds while the model loads.
+- **Timing is from my machine.** The 16 to 19 ms p50 and 56 to 58 ms p95 figures are on an 8 vCPU desktop CPU, and 7 ms and 22 ms with the 0.6 fast path. On the shared 1 GB VM the fast profile measured p50 208 ms and p95 995 ms, and the accurate profile with the fast path p50 84 ms and p95 397 ms. With about 130 MB free next to the other services, part of the process gets paged out, and that drives the p95; a normal laptop meets p95 under 100 ms. The model now loads and warms up at startup (18 s on the VM), so the first check after a restart takes about 0.18 s there instead of about 8.5 s.
 - **One synthetic company.** The corpus and the eval pastes were generated with Claude for one fictional company. Real documents may land in a different similarity range.
 - **Coverage.** Chrome only, on two AI sites. Not desktop apps, Claude's own browser agent, mobile, or text typed in by hand.
 
@@ -177,7 +187,7 @@ Drag-and-drop is implemented in the extension, but I have not checked it end to 
 2. Run it on a second corpus, ideally a design partner's redacted documents, and report recall at a fixed low false alarm rate.
 3. Work on summaries: a summary-level embedding of each document, and a small reranker or local LLM judge only on borderline scores, so the fast path stays fast.
 4. Test drag-and-drop end to end in both sites.
-5. Fix VM latency by giving the backend its own memory or a lighter process, then re-measure p95 there.
+5. Fix the rest of the VM tail by giving the backend its own memory, then re-measure p95 there. The fast path brought it from 802 ms to 397 ms, still over 100 ms.
 6. Use the identity context. The match score and source name can be one more signal for Sidekick's reasoning: personal account plus strong match is a block that offers the approved workspace, while a corporate account plus a weak match is a nudge.
 7. Scope the cases the extension cannot see (desktop apps, agentic browsers) as a separate feasibility question.
 

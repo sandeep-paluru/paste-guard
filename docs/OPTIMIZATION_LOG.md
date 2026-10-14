@@ -192,3 +192,42 @@ one-sample difference. Summaries remain the weak spot at 56%. The default profil
   to Latin. This closes an easy evasion (inserting invisible characters or swapping letters). It was added as a
   correctness fix and is covered by tests, not by the benchmark set.
 - The model is still pretrained all-MiniLM-L6-v2 used as is. Nothing was trained; only thresholds were tuned.
+
+## 0.6.0: two-step fast path (2026-10-14)
+
+Question: most of the time per check goes to the MiniLM embedding, but many pastes share almost no vocabulary with any indexed document. Can a cheap first step decide those without the model? The idea comes from Google DeepMind's on-device Gemma scam detector (October 2026), which runs a cheap classifier first and the heavier model only when needed.
+
+What changed (`semantic()` in `backend/app.py`, config `[fast_path] enabled = true, skip_below = 0.10`, `PG_FAST_PATH=0` turns it off):
+- Step 1 runs 3-gram containment and TF-IDF on every window, a few ms.
+- MiniLM is skipped when a cheap check already reaches block. The embedding cannot raise the verdict past block, so the outcome is identical.
+- MiniLM is also skipped when the best TF-IDF score against any indexed passage is below 0.10, meaning almost no shared vocabulary.
+- 0.10 was picked because on the eval no positive whose MiniLM score is at or above 0.60 has a TF-IDF score below 0.12, in either held-out fold. So 0.10 leaves a small margin below the lowest such positive.
+
+Measured with `eval/fastpath_eval.py`, which runs `app.decide()` on all 472 eval pastes with the fast path off and on (`eval/bench/fastpath.json`, chart `eval/bench_fastpath.png`). Flagged = coach or block verdict, deployed thresholds.
+
+| Set | Recall off / on | False alarm rate off / on | p50 off / on | p95 off / on |
+|---|---|---|---|---|
+| All 472 pastes | 0.946 / 0.946 | 2.5% / 2.5% | 11.0 / 3.6 ms | 70.1 / 21.9 ms |
+| Documents | 0.933 / 0.933 | 1.4% / 1.4% | 9.8 / 3.3 ms | 44.0 / 16.2 ms |
+| Code | 1.00 / 1.00 | 4% / 4% (2 of 50) | 17.6 / 5.2 ms | 132.3 / 46.7 ms |
+
+MiniLM was skipped on 58.5% of the eval pastes. Exactly one verdict changed out of 472: a negative went from nudge to allow, and nudge is not a flag. Per held-out fold, recall and false alarm rate are identical with the fast path off and on (document fold A recall 0.939, FPR 0.0; fold B recall 0.927, FPR 2.7%). The 4% code false alarm rate is the same as in 0.5.1 and remains a known limit. Timings are in-process backend logic on the 8 core box.
+
+Caveat: the eval set is mostly near-matches of confidential text. In daily use most pastes are unrelated text, so the skip rate should be higher. I did not measure that.
+
+HTTP latency of real `/check` calls (`eval/http_latency.py`):
+
+| Machine | 0.5.1 p50 / p95 | 0.6.0 p50 / p95 | File |
+|---|---|---|---|
+| This box (8 CPU, 15.6 GB) | 19.1 / 56.1 ms | 7.3 / 22.5 ms | `eval/bench/box_latency_0.6.json` |
+| Techvista VM (2 CPU, 0.9 GB, shared, PG_THREADS=1) | 130.6 / 801.9 ms | 84.0 / 397.2 ms | `eval/bench/vm_latency_0.6.json` |
+
+The VM tail is memory pressure and swap, not the model. On a normal laptop it meets the p95 under 100 ms rule.
+
+Cold start: the backend now loads the model and runs one warm-up check at startup (`PG_NO_WARMUP=1` skips it). The first `/check` after a restart went from 1.29 s to 0.024 s on the box, where startup itself grew from 0.45 s to 1.75 s. On the VM it went from about 8.5 s to 0.18 s, and the warm-up takes 18 s at startup there. `/health` now reports the fast path settings and counters and `warmup_ms`.
+
+Tried and rejected: int8 dynamic quantization of MiniLM (onnxruntime `quantize_dynamic`). The model shrank from 90.4 MB to 22.9 MB and a text took 3.9 ms instead of 6.6 ms, but the embeddings drifted. Cosine to the fp32 vectors averaged 0.952 and went as low as 0.888 on 120 doc pastes. That shift is larger than the gap between our coach and block bands, so every threshold would need re-tuning to save about 3 ms per text, which the fast path already beats. I kept fp32. Batching: the windows of a paste were already embedded in one batch (batch_size 16), so nothing changed there.
+
+Secrets scanner (not a latency change): new rules for Anthropic, OpenAI project, service account and admin keys, GitHub fine-grained tokens, AWS temporary keys, Google, Stripe, Slack webhooks, JWTs, Hugging Face, GitLab, npm, SendGrid, Twilio, Azure, xAI and database URLs with a password. Overlapping matches keep the longest span. The tests are in `tests/test_secrets_formats.py`; the total is now 84 pytest tests.
+
+The model is still pretrained all-MiniLM-L6-v2 used zero-shot. Nothing was trained; only thresholds were tuned.
