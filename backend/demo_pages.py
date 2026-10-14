@@ -25,7 +25,7 @@ FLAGGED = ("coach", "block")  # what the eval counts as caught
 
 def _load(path: Path, what: str):
     if not path.exists():
-        raise HTTPException(404, f"{what} not found ({path.relative_to(ROOT)}); this install does not ship the demo data")
+        raise HTTPException(404, f"{what} not found ({path.name}); this install does not ship the demo data")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -63,6 +63,13 @@ def eval_totals() -> dict | None:
             "paste_guard": {"recall": fp["recall"], "fpr": fp["fpr"], "p50_ms": fp["p50"], "p95_ms": fp["p95"]}}
 
 
+def load_rewrites() -> dict:
+    """The pre-generated adversarial rewrites (demo/redteam/rewrites.json). Nothing is generated at runtime."""
+    data = _load(REWRITES, "rewrites")
+    items = [r for r in data.get("rewrites", []) if isinstance(r.get("text"), str) and r["text"].strip()]
+    return {"note": data.get("note", ""), "source_doc": data.get("source_doc", ""), "count": len(items), "rewrites": items}
+
+
 def make_router(decide) -> APIRouter:
     router = APIRouter()
 
@@ -91,5 +98,13 @@ def make_router(decide) -> APIRouter:
                                 "similarity": (top or {}).get("similarity"),
                                 "secrets": [f["type"] for f in res["findings"]][:3], "ms": round(ms, 1)}})
         return {"version": VERSION, "note": data.get("note", ""), "totals": eval_totals(), "examples": rows}
+
+    @router.get("/demo/redteam", response_class=HTMLResponse)
+    def redteam_page():
+        return (HERE / "demo_redteam.html").read_text(encoding="utf-8")
+
+    @router.get("/demo/redteam/api")
+    def redteam_api():
+        return load_rewrites()
 
     return router

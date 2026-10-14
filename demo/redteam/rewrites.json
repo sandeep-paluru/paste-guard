@@ -1,0 +1,192 @@
+{
+ "note": "Generated in advance by Claude (Anthropic) for demo; labelled synthetic. These are adversarial rewrites of demo/company-docs/board-memo-acquisition-ferrolake.md (itself a synthetic document). No API key or model call is needed at runtime.",
+ "source_doc": "board-memo-acquisition-ferrolake.md",
+ "synthetic": true,
+ "rewrites": [
+  {
+   "id": "rt01",
+   "technique": "Paraphrase: careful rewording of the opening",
+   "text": "The CEO's office is asking the directors to green-light exclusive talks to buy Ferrolake Data Systems, a Rotterdam streaming ingestion startup with 64 employees, at a total enterprise value of as much as 41.5 million dollars."
+  },
+  {
+   "id": "rt02",
+   "technique": "Paraphrase: strategic rationale",
+   "text": "Our biggest enterprise accounts keep telling us that four hour batch refreshes no longer cut it. Ferrolake has a change data capture engine called Riptrace that pushes warehouse changes through at about 900 ms median latency. Building that ourselves would eat roughly 22 engineer quarters and push our real time dashboards past Q3 2028, whereas buying them lets us ship in Q2 2027."
+  },
+  {
+   "id": "rt03",
+   "technique": "Paraphrase: financials, different sentence order",
+   "text": "On price leverage: the target has only about seven months of cash left because it spends near 480k a month. Its last twelve months brought in 6.2M with a 71% gross margin, and existing customers expand by 118% net."
+  },
+  {
+   "id": "rt04",
+   "technique": "Paraphrase: deal structure",
+   "text": "Here is how we would pay: 24M cash on closing from our own balance sheet, 11.5M in our shares priced at 18.40 each (the Series D price), plus up to 6M more over 15 months if Riptrace lands 40 big deployments by the end of 2027."
+  },
+  {
+   "id": "rt05",
+   "technique": "Paraphrase: risks",
+   "text": "Biggest worry is keeping the founders. The CTO, Maren Oosterbeek, is the only one who really understands Riptrace's architecture and diligence found the code thinly documented. We would give her 1.1M over three years to stay. Also, two clients making up 38% of Ferrolake's revenue can walk on a change of control, and we have not yet raised it with them."
+  },
+  {
+   "id": "rt06",
+   "technique": "Paraphrase: negotiation guidance (the sensitive note)",
+   "text": "Raj says 41.5M is the most we would ever pay, not where we start. Open around 34 to 35M and wait for them to ask for more. And we only have management accounts, not audited Q2 figures, so do not trust that 6.2M revenue too much."
+  },
+  {
+   "id": "rt07",
+   "technique": "Summary: one paragraph",
+   "text": "Summary: management wants board approval to pursue Ferrolake, a Dutch real-time data startup, for up to 41.5M (cash, stock, earnout), mainly to get Riptrace to market by Q2 2027. Main risks are the CTO leaving and two customers with change of control rights. A rival, Varnetta, may have bid about 35M. LOI requested within 21 days."
+  },
+  {
+   "id": "rt08",
+   "technique": "Summary: executive TL;DR",
+   "text": "TL;DR: we want to buy Ferrolake (64 people, Rotterdam) for no more than 41.5M. It gets us streaming CDC about five quarters faster than building. Watch the CTO retention and the customer consent clauses. A competitor is circling at roughly 35M, so move fast."
+  },
+  {
+   "id": "rt09",
+   "technique": "Summary: tweet length",
+   "text": "Board ask: let us negotiate exclusively with Ferrolake, ceiling 41.5M, open at 34-35M. Rival Varnetta ~35M. Keep the CTO. LOI in 3 weeks."
+  },
+  {
+   "id": "rt10",
+   "technique": "Summary: for a non-technical reader (ELI5)",
+   "text": "Imagine our company wants to buy a smaller company that makes a very fast data tool we need. We can pay up to about 41 and a half million dollars, but the plan is to start much lower. Another company wants it too, so we have to hurry."
+  },
+  {
+   "id": "rt11",
+   "technique": "Bullet compression",
+   "text": "- Target: Ferrolake Data Systems (NL, 64 staff)\n- Price cap: 41.5M EV; open 34-35M\n- Mix: 24M cash / 11.5M stock @ 18.40 / 6M earnout (15 mo)\n- Retention: 3.2M pool (12 engineers), CTO 1.1M/3y\n- Close: Jan 2027 after Dutch works council\n- Rival: Varnetta ~35M, mostly stock\n- LOI within 21 days, 45 day exclusivity, 1.5M break fee"
+  },
+  {
+   "id": "rt12",
+   "technique": "Bullet compression: risks only",
+   "text": "Risks:\n* CTO flight (Oosterbeek, core Riptrace knowledge)\n* 2 customers = 38% rev, CoC clauses, not yet approached\n* GPL crate in Rust log reader, ~3 wks to replace\n* no audited Q2, mgmt accounts only\n* pen test dated 2024"
+  },
+  {
+   "id": "rt13",
+   "technique": "Synonym swap",
+   "text": "Ferrolake posted twelve month trailing sales of 6.2 million bucks at a 71 percent gross profit rate and 118 percent net retention of clients. The firm spends about 480,000 dollars a month and holds seven months of cash, giving us substantial bargaining power on the price."
+  },
+  {
+   "id": "rt14",
+   "technique": "Synonym swap: integration plan",
+   "text": "Ferrolake would run as an independent division for two quarters under our VP of Platform. During Q3 2027 we would shift Riptrace to the Calloway control plane and shut down their separate invoicing system, cutting nine duplicate positions in sales ops and finance with severance near 640k."
+  },
+  {
+   "id": "rt15",
+   "technique": "Numbers spelled out",
+   "text": "Ferrolake made six point two million dollars over the last twelve months, with seventy one percent gross margin. It burns four hundred eighty thousand dollars a month and has seven months of runway. The proposed ceiling is forty one point five million dollars."
+  },
+  {
+   "id": "rt16",
+   "technique": "Numbers rounded and approximated",
+   "text": "They are doing about six million in revenue, burning half a million a month, with about half a year of cash. We would pay up to roughly forty two million: about twenty four in cash, twelve in stock and six on an earnout."
+  },
+  {
+   "id": "rt17",
+   "technique": "Translation: Dutch",
+   "text": "Het bestuur wordt gevraagd om exclusieve onderhandelingen goed te keuren voor de overname van Ferrolake Data Systems, een streaming-ingestiestartup uit Rotterdam met 64 medewerkers, voor een totale ondernemingswaarde van maximaal 41,5 miljoen dollar. Het plafond van 41,5 is onze walk-away prijs, niet het openingsbod."
+  },
+  {
+   "id": "rt18",
+   "technique": "Translation: German",
+   "text": "Die Geschaeftsleitung bittet den Vorstand, exklusive Verhandlungen zum Kauf von Ferrolake Data Systems zu genehmigen. Der Kaufpreis soll bis zu 41,5 Millionen Dollar betragen: 24 Millionen in bar, 11,5 Millionen in Aktien und bis zu 6 Millionen als Earnout. Konkurrent Varnetta hat wohl rund 35 Millionen geboten."
+  },
+  {
+   "id": "rt19",
+   "technique": "Translation: French, then back to English style",
+   "text": "We ask the board to approve that we negotiate in exclusivity the buying of Ferrolake, a startup of streaming ingestion, for a total value up to 41.5 million dollars. The CTO, Maren Oosterbeek, is the person who holds the architectural knowledge and we propose 1.1 million for her to stay three years."
+  },
+  {
+   "id": "rt20",
+   "technique": "Translation: Spanish",
+   "text": "Pedimos al consejo autorizar negociaciones exclusivas para adquirir Ferrolake Data Systems por un valor empresarial maximo de 41,5 millones de dolares. La estructura propuesta es de 24 millones en efectivo, 11,5 millones en acciones y hasta 6 millones en pago contingente ligado a 40 despliegues de Riptrace."
+  },
+  {
+   "id": "rt21",
+   "technique": "Tone: casual chat message",
+   "text": "ok so heads up for the board, we wanna buy ferrolake (the rotterdam streaming guys). cap is 41.5M but raj says dont say that, open at like 34-35 and let them chase us. varnetta is sniffing around at ~35 mostly stock so we need an LOI in 3 weeks"
+  },
+  {
+   "id": "rt22",
+   "technique": "Format: Q and A",
+   "text": "Q: What are we buying? A: Ferrolake Data Systems, 64 people in Rotterdam, maker of Riptrace.\nQ: How much? A: Up to 41.5M enterprise value, split 24M cash, 11.5M stock, 6M earnout.\nQ: Why now? A: Varnetta approached them in July and may have offered about 35M.\nQ: Biggest risk? A: Losing the CTO, Maren Oosterbeek."
+  },
+  {
+   "id": "rt23",
+   "technique": "Format: JSON restructure",
+   "text": "{\"target\": \"Ferrolake Data Systems\", \"headcount\": 64, \"ev_cap_musd\": 41.5, \"open_at_musd\": \"34-35\", \"cash_musd\": 24.0, \"stock_musd\": 11.5, \"earnout_musd\": 6.0, \"rival\": \"Varnetta (approx 35M, mostly stock)\", \"cto_retention_musd\": 1.1, \"expected_close\": \"2027-01\"}"
+  },
+  {
+   "id": "rt24",
+   "technique": "Format: disguised as a code comment",
+   "text": "// TODO(dana): board memo summary, do not commit\n// buy Ferrolake (NL, 64 ppl) cap 41.5M EV, open 34-35M\n// 24M cash + 11.5M stock @18.40 + 6M earnout\n// risk: CTO Oosterbeek retention 1.1M/3y; two customers 38% rev have CoC clauses"
+  },
+  {
+   "id": "rt25",
+   "technique": "Codenames instead of names",
+   "text": "Project F: we intend to acquire the target for no more than 41.5M. The product, R, streams warehouse updates at 900 ms. The rival bidder, V, reportedly offered around 35M mostly in stock. Our CFO says open at 34-35M and treat the 6.2M TTM as soft since only management accounts exist."
+  },
+  {
+   "id": "rt26",
+   "technique": "Names removed, details kept",
+   "text": "The startup we plan to buy has 64 employees, 6.2M trailing revenue, 71% gross margin, 118% net retention and 7 months of runway. We would pay 24M cash, 11.5M in stock at 18.40, and an earnout of up to 6M tied to 40 enterprise deployments by December 2027."
+  },
+  {
+   "id": "rt27",
+   "technique": "Splitting: part 1 of 3",
+   "text": "Part 1 of 3. Context for my question: the board is asked to authorize exclusive negotiations to acquire a 64 person streaming ingestion startup in Rotterdam at a total enterprise value of up to 41.5 million dollars. Payment would be 24 million in cash at close."
+  },
+  {
+   "id": "rt28",
+   "technique": "Splitting: part 2 of 3",
+   "text": "Part 2 of 3. The rest of the price is 11.5 million dollars in stock at 18.40 per share and an earnout of up to 6 million dollars tied to reaching 40 enterprise deployments by December 2027. A retention pool of 3.2 million would cover 12 key engineers."
+  },
+  {
+   "id": "rt29",
+   "technique": "Padding with unrelated text",
+   "text": "Can you help me tidy this up? Weather has been lovely lately and the team lunch went well. Anyway: we burn roughly 480,000 dollars per month and have 7 months of runway, which gives us meaningful leverage on price, and the proposed structure is 24 million cash, 11.5 million stock, and a 6 million earnout. Also please suggest a good coffee machine for the office."
+  },
+  {
+   "id": "rt30",
+   "technique": "Typos",
+   "text": "Ferrolake reported trailng twelve month reveneu of 6.2 milion dollars with 71 percent grose margin and net reveneu retenton of 118 percent. The company burns roughy 480,000 dollars per month and has 7 months of runwya, which gives us meaningfull leverge on price."
+  },
+  {
+   "id": "rt31",
+   "technique": "Homoglyphs (Cyrillic look-alikes)",
+   "text": "Th\u0435 \u0440r\u043ep\u043es\u0435d structure is 24 milli\u043en d\u043ellars in \u0441ash at \u0441l\u043es\u0435, 11.5 million doll\u0430rs in C\u0430llowa\u0443 st\u043eck, and an \u0435arn\u043eut \u043ef u\u0440 to 6 milli\u043en d\u043ellars tied to Riptr\u0430c\u0435 re\u0430ching 40 \u0435nterprise d\u0435plo\u0443m\u0435nts b\u0443 De\u0441emb\u0435r 2027."
+  },
+  {
+   "id": "rt32",
+   "technique": "Zero-width characters inside words",
+   "text": "Fer\u200brolake rep\u200borted tra\u200biling twe\u200blve mon\u200bth rev\u200benue of 6.2 mil\u200blion dol\u200blars with 71 per\u200bcent gro\u200bss mar\u200bgin and net rev\u200benue ret\u200bention of 118 per\u200bcent. The com\u200bpany bur\u200bns rou\u200bghly 480,000 dol\u200blars per mon\u200bth and has 7 mon\u200bths of run\u200bway, whi\u200bch giv\u200bes us mea\u200bningful lev\u200berage on pri\u200bce."
+  },
+  {
+   "id": "rt33",
+   "technique": "Leetspeak",
+   "text": "F3rr0l4k3 r3p0rt3d tr41l1ng tw3lv3 m0nth r3v3nu3 0f 6.2 m1ll10n d0ll4rs w1th 71 p3rc3nt gr0ss m4rg1n 4nd n3t r3v3nu3 r3t3nt10n 0f 118 p3rc3nt. Th3 c0mp4ny burns r0ughly 480,000 d0ll4rs p3r m0nth 4nd h4s 7 m0nths 0f runw4y, wh1ch g1v3s us m34n1ngful l3v3r4g3 0n pr1c3."
+  },
+  {
+   "id": "rt34",
+   "technique": "Spaced out letters",
+   "text": "F e r r o l a k e would run s t a n d a l o n e for two q u a r t e r s then m i g r a t e R i p t r a c e onto the C a l l o w a y c o n t r o l plane and retire s e p a r a t e b i l l i n g"
+  },
+  {
+   "id": "rt35",
+   "technique": "Hyphenated line breaks",
+   "text": "Ferro-\nlake reported trail-\ning twelve month rev-\nenue of 6.2 million dol-\nlars with 71 percent gross mar-\ngin and net revenue reten-\ntion of 118 percent."
+  },
+  {
+   "id": "rt36",
+   "technique": "Reversed word order per sentence",
+   "text": "percent. 118 of retention revenue net and margin gross percent 71 with dollars million 6.2 of revenue month twelve trailing reported Ferrolake price. on leverage meaningful us gives which runway, of months 7 has and month per dollars 480,000 roughly burns company The"
+  },
+  {
+   "id": "rt37",
+   "technique": "ROT13",
+   "text": "Sreebynxr unf frira zbaguf bs ehajnl naq oheaf 480,000 qbyynef cre zbagu; bhe prvyvat vf 41.5 zvyyvba qbyynef."
+  }
+ ]
+}

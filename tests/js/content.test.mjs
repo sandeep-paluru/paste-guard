@@ -197,3 +197,36 @@ test("no matches list: overlay has no why-panel", async () => {
   await tick();
   assert.equal(w.document.querySelector("#pg-overlay .pg-why"), null);
 });
+
+// ---------- /demo/redteam page script ----------
+test("redteam page: steps through rewrites, counts caught / nudged / slipped, never injects HTML", async () => {
+  const html = readFileSync(new URL("../../backend/demo_redteam.html", import.meta.url), "utf8");
+  const items = [
+    { id: "a", technique: "<b>bold</b> paraphrase", text: "<img src=x onerror=alert(1)> rewrite one" },
+    { id: "b", technique: "summary", text: "rewrite two" },
+    { id: "c", technique: "typos", text: "rewrite three" },
+    { id: "d", technique: "rot13", text: "rewrite four" },
+  ];
+  const verdicts = { "rewrite one": "block", "rewrite two": "nudge", "rewrite three": "coach", "rewrite four": "allow" };
+  const dom = new JSDOM(html, { url: "http://localhost/demo/redteam?ms=0", runScripts: "dangerously" , pretendToBeVisual: true,
+    beforeParse(w) {
+      w.fetch = async (url, opt) => {
+        if (url === "/demo/redteam/api") return { ok: true, json: async () => ({ note: "Generated in advance by Claude (Anthropic) for demo; labelled synthetic.", rewrites: items }) };
+        const t = JSON.parse(opt.body).text;
+        const key = Object.keys(verdicts).find((k) => t.includes(k));
+        return { ok: true, json: async () => ({ verdict: verdicts[key], semantic_match: verdicts[key] === "allow" ? null : { path: "board-memo.md" } }) };
+      };
+    } });
+  const w = dom.window;
+  await tick();
+  assert.equal(w.document.getElementById("done").textContent.includes("0/4"), true);
+  w.document.getElementById("start").click();
+  await new Promise((r) => setTimeout(r, 300));
+  const n = (id) => w.document.querySelector(`#${id} .n`).textContent;
+  assert.deepEqual([n("caught"), n("nudged"), n("slipped"), n("done")], ["2", "1", "1", "4/4"]);
+  assert.equal(w.document.querySelector("#stage img"), null);
+  assert.equal(w.document.querySelector("#log b"), null);
+  assert.equal(w.document.querySelectorAll("#log tr").length, 4);
+  assert.equal(w.document.querySelectorAll(".dot.caught").length, 2);
+  assert.equal(w.document.querySelectorAll(".dot.slipped").length, 1);
+});

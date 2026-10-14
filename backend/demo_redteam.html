@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Red team: can these rewrites get past Paste Guard?</title>
+<style>
+:root { --ink:#16202e; --mute:#5b6779; --line:#dde3ec; --bg:#f4f6fa; --card:#fff; --ok:#1f7a45; --okbg:#e4f4ea; --bad:#b3261e; --badbg:#fbe7e5; --warn:#a15c00; --warnbg:#fff1d6; --acc:#2554d6; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+main { max-width:1100px; margin:0 auto; padding:28px 20px 48px; }
+h1 { font-size:30px; margin:0 0 4px; letter-spacing:-.01em; }
+.sub { color:var(--mute); margin:0 0 18px; }
+.bar { display:flex; flex-wrap:wrap; gap:12px; align-items:stretch; margin-bottom:18px; }
+.count { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 18px; min-width:150px; }
+.count .n { font-size:42px; font-weight:750; line-height:1.1; font-variant-numeric:tabular-nums; }
+.count .l { color:var(--mute); font-size:14px; }
+#caught .n { color:var(--ok); } #slipped .n { color:var(--bad); } #nudged .n { color:var(--warn); }
+button { font:inherit; font-weight:650; padding:10px 22px; border-radius:10px; border:0; background:var(--acc); color:#fff; cursor:pointer; align-self:center; }
+button.sec { background:#e6eaf3; color:var(--ink); } button:disabled { opacity:.5; cursor:default; }
+.stage { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:18px; min-height:190px; }
+.stage .tech { font-weight:700; font-size:18px; }
+.stage .prog { color:var(--mute); font-size:14px; }
+.stage pre { margin:10px 0; white-space:pre-wrap; word-break:break-word; font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; background:#f7f8fb; border-left:4px solid var(--line); padding:10px 12px; border-radius:6px; max-height:230px; overflow:auto; }
+.res { font-size:18px; font-weight:700; }
+.res.caught { color:var(--ok); } .res.slipped { color:var(--bad); } .res.nudged { color:var(--warn); }
+.res small { color:var(--mute); font-weight:500; font-size:14px; }
+.grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.dot { width:26px; height:26px; border-radius:6px; background:#dfe4ee; font-size:11px; display:flex; align-items:center; justify-content:center; color:#44506a; }
+.dot.caught { background:var(--ok); color:#fff; } .dot.slipped { background:var(--bad); color:#fff; } .dot.nudged { background:#e3a01a; color:#fff; } .dot.now { outline:3px solid var(--acc); }
+table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; font-size:14px; }
+th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); vertical-align:top; } th { background:#eef1f7; color:var(--mute); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+footer { color:var(--mute); font-size:13px; margin-top:16px; }
+#err { color:var(--bad); font-weight:600; }
+</style></head>
+<body><main>
+<h1>Red team: can a rewrite get past Paste Guard?</h1>
+<p class="sub">Adversarial rewrites of one confidential acquisition memo, each sent to <code>/check</code> live. <span id="note"></span></p>
+<div id="err"></div>
+<div class="bar">
+  <button id="start">Start</button><button id="reset" class="sec" disabled>Reset</button>
+  <div class="count" id="caught"><div class="n">0</div><div class="l">caught (coach or block)</div></div>
+  <div class="count" id="nudged"><div class="n">0</div><div class="l">only nudged</div></div>
+  <div class="count" id="slipped"><div class="n">0</div><div class="l">slipped (allowed)</div></div>
+  <div class="count" id="done"><div class="n">0/0</div><div class="l">rewrites checked</div></div>
+</div>
+<div class="grid" id="grid"></div>
+<div class="stage" id="stage"><div class="tech">Press Start</div><div class="prog">Each rewrite is shown, checked, and scored, about one per second.</div></div>
+<table><thead><tr><th>#</th><th>Technique</th><th>Verdict</th><th>Matched</th></tr></thead><tbody id="log"></tbody></table>
+<footer id="foot"></footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+const q = new URLSearchParams(location.search);
+const STEP_MS = q.has("ms") ? Math.max(0, Number(q.get("ms")) || 0) : 1000;  // ?ms=0 for tests, ?ms=2000 to slow down
+let items = [], running = false, token = 0, tally = { caught: 0, nudged: 0, slipped: 0 };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const outcome = (v) => (v === "block" || v === "coach") ? "caught" : (v === "nudge" ? "nudged" : "slipped");
+
+function counts() {
+  for (const k of Object.keys(tally)) $(k).querySelector(".n").textContent = tally[k];
+  $("done").querySelector(".n").textContent = `${tally.caught + tally.nudged + tally.slipped}/${items.length}`;
+}
+
+async function init() {
+  try {
+    const r = await fetch("/demo/redteam/api");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    items = d.rewrites; $("note").textContent = d.note;
+    $("foot").textContent = "Caught means coach or block, the same definition the eval uses. A nudge shows a soft warning and is counted separately, not as caught.";
+    items.forEach((it, i) => $("grid").append(Object.assign(el("div", "dot", String(i + 1)), { id: "dot" + i, title: it.technique })));
+    counts();
+  } catch (e) { $("err").textContent = "Could not load the rewrites: " + e.message; $("start").disabled = true; }
+}
+
+async function run() {
+  if (running) return;
+  running = true; const me = ++token;
+  $("start").disabled = true; $("reset").disabled = false;
+  for (let i = 0; i < items.length && me === token; i++) {
+    const it = items[i], t0 = performance.now();
+    document.querySelectorAll(".dot.now").forEach((d) => d.classList.remove("now"));
+    $("dot" + i).classList.add("now");
+    const st = $("stage"); st.replaceChildren(el("div", "prog", `Rewrite ${i + 1} of ${items.length}`), el("div", "tech", it.technique), el("pre", "", it.text), el("div", "res", "Checking..."));
+    let v = null;
+    try {
+      const r = await fetch("/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: it.text, source: "demo/redteam" }) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      v = await r.json();
+    } catch (e) { $("err").textContent = "Check failed: " + e.message; break; }
+    if (me !== token) return;
+    const o = outcome(v.verdict), doc = (v.semantic_match || {}).path || "";
+    tally[o]++; counts();
+    $("dot" + i).classList.add(o);
+    const res = st.querySelector(".res"); res.className = "res " + o;
+    res.replaceChildren(document.createTextNode(o === "caught" ? "Caught: " + v.verdict : o === "nudged" ? "Only nudged" : "Slipped through: allow"), el("small", "", doc ? "  matched " + doc : ""));
+    const tr = el("tr"); tr.append(el("td", "", String(i + 1)), el("td", "", it.technique), el("td", "", v.verdict), el("td", "", doc));
+    $("log").prepend(tr);
+    const wait = STEP_MS - (performance.now() - t0);
+    if (wait > 0) await sleep(wait);
+  }
+  if (me === token) { running = false; $("start").disabled = false; $("start").textContent = "Run again"; $("start").onclick = () => { reset(); run(); }; }
+}
+
+function reset() {
+  token++; running = false; tally = { caught: 0, nudged: 0, slipped: 0 }; counts();
+  $("log").replaceChildren(); $("err").textContent = "";
+  document.querySelectorAll(".dot").forEach((d) => { d.className = "dot"; });
+  $("stage").replaceChildren(el("div", "tech", "Press Start"));
+  $("start").disabled = false; $("start").textContent = "Start"; $("start").onclick = run; $("reset").disabled = true;
+}
+$("start").onclick = run; $("reset").onclick = reset;
+init();
+</script></body></html>
