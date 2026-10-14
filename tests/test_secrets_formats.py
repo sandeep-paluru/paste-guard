@@ -105,3 +105,12 @@ def test_no_catastrophic_backtracking():
                  "AccountKey=" + "A" * 200000 + "!", "github_pat_" + "a" * 200000]:
         scan(text)
     assert time.time() - t < 5
+
+
+def test_anthropic_key_blocks_end_to_end():
+    """A pasted Anthropic key is a hard block in the real backend, not just a scanner hit."""
+    import app
+    key = "sk-ant-" + "api03-" + "Ab3dE" * 18 + "-xyzAA"
+    out = app.decide("Here is my config, why does it fail?\nANTHROPIC_API_KEY=" + key)
+    assert out["verdict"] == "block"
+    assert key not in out["redacted"]

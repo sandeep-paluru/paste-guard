@@ -28,7 +28,11 @@ TFIDF = CONFIG["tfidf"]  # TF-IDF cosine levels per kind; only used when the pro
 PROFILE = CONFIG["profile"]
 FAST = CONFIG["fast_path"]  # two-step matching: cheap lexical checks first, MiniLM only when uncertain
 STATS = {}  # fast path counters, shown on /health
-HARD_SECRETS = {"private_key", "aws_access_key", "github_token", "openai_key", "slack_token"}
+# Live credentials always block. password_assignment and jwt stay a softer "may contain a secret" coach.
+HARD_SECRETS = {"private_key", "aws_access_key", "aws_temp_key", "github_token", "github_pat_fine_grained",
+                "anthropic_key", "openai_key", "xai_key", "google_api_key", "google_oauth_client_secret",
+                "stripe_key", "slack_token", "slack_webhook", "huggingface_token", "gitlab_token", "npm_token",
+                "sendgrid_key", "twilio_key", "azure_storage_key", "db_url_password"}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
 MAX_CHARS = int(os.environ.get("PG_MAX_CHARS", str(2 * 1024 * 1024)))  # longer pastes are rejected with HTTP 422
@@ -44,6 +48,7 @@ def _warm_up():
         return
     t0 = time.time()
     embedder.embed(["warm up"])
+    decide("Warm-up request: load the index, the TF-IDF vocabulary and the 3-gram fingerprints once at startup.")
     STATS["warmup_ms"] = round((time.time() - t0) * 1000)
 _extra = [o for o in os.environ.get("PG_CORS_ORIGINS", "").split(",") if o]
 app.add_middleware(CORSMiddleware, allow_origin_regex=r"chrome-extension://.*", allow_origins=_extra,
