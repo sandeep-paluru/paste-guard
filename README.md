@@ -27,6 +27,7 @@ Requirements: Linux or macOS with Python 3.10+ (or Docker), about 600 MB RAM.
 |---|---|---|
 | `[index]` | `docs`, `code`, `db` | Folders to protect and where the index lives |
 | `[server]` | `host`, `port` | Backend address (default 127.0.0.1:8765) |
+| `profile` | `"accurate"` or `"fast"` | Matching profile (default `accurate`), see Profiles |
 | `[thresholds.doc]`, `[thresholds.code]` | `nudge`, `coach`, `block` | Cosine similarity levels per content kind |
 | `[sites]` | `allowed` | AI sites to protect |
 | `[audit]` | `db`, `keep_days` | Verdict log for the admin page |
@@ -47,7 +48,7 @@ Open `http://127.0.0.1:8765/admin` on the backend machine (or through an SSH tun
 ## How it works
 ```
  Chrome extension                         Paste Guard backend (local or company server)
- paste / file picker / drag-and-drop  ->  /check (text) or /check_file (PDF, DOCX)
+ paste / file picker / drag-and-drop  ->  /check (text) or /check_file (PDF, DOCX, text, code)
  .txt/.md read in the browser             secrets and marker scan
  overlay: allow, nudge, coach, block  <-  windows of the paste embedded (all-MiniLM-L6-v2, ONNX, CPU)
  matched passage + source document        nearest passages in sqlite-vec (docs + code)
@@ -88,10 +89,30 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 - The admin page is only served to local connections.
 
 ## Tests
-`.venv/bin/python -m pytest -q tests` runs end-to-end checks against the real model and index.
+Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 39 tests against the real model and index:
+26 backend edge-case and end-to-end tests in `tests/`, and 13 jsdom tests of the extension content script
+(`tests/js/content.test.mjs`, started from `tests/test_extension_js.py`). The JS tests need `node`; `npm install` runs
+automatically in `tests/js` the first time. If node or npm is missing, those tests are skipped. `pytest.ini` limits
+collection to `tests/` and ignores `demo/`.
+
+## Edge-case behaviour
+- **Paste size:** pastes over 2 MB characters get HTTP 422. For long pastes and files (more than 48 windows), half the
+  embedded windows are picked by TF-IDF score and half are sampled evenly, so a confidential section at the end of a
+  1 MB paste or a 1500 paragraph docx is still checked.
+- **Unicode tricks:** zero-width characters are stripped, text is NFKC normalized, and common Cyrillic and Greek
+  look-alike letters are mapped to Latin before matching.
+- **File types (`/check_file`, used by the file picker and drag-and-drop):** PDF, DOCX, plain text and code files are
+  checked. Binary content disguised as text gets 422. Password-protected PDFs get 422 with a clear message; PDFs that
+  only have an owner password are still checked. Images, archives and other types get 415.
+- **Backend down (fail-open):** the paste goes through unchecked and the page shows "Paste Guard is offline, so this
+  paste was not checked". Unreadable files show a toast naming the file and the reason.
 
 ## Profiles
 
-`profile = "default"` (MiniLM OR 3-gram) fits a 1 GB VM. `profile = "accurate"` (or `PG_PROFILE=accurate`) adds a
-TF-IDF check for documents: held-out document F1 0.97, recall 0.94, false alarms 2.8%, /check p95 56 ms on a desktop CPU.
-Windows setup for it: `deploy/windows/`. Numbers: `eval/benchmarks.md`, reasoning: `docs/OPTIMIZATION_LOG.md`.
+`profile = "accurate"` is the default: MiniLM OR 3-gram OR TF-IDF for documents. Held-out document F1 0.97, recall 0.94,
+false alarms 2.8%, /check p95 56 ms on a desktop CPU. On the 1 GB Techvista VM a short document paste check takes about
+0.10 s end to end and the service uses about 370 MB of RAM.
+
+`profile = "fast"` (or `PG_PROFILE=fast`) is the previous setup, MiniLM OR 3-gram without TF-IDF: held-out document
+F1 0.94, recall 0.90, false alarms 2.8%. `"default"` is accepted as an alias for `accurate`.
+Windows setup: `deploy/windows/`. Numbers: `eval/benchmarks.md`, reasoning: `docs/OPTIMIZATION_LOG.md`.

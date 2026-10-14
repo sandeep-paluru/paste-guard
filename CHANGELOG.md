@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.1 (2026-10-14)
+- The accurate profile (MiniLM OR word 3-gram OR TF-IDF for documents) is now the default. The previous setup stays available as `profile = "fast"`. `"default"` is accepted as an alias for `accurate`.
+- Unicode cleanup before matching: zero-width characters are stripped, text is NFKC normalized, and common Cyrillic and Greek look-alike letters are mapped to Latin.
+- Huge pastes and files: when there are more than 48 windows, half of the embedded windows are chosen by TF-IDF score and half are sampled evenly, so a confidential section at the end of a 1 MB paste or a 1500 paragraph docx is still caught. Pastes over 2 MB characters get HTTP 422.
+- `/check_file` (file picker and drag-and-drop) now also accepts plain text and code files. It rejects binary content disguised as text (422), reports password-protected PDFs clearly (422), still checks PDFs that only have an owner password, and returns 415 for images, archives and other types.
+- Extension: when the backend is down, pastes fail open and show the toast "Paste Guard is offline, so this paste was not checked". Unreadable files show a toast naming the file and the reason. The service worker treats non-200 `/check` responses as errors. Extension version is now 0.5.1.
+- Tests: 26 edge-case tests in `tests/test_edge_cases.py` and 13 jsdom tests of the content script in `tests/js/content.test.mjs` (run from pytest). Plain `pytest` at the repo root runs all 39. `pytest.ini` limits collection to `tests/` and ignores `demo/`.
+- Measured on the Techvista VM (1 GB, 1 OCPU) after deploy: a short document paste check takes about 0.10 s end to end with the accurate profile. Service RAM is about 370 MB.
+
 ## 0.5.0 (2026-10-13)
 - Selectable profiles in `paste-guard.toml` (`profile = "accurate"` or `PG_PROFILE=accurate`). Default unchanged.
 - `accurate` profile: MiniLM OR 3-gram OR TF-IDF for documents. Held-out doc F1 0.94 to 0.97, recall 0.90 to 0.94, false alarms 2.8%, /check p95 56 ms.

@@ -178,3 +178,17 @@ on 50 negatives) without adding recall, which was already 1.00.
 
 Honest limits: 72 document negatives means one false alarm moves the rate by 1.4 points, so 2.8% vs 4.2% is a
 one-sample difference. Summaries remain the weak spot at 56%. The default profile on the VM is unchanged.
+
+## 0.5.1: accurate becomes the default
+
+- The default profile is now `accurate` (MiniLM OR 3-gram OR TF-IDF). The old setup is `profile = "fast"`. The numbers
+  above are unchanged: held-out document F1 0.966 against 0.943, same false alarm rate of 2.8%. After deploy on the 1 GB
+  Techvista VM, a short document paste check takes about 0.10 s end to end and the service uses about 370 MB.
+- Huge inputs: with more than 48 windows, half of the embedded windows are chosen by TF-IDF score and half are sampled
+  evenly. Before this, a confidential section near the end of a very long paste or file could fall outside the windows
+  that were embedded. Pastes over 2 MB characters are rejected with HTTP 422. No new accuracy numbers were measured for
+  this change; it is covered by edge-case tests.
+- Unicode cleanup before matching: zero-width characters stripped, NFKC, common Cyrillic and Greek look-alikes mapped
+  to Latin. This closes an easy evasion (inserting invisible characters or swapping letters). It was added as a
+  correctness fix and is covered by tests, not by the benchmark set.
+- The model is still pretrained all-MiniLM-L6-v2 used as is. Nothing was trained; only thresholds were tuned.
