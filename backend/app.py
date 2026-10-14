@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 import embedder
 import explain
+import livelog
 import secrets_scan
 from audit import Audit
 from config import CONFIG, CONFIG_PATH, VERSION
@@ -57,7 +58,8 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=r"chrome-extension://.*", 
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 INDEX = Index()
 AUDIT = Audit(CONFIG["audit"]["db"], CONFIG["audit"]["keep_days"])
-ADMIN_HTML = (Path(__file__).with_name("admin.html")).read_text()
+ADMIN_HTML = (Path(__file__).with_name("admin.html")).read_text(encoding="utf-8")
+LOGS_HTML = (Path(__file__).with_name("logs.html")).read_text(encoding="utf-8")
 
 
 class CheckIn(BaseModel):
@@ -86,6 +88,19 @@ def _local(request: Request):
 def admin(request: Request):
     _local(request)
     return ADMIN_HTML
+
+
+@app.get("/logs", response_class=HTMLResponse)
+def logs_page(request: Request):
+    _local(request)
+    return LOGS_HTML
+
+
+@app.get("/logs/api")
+def logs_api(request: Request, after: int = 0):
+    """Checks newer than id `after`. The /logs page polls this about twice a second."""
+    _local(request)
+    return {"version": VERSION, "model": embedder.MODEL_NAME, "events": livelog.since(after)}
 
 
 @app.get("/admin/api")
@@ -173,7 +188,11 @@ def decide(text: str) -> dict:
     findings = secrets_scan.scan(text)
     marks = secrets_scan.markers(text)
     types = {f["type"] for f in findings}
-    per_window = semantic(text) if len(clean(text).strip()) >= 20 else []
+    if len(clean(text).strip()) >= 20:
+        per_window = semantic(text)
+    else:
+        per_window = []
+        STATS["last_path"] = "short"
 
     # Best hit per (source, location), ranked by how far past its own kind threshold it is.
     best = {}
@@ -300,8 +319,12 @@ def _site(source: str, request: Request) -> str:
 def check(req: CheckIn, request: Request):
     t0 = time.time()
     res = decide(req.text)
+    path = STATS.get("last_path")
     channel = "file" if " file:" in (req.source or "") else "paste"
-    AUDIT.record(channel, _site(req.source, request), req.text, res, int((time.time() - t0) * 1000))
+    ms = int((time.time() - t0) * 1000)
+    site = _site(req.source, request)
+    AUDIT.record(channel, site, req.text, res, ms)
+    livelog.record(channel, site, req.text, res, ms, path)
     return res
 
 
@@ -321,6 +344,10 @@ async def check_file(request: Request, file: UploadFile = File(...), source: str
     except Exception as ex:
         raise HTTPException(422, f"could not read {file.filename}: {type(ex).__name__}")
     res = decide(text)
+    path = STATS.get("last_path")
     res["file"] = {"name": file.filename, "chars": len(text)}
-    AUDIT.record("file", _site(source, request), text, res, int((time.time() - t0) * 1000))
+    ms = int((time.time() - t0) * 1000)
+    site = _site(source, request)
+    AUDIT.record("file", site, text, res, ms)
+    livelog.record("file", site, text, res, ms, path, file.filename)
     return res

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Paste Guard live checks</title>
+<style>
+body{font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+header{padding:14px 22px;background:#111c34;border-bottom:1px solid #22304d;display:flex;gap:18px;align-items:center}
+h1{font-size:19px;margin:0}.sub{color:#94a3b8;font-size:13px}
+#dot{width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px}
+#dot.off{background:#ef4444}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:#16213d;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #1e293b;vertical-align:top}
+tr.new{animation:flash 1.6s ease-out}@keyframes flash{from{background:#334155}to{background:transparent}}
+.v{font-weight:700;padding:2px 8px;border-radius:6px;font-size:13px}
+.block{background:#7f1d1d;color:#fecaca}.coach{background:#78350f;color:#fde68a}
+.nudge{background:#1e3a8a;color:#bfdbfe}.allow{background:#14532d;color:#bbf7d0}
+.s{font-family:Consolas,monospace;font-size:13px}.hit{color:#fbbf24;font-weight:700}.dim{color:#64748b}
+.path{font-size:12px;color:#94a3b8}
+</style></head><body>
+<header><h1>Paste Guard: live checks</h1>
+<span class="sub"><span id="dot"></span><span id="state">connecting</span></span>
+<span class="sub" id="meta"></span>
+<span class="sub" style="margin-left:auto">Only a short SHA-256 hash and length are kept, never the pasted text.</span></header>
+<table><thead><tr><th>Time</th><th>Site</th><th>Kind</th><th>Verdict</th><th>Matched source</th>
+<th>MiniLM</th><th>3-gram</th><th>TF-IDF</th><th>Path</th><th>Latency</th><th>Text hash</th></tr></thead>
+<tbody id="rows"><tr id="empty"><td colspan="11" class="dim">Waiting for the first paste or upload...</td></tr></tbody></table>
+<script>
+let after = 0, failed = false;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = (x, m, method) => x == null ? '<span class="dim">-</span>' : `<span class="${m === method ? "hit" : ""}">${x.toFixed(2)}</span>`;
+const PATH = {embedding: "MiniLM ran", cheap_block: "fast path: cheap check already blocked", cheap_clear: "fast path: no overlap, MiniLM skipped", short: "too short"};
+function row(e) {
+  const tr = document.createElement("tr"); tr.className = "new";
+  const src = e.source ? esc(e.source) : (e.secrets.length ? "secret: " + esc(e.secrets.join(", ")) : '<span class="dim">none</span>');
+  tr.innerHTML = `<td class="s">${esc(e.time)}</td><td>${esc(e.site)}</td><td>${esc(e.channel)}${e.file ? '<div class="path">' + esc(e.file) + '</div>' : ""}</td>
+  <td><span class="v ${esc(e.verdict)}">${esc(e.verdict.toUpperCase())}</span></td><td>${src}</td>
+  <td class="s">${num(e.scores.embedding, "embedding", e.method)}</td><td class="s">${num(e.scores.ngram, "fingerprint", e.method)}</td>
+  <td class="s">${num(e.scores.tfidf, "tfidf", e.method)}</td><td class="path">${esc(PATH[e.path] || e.path || "")}</td>
+  <td class="s">${e.ms} ms</td><td class="s dim">#${esc(e.hash)} (${e.chars})</td>`;
+  return tr;
+}
+async function poll() {
+  try {
+    const r = await fetch("/logs/api?after=" + after); const d = await r.json();
+    document.getElementById("meta").textContent = `v${d.version}, model ${d.model}`;
+    const body = document.getElementById("rows");
+    for (const e of d.events) { document.getElementById("empty")?.remove(); body.prepend(row(e)); after = e.id; }
+    while (body.children.length > 200) body.lastChild.remove();
+    document.getElementById("dot").className = ""; document.getElementById("state").textContent = "live";
+  } catch (err) {
+    document.getElementById("dot").className = "off"; document.getElementById("state").textContent = "backend offline, retrying";
+  }
+  setTimeout(poll, 500);
+}
+poll();
+</script></body></html>

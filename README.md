@@ -58,6 +58,16 @@ Environment variables override thresholds (`PG_T_DOC_COACH`, `PG_T_CODE_BLOCK`, 
 ./pasteguard eval       # run the evaluation
 ```
 
+## Live log (0.7.1)
+Open `http://127.0.0.1:8765/logs` on the backend machine. Every `/check` and `/check_file` call appears as it happens (the page polls `/logs/api?after=<id>` twice a second): time, site, paste or file, verdict, matched source, the best MiniLM, word 3-gram and TF-IDF scores (the deciding score is highlighted), whether the fast path skipped MiniLM, latency in ms, and a 10 character SHA-256 prefix plus the length. The pasted text is never shown or kept. Events live in memory only (last 500, `PG_LIVELOG_SIZE`), and the page is local only, like `/admin`.
+
+The server console prints the same thing as one line per check, for example:
+```
+[18:14:25] BLOCK  paste claude.ai          emb 0.81 3gram   -   tfidf   -   MiniLM      9 ms  #26969c39ee 582 chars  -> board-memo-acquisition-ferrolake.md
+[18:14:25] ALLOW  paste claude.ai          emb   -   3gram   -   tfidf 0.04 fast-path    3 ms  #e33c5f64e8 48 chars  -> -
+```
+`PG_CONSOLE_LOG=0` turns the console lines off. On Windows, `deploy\windows\start-backend-with-logs.cmd` opens a visible console running the backend (it stops a Paste Guard backend already on port 8765 first) and `deploy\windows\stop-backend.cmd` stops it. No admin needed.
+
 ## Admin page
 Open `http://127.0.0.1:8765/admin` on the backend machine (or through an SSH tunnel). It shows indexed passages, thresholds, verdict counts for the last 7 days and recent checks. The log never stores content: only a SHA-256 hash, the length, the verdict and the matched source name.
 
@@ -106,8 +116,8 @@ kept: bge-base is better on summaries but needs 1.4 GB and is 7 times slower. La
 - The admin page is only served to local connections.
 
 ## Tests
-Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 101 pytest tests against the real model and index:
-14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, 7 'why this matched' tests in `tests/test_explain.py`, 4 and 5 demo page tests in `tests/test_demo_compare.py` and `tests/test_demo_redteam.py`, 46 secret format tests in `tests/test_secrets_formats.py` (fake keys are built at runtime, so no key-shaped literal is committed), and one test
+Run `.venv/bin/python -m pytest` from the repo root (plain `pytest`). It runs 108 pytest tests against the real model and index:
+14 end-to-end tests in `tests/test_check.py`, 24 edge-case tests in `tests/test_edge_cases.py`, 7 'why this matched' tests in `tests/test_explain.py`, 4 and 5 demo page tests in `tests/test_demo_compare.py` and `tests/test_demo_redteam.py`, 46 secret format tests in `tests/test_secrets_formats.py` (fake keys are built at runtime, so no key-shaped literal is committed), 7 live log tests in `tests/test_livelog.py`, and one test
 (`tests/test_extension_js.py`) that runs the 16 jsdom tests of the extension content script in `tests/js/content.test.mjs`. The JS tests need `node`; `npm install` runs
 automatically in `tests/js` the first time. If node or npm is missing, those tests are skipped. `pytest.ini` limits
 collection to `tests/` and ignores `demo/`.

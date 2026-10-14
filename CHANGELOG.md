@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 (2026-10-14)
+- **Live log.** New `/logs` page (local only) that shows every check as it happens: time, site, paste or file, verdict, matched source, best MiniLM, 3-gram and TF-IDF scores, whether the fast path skipped MiniLM, latency, and a short SHA-256 prefix with the length. Never the text. It polls the new `/logs/api?after=<id>` endpoint; events are kept in memory only (`backend/livelog.py`, last 500).
+- The server console prints one readable line per check with the same fields (`PG_CONSOLE_LOG=0` turns it off).
+- Windows: `deploy/windows/start-backend-with-logs.cmd` runs the backend in a visible console without access-log noise, and `deploy/windows/stop-backend.cmd` stops a running one. Both work without admin.
+- Tests: 108 pytest tests (was 101), new `tests/test_livelog.py`. Version is 0.7.1 in `VERSION`, the extension manifest, `/health` and the compose image tag.
+
 ## 0.7.0 (2026-10-14)
 - **Why this matched.** Flagged hits in `/check` and `/check_file` carry a `matches` list: up to three sentence pairs with `paste_span`, `paste_text`, `source_doc`, `source_text`, `source_span`, highlight marks, `kind` (`ngram`, `tfidf` or `semantic`) and `score`. Phrase spans come from the existing 3-gram and TF-IDF overlap; rewrites that share neither get the best sentence alignment by MiniLM cosine, in one embedding batch with cached vectors and the window vectors the matcher already has. Benign pastes never pay for it. `PG_EXPLAIN_HITS=0` turns it off. New `backend/explain.py`.
 - Extension overlay: side-by-side "Your paste" and "Source" panel, at most three rows, 14 px text, matched phrases in `<mark>`, everything HTML escaped.

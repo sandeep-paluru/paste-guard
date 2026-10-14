@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Paste Guard",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Checks pastes, uploads and drops into AI tools for confidential documents, company code and secrets. Local by default.",
   "background": {
     "service_worker": "service_worker.js"
