@@ -20,8 +20,8 @@ The script clones the repo, creates `.venv`, installs dependencies, fetches the 
 "Paste Guard" shortcut to your Startup folder so the backend starts hidden at logon on `127.0.0.1:8765`,
 starts it now, and checks `/health`. If Python or git is missing it stops with a download link instead of installing.
 
-Then load `extension\` in `chrome://extensions` (Developer mode, Load unpacked). If the extension was pointed
-at the VM, set the backend URL on its options page to `http://localhost:8765`.
+Then load `extension\` in `chrome://extensions` (Developer mode, Load unpacked). The extension talks to
+`http://127.0.0.1:8765` by default. If you changed the backend URL on its options page, set it back to that.
 
 Stop the server:
 ```powershell

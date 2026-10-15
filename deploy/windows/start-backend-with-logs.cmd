@@ -12,7 +12,7 @@ if not defined PG_MODEL_CACHE set "PG_MODEL_CACHE=%LOCALAPPDATA%\paste-guard\mod
 set PYTHONUNBUFFERED=1
 cd /d "%ROOT%\backend"
 echo Paste Guard from %ROOT%
-echo Live log page: http://localhost:8765/logs     Close this window or press Ctrl+C to stop.
+echo Live log page: http://127.0.0.1:8765/logs     Close this window or press Ctrl+C to stop.
 echo.
 "%ROOT%\.venv\Scripts\python.exe" -m uvicorn app:app --host 127.0.0.1 --port 8765 --no-access-log
 echo.

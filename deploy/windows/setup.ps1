@@ -121,7 +121,7 @@ for ($i = 0; $i -lt 60; $i++) {
 if ($ok) {
   Write-Host "Paste Guard $($h.version) is up. Profile: $($h.profile). Model: $($h.model)" -ForegroundColor Green
   Write-Host "Next: chrome://extensions > Developer mode > Load unpacked > $InstallDir\extension"
-  Write-Host "If the extension options point at the VM, set Backend URL to http://localhost:8765."
+  Write-Host "The extension defaults to http://127.0.0.1:8765. If you changed it, set Backend URL back to that on the options page."
   Write-Host "Admin page: http://127.0.0.1:8765/admin   Log: $InstallDir\data\server.log"
 } else {
   Write-Warning "Backend did not answer. See $InstallDir\data\server.log"

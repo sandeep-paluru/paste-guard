@@ -15,7 +15,7 @@
 +-------------------------+
 | Service worker (MV3)    |
 +-----------+-------------+
-            | POST http://localhost:8765/check
+            | POST http://127.0.0.1:8765/check
             v
 +---------------------------------------------------+
 | Localhost API (FastAPI)                           |
