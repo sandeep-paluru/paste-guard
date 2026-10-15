@@ -1,4 +1,4 @@
-const DEFAULTS = { backendUrl: "http://localhost:8765", disabledSites: [], checkFiles: true, failOpen: true };
+const DEFAULTS = { backendUrl: "http://127.0.0.1:8765", disabledSites: [], checkFiles: true, failOpen: true };
 const $ = (id) => document.getElementById(id);
 const SITES = chrome.runtime.getManifest().content_scripts[0].matches.map((m) => new URL(m.replace("/*", "/")).hostname);
 $("ver").textContent = "v" + chrome.runtime.getManifest().version;

@@ -10,7 +10,7 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
-    "http://localhost:8765/*"
+    "http://127.0.0.1:8765/*", "http://localhost:8765/*"
   ],
   "content_scripts": [
     {

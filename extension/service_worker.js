@@ -1,6 +1,6 @@
 // Relays paste text and dropped/uploaded files from the content script to the
-// Paste Guard backend. Backend URL is set on the options page (default http://localhost:8765).
-const DEFAULT_BACKEND = "http://localhost:8765";
+// Paste Guard backend. Backend URL is set on the options page (default http://127.0.0.1:8765).
+const DEFAULT_BACKEND = "http://127.0.0.1:8765";
 
 function backend(cb) {
   chrome.storage.sync.get({ backendUrl: DEFAULT_BACKEND }, ({ backendUrl }) => cb(backendUrl.replace(/\/+$/, "")));

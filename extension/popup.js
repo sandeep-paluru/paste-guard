@@ -1,4 +1,4 @@
-const DEFAULTS = { backendUrl: "http://localhost:8765", disabledSites: [] };
+const DEFAULTS = { backendUrl: "http://127.0.0.1:8765", disabledSites: [] };
 const $ = (id) => document.getElementById(id);
 $("ver").textContent = "v" + chrome.runtime.getManifest().version;
 $("opts").onclick = () => chrome.runtime.openOptionsPage();

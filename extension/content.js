@@ -110,7 +110,7 @@
     if (!files.some(checkable)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    const target = e.target, x = e.clientX, y = e.clientY;
+    const target = e.target, x = e.clientX, y = e.clientY; clearSiteDrag(target, x, y); // page drag layer reset
     const v = await worstVerdict(files);
     const replay = () => {
       const dt = new DataTransfer();
@@ -125,6 +125,20 @@
   }, true);
 
   // ---------- helpers ----------
+  // Sites like ChatGPT show a "drop files here" layer on dragenter and hide it on drop or dragleave.
+  // Since we hold the drop, send dragleave and dragend so the composer goes back to normal.
+  function clearSiteDrag(target, x, y) {
+    replaying = true;
+    try {
+      const opts = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, dataTransfer: new DataTransfer() };
+      for (const el of new Set([target, document.body, document.documentElement, document])) {
+        el?.dispatchEvent(new DragEvent("dragleave", { ...opts, relatedTarget: null }));
+        el?.dispatchEvent(new DragEvent("dragend", opts));
+      }
+      window.dispatchEvent(new DragEvent("dragleave", { ...opts, relatedTarget: null }));
+    } finally { replaying = false; }
+  }
+
   function insert(target, text) {
     target?.focus();
     if (target && (target.tagName === "TEXTAREA" || target.tagName === "INPUT")) {
@@ -132,7 +146,16 @@
       target.setRangeText(text, s, e, "end");
       target.dispatchEvent(new Event("input", { bubbles: true }));
     } else {
-      document.execCommand("insertText", false, text); // works with contenteditable editors
+      // Replay as a real paste so editors like ProseMirror (ChatGPT, Claude) take the exact text.
+      let ok = false;
+      try {
+        const dt = new DataTransfer(); dt.setData("text/plain", text);
+        replaying = true;
+        const ev = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true });
+        (target || document.activeElement).dispatchEvent(ev);
+        ok = ev.defaultPrevented; // the editor handled it
+      } finally { replaying = false; }
+      if (!ok) document.execCommand("insertText", false, text);
     }
   }
 
