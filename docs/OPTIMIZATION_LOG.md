@@ -18,7 +18,7 @@ no eval text was ever used as training data.
 
 472 labelled pastes: 356 against 18 synthetic Calloway Metrics confidential documents (284 positives in nine
 transforms, 72 public-text negatives) and 116 against one code repository (66 positives in six transforms, 50
-public-code negatives). Positives and negatives were generated with Claude. Main limitation: the negatives are
+public-code negatives). Positives and negatives are synthetic. Main limitation: the negatives are
 public text and public code, not same-topic internal text that is not confidential, so false positive rates here
 are optimistic for a real company.
 

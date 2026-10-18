@@ -2,9 +2,7 @@
 
 <p class="subtitle">Checking what gets pasted into AI chat tools against a company's own documents and code</p>
 
-<p class="meta">Sandeep Paluru, for Eric McIntyre (VP of Technology, Sidekick Labs)<br>14 October 2026. Version 0.6.0. Repo: github.com/sandeep-paluru/paste-guard</p>
-
-<div class="note">Paste Guard is a proof of concept I built to show how I work on a problem like this. It is not a product, and the company in it, Calloway Metrics, is fictional.</div>
+<p class="meta">Sandeep Paluru<br>14 October 2026. Version 0.6.0. Repo: github.com/sandeep-paluru/paste-guard</p>
 
 ## Summary
 
@@ -23,11 +21,9 @@ Nothing is trained. It uses a public pretrained embedding model (all-MiniLM-L6-v
 
 Latency figures are from my 8 vCPU machine. On the 1 GB VM the fast profile ran at p50 208 ms and p95 995 ms. In 0.6.0 the accurate profile on the VM went from p50 131 ms and p95 802 ms to p50 84 ms and p95 397 ms (more on that under limitations).
 
-## How the idea came about
+## The problem
 
-On our call on 9 October you described a very ordinary way data leaves a company: someone has a confidential document, wants a quick summary, and pastes it or drops the file into Claude or ChatGPT. You also described Sidekick's approach of stepping in at that moment with a nudge, some coaching or a block, rather than banning the tools outright.
-
-That raised a question I wanted to answer properly: at the moment of the paste, can you tell whether the content is *ours*, and not just whether it looks sensitive? People rarely paste a document with "CONFIDENTIAL" on top. They paste a paragraph, reword it, trim it or wrap it in "summarize this for me". I built Paste Guard over 12 and 13 October to see how far a local, cheap approach gets on that question and where it breaks.
+A common way confidential text leaves a company: someone has a document, wants a quick summary, and pastes it or drops the file into a chat site. The useful question at that moment is whether the content is the company's, not only whether it looks sensitive. People rarely paste a document with "CONFIDENTIAL" on top. They paste a paragraph, reword it, trim it, or wrap it in "summarize this for me". Paste Guard checks that locally, and the eval shows where the approach holds and where it breaks.
 
 ## The gap it targets
 
@@ -37,7 +33,7 @@ That raised a question I wanted to answer properly: at the moment of the paste, 
 
 **Fingerprinting and lineage.** Document fingerprinting and exact data match handle verbatim and lightly edited copies but are weak on paraphrase. Microsoft's documentation for Purview's paste-to-browser control says it does not support exact data match or document fingerprinting on paste at all. Cyberhaven tracks where data came from, which misses text that was retyped or copied from somewhere its agent does not see.
 
-**Where Paste Guard sits.** It matches each paste against an index of the company's own documents and code, locally, and catches rewording as well as copies. From Sidekick's public site I could not tell whether you inspect paste content today, so I see this as a possible extra signal next to what Sidekick already knows (the account, the app, the settings), not as a claim about a gap in Sidekick. A personal Claude account plus a strong match to a board memo is a very different event from a corporate account pasting a public article.
+**Where Paste Guard sits.** It matches each paste against an index of the company's own documents and code, locally, and catches rewording as well as copies. A strong match to a board memo is a different event from someone pasting a public article.
 
 ## Architecture
 
@@ -45,7 +41,7 @@ That raised a question I wanted to answer properly: at the moment of the paste, 
 
 **Extension (Chrome, Manifest V3).** A content script on claude.ai, chatgpt.com and chat.openai.com intercepts three things: paste, file picker uploads and drag-and-drop. Text files (.txt, .md) are read in the browser. PDF and DOCX files go to the backend for text extraction. The service worker sends the content to the backend and the overlay shows the verdict, the matched document, the matched passage and a redaction button. The toolbar icon shows a green dot when protection is on, and the settings page allows a per-site pause.
 
-**Backend (FastAPI).** It runs on the same machine or a company server. For the demo it runs on a 2 vCPU, 1 GB Oracle VM that also hosts my existing Techvista services. Each check does the following:
+**Backend (FastAPI).** It runs on the same machine or a company server. It has also been run on a 2 vCPU, 1 GB Oracle VM that also hosts my existing Techvista services. Each check does the following:
 
 1. Secrets and marker scan. Cloud keys, API keys for the common providers (Anthropic, OpenAI, GitHub, Google, Stripe, Slack, Hugging Face and others), private keys and database URLs with a password are always blocked. JWTs and password assignments are coached.
 2. The paste is cut into windows. Since 0.6.0, steps 4 and 5 run first and the embedding is skipped when it cannot change the verdict. Each window is otherwise embedded with all-MiniLM-L6-v2 (ONNX on CPU through fastembed).
@@ -64,7 +60,7 @@ That raised a question I wanted to answer properly: at the moment of the paste, 
 
 All of it is synthetic. I wrote a corpus of 18 confidential documents for a fictional company, Calloway Metrics: board memos, an M&A term sheet, a layoff plan, compensation bands, pricing, a customer list with contract values, a security incident postmortem, a legal settlement summary, a product roadmap and similar, in .md, .txt, .pdf and .docx. The code side is one real open source Python repository standing in for a company repo.
 
-The eval set has 472 labelled pastes, generated with Claude:
+The eval set has 472 labelled pastes:
 
 | Set | Positives | Negatives |
 |---|---|---|
@@ -156,9 +152,9 @@ Step 3 lowered the numbers on purpose. The bigger corpus and harder eval set are
 
 In-sample, the top match named the right source document 98% of the time (314 detected positives). On held-out thresholds the v0.4 hybrid named the right one 93% of the time (255 detected).
 
-## Live test in ChatGPT and Claude
+## Live test on the chat sites
 
-Beyond the offline eval, I ran it by hand in both ChatGPT and Claude:
+Beyond the offline eval, I ran it by hand on chatgpt.com and claude.ai:
 
 | Test | Result |
 |---|---|
@@ -175,11 +171,11 @@ Drag-and-drop is implemented in the extension, but I have not checked it end to 
 
 ## Limitations
 
-- **Summaries are the weak spot.** Even the accurate profile catches 56% of summaries. A summary shares meaning with the source but few specific phrases, and that is the paste you described on our call.
+- **Summaries are the weak spot.** Even the accurate profile catches 56% of summaries. A summary shares meaning with the source but few specific phrases.
 - **The negative set is small and easy.** There are 72 document negatives, so one false alarm moves the rate by 1.4 points. 2.8% against 4.2% is a one-sample difference. The negatives are also public text and public code, not same-topic internal text that is not confidential, so the false alarm rates are optimistic for a real company. The strong lexical results could partly be an effect of these easy negatives.
 - **Timing is from my machine.** The 16 to 19 ms p50 and 56 to 58 ms p95 figures are on an 8 vCPU desktop CPU, and 7 ms and 22 ms with the 0.6 fast path. On the shared 1 GB VM the fast profile measured p50 208 ms and p95 995 ms, and the accurate profile with the fast path p50 84 ms and p95 397 ms. With about 130 MB free next to the other services, part of the process gets paged out, and that drives the p95; a normal laptop meets p95 under 100 ms. The model now loads and warms up at startup (18 s on the VM), so the first check after a restart takes about 0.18 s there instead of about 8.5 s.
-- **One synthetic company.** The corpus and the eval pastes were generated with Claude for one fictional company. Real documents may land in a different similarity range.
-- **Coverage.** Chrome only, on two AI sites. Not desktop apps, Claude's own browser agent, mobile, or text typed in by hand.
+- **One synthetic company.** The corpus and the eval pastes are for one fictional company, Calloway Metrics. Real documents may land in a different similarity range.
+- **Coverage.** Chrome only, on the sites in `paste-guard.toml`. Not desktop apps, browser agents inside those sites, mobile, or text typed in by hand.
 
 ## Next steps
 
@@ -188,7 +184,6 @@ Drag-and-drop is implemented in the extension, but I have not checked it end to 
 3. Work on summaries: a summary-level embedding of each document, and a small reranker or local LLM judge only on borderline scores, so the fast path stays fast.
 4. Test drag-and-drop end to end in both sites.
 5. Fix the rest of the VM tail by giving the backend its own memory, then re-measure p95 there. The fast path brought it from 802 ms to 397 ms, still over 100 ms.
-6. Use the identity context. The match score and source name can be one more signal for Sidekick's reasoning: personal account plus strong match is a block that offers the approved workspace, while a corporate account plus a weak match is a nudge.
-7. Scope the cases the extension cannot see (desktop apps, agentic browsers) as a separate feasibility question.
+6. Scope the cases the extension cannot see (desktop apps, agentic browsers) as a separate feasibility question.
 
 <p class="sources">Sources: README.md, docs/OPTIMIZATION_LOG.md, eval/benchmarks.md, eval/results.md, CHANGELOG.md and paste-guard.toml in the repo. Market and competitor notes are from public vendor pages and documentation.</p>
