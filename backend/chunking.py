@@ -82,9 +82,92 @@ def doc_chunks(text: str, target: int = 160, max_words: int = 200, min_words: in
         yield (start or 0) + 1, (last or 0) + 1, " ".join(buf)
 
 
-def extract_text(path_or_bytes, suffix: str) -> str:
-    """Extract plain text from .md/.txt/.pdf/.docx (path or raw bytes)."""
+def _user_y(cm, tm) -> float:
+    """Text origin in page space. cm and tm are the six PDF matrix numbers."""
+    return cm[1] * tm[4] + cm[3] * tm[5] + cm[5]
+
+
+def _paragraph_breaks(pieces) -> str | None:
+    """Put back blank lines where the page leaves a gap bigger than one line.
+
+    pypdf's plain extractor keeps one newline per visual line and drops the extra
+    space between paragraphs, so a code block in a longer PDF is glued to the
+    prose around it. The words stay in the same order; only newlines are added.
+    Returns None when the positions are not usable.
+    """
+    flat = []
+    for y, text in pieces:
+        bits = text.split("\n")
+        for i, bit in enumerate(bits):
+            if bit:
+                flat.append((y, bit))
+            if i < len(bits) - 1:
+                flat.append((None, "\n"))
+    content = [(i, y) for i, (y, t) in enumerate(flat) if t.strip() and y is not None]
+    gaps = []
+    for (i1, y1), (i2, y2) in zip(content, content[1:]):
+        gap = y1 - y2
+        if gap > 2:
+            gaps.append((i1, gap))
+    if len(gaps) < 3:
+        return None
+    ordered = sorted(g for _, g in gaps)
+    tight = ordered[: max(1, (len(ordered) + 1) // 2)]
+    line_h = tight[len(tight) // 2]
+    if line_h < 4:
+        return None
+    cut = max(line_h * 1.7, line_h + 6)
+    break_after = {i for i, gap in gaps if gap >= cut}
+    out, prev, used = [], None, set()
+    for i, (y, t) in enumerate(flat):
+        if t.strip():
+            prev = i
+            out.append(t)
+        elif t == "\n" and prev in break_after and prev not in used:
+            used.add(prev)
+            out.append("\n\n")
+        else:
+            out.append(t)
+    return "".join(out)
+
+
+def _pdf_text(data: bytes, keep_paragraphs: bool) -> str:
     import io
+    from pypdf import PdfReader
+    reader = PdfReader(io.BytesIO(data))
+    if reader.is_encrypted:
+        try:
+            ok = reader.decrypt("")  # owner-password-only PDFs open with an empty user password
+        except Exception:
+            ok = 0
+        if not ok:
+            raise NotText("the PDF is password protected")
+    pages = []
+    for page in reader.pages:
+        if not keep_paragraphs:
+            pages.append(page.extract_text() or "")
+            continue
+        pieces = []
+
+        def visit(text, cm, tm, font, size, pieces=pieces):
+            pieces.append((_user_y(cm, tm), text))
+
+        plain = page.extract_text(visitor_text=visit) or ""
+        restored = _paragraph_breaks(pieces)
+        # Only newlines may change. If the positions produce different words, keep the plain extract.
+        if restored is None or re.sub(r"\s+", "", restored) != re.sub(r"\s+", "", plain):
+            pages.append(plain)
+        else:
+            pages.append(restored)
+    return "\n\n".join(pages)
+
+
+def extract_text(path_or_bytes, suffix: str, keep_paragraphs: bool = False) -> str:
+    """Extract plain text from .md/.txt/.pdf/.docx (path or raw bytes).
+
+    keep_paragraphs: for a PDF the user dropped, put back blank lines where the
+    page has a gap. Off for the index, which was tuned on the plain extract.
+    """
     suffix = suffix.lower()
     if isinstance(path_or_bytes, (bytes, bytearray)):
         data = bytes(path_or_bytes)
@@ -92,17 +175,9 @@ def extract_text(path_or_bytes, suffix: str) -> str:
         with open(path_or_bytes, "rb") as f:
             data = f.read()
     if suffix == ".pdf":
-        from pypdf import PdfReader
-        r = PdfReader(io.BytesIO(data))
-        if r.is_encrypted:
-            try:
-                ok = r.decrypt("")  # owner-password-only PDFs open with an empty user password
-            except Exception:
-                ok = 0
-            if not ok:
-                raise NotText("the PDF is password protected")
-        return "\n\n".join((pg.extract_text() or "") for pg in r.pages)
+        return _pdf_text(data, keep_paragraphs)
     if suffix == ".docx":
+        import io
         import docx
         d = docx.Document(io.BytesIO(data))
         parts = [p.text for p in d.paragraphs]
