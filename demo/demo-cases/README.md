@@ -17,7 +17,7 @@ Two more cases are part of the demo script but are not in this folder yet:
 
 | File | Expected verdict | Why |
 |---|---|---|
-| Signing Module Review.pdf | coach when pasted | Code close to the indexed sample repository. Known gap: dropped as a file it does not get the same verdict |
+| Signing Module Review.pdf | coach | Code close to the indexed sample repository. Paste and drop get the same verdict |
 | Team Lunch Ideas.pdf | allow | Unrelated text |
 
 All keys in these files are fake and do not work.

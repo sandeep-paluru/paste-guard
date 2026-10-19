@@ -102,7 +102,6 @@ Verbatim text and partial excerpts are caught almost always. Paraphrases are cau
 ## Limits
 
 - Summaries and tone rewrites are the weak spot, about 0.50 recall held-out.
-- `Signing Module Review` is coached when its text is pasted, and missed when that PDF is dropped.
 - If the backend is down, pastes go through. The page says so.
 - On a 2 vCPU, 1 GB VM the p95 latency is over the 100 ms goal, because of memory pressure. A normal laptop is fine.
 - Chrome only, and only the sites listed in `paste-guard.toml` (claude.ai, chatgpt.com, chat.openai.com).

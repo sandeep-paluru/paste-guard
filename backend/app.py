@@ -338,7 +338,7 @@ async def check_file(request: Request, file: UploadFile = File(...), source: str
     if len(data) > MAX_FILE_BYTES:
         raise HTTPException(413, "file too large")
     try:
-        text = extract_text(data, suffix)
+        text = extract_text(data, suffix, keep_paragraphs=True)
     except NotText as ex:
         raise HTTPException(422, f"could not check {file.filename}: {ex}")
     except Exception as ex:

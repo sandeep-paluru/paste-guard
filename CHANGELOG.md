@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.1 follow-up (2026-10-19)
+- A dropped PDF now keeps a blank line where the page has a gap between paragraphs. pypdf's plain extract was joining those lines, so a code block inside a longer file was scored with the prose around it and could miss a coach that the same text got when pasted. `Signing Module Review` is coached either way now. The index still uses the plain extract, so the tuned thresholds stay where they are. Test: `tests/test_pdf_paragraphs.py`.
+
 ## 0.7.1 (2026-10-14)
 - **Live log.** New `/logs` page (local only) that shows every check as it happens: time, site, paste or file, verdict, matched source, best MiniLM, 3-gram and TF-IDF scores, whether the fast path skipped MiniLM, latency, and a short SHA-256 prefix with the length. Never the text. It polls the new `/logs/api?after=<id>` endpoint; events are kept in memory only (`backend/livelog.py`, last 500).
 - The server console prints one readable line per check with the same fields (`PG_CONSOLE_LOG=0` turns it off).
