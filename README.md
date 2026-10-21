@@ -75,7 +75,7 @@ The content script on the protected sites catches paste, the file picker, and dr
 
 Each check does four things. The worst verdict wins.
 
-1. Secret scan. AWS, Anthropic, OpenAI, GitHub, Stripe, Slack, and other provider keys, private keys, and database URLs that include a password are blocked. The overlay can redact them in one click.
+1. Secret scan. AWS, Anthropic, OpenAI, GitHub, Stripe, Slack, and other provider keys, private keys, and database URLs with a password (Postgres, MySQL, MongoDB, Redis, AMQP, SQL Server) are blocked. `.env` lines and config assignments are caught too (`DB_PASSWORD`, `AWS_SECRET_ACCESS_KEY`, `client_secret`, `access_token`, `auth_token`, `private_key_id`, including prefixed names). A known provider key inside one blocks. A bare password assignment is coached. Empty values and placeholders (`${VAR}`, `$VAR`, `<your-password>`, `changeme`, `example`, `xxxx`, `your_api_key_here`, `null`) are ignored. The overlay can redact them in one click.
 2. Word 3-gram overlap with each indexed passage. This catches verbatim copies and partial excerpts.
 3. TF-IDF similarity (word 1-grams and 2-grams) for documents. This catches pastes that share vocabulary.
 4. MiniLM embeddings (`sentence-transformers/all-MiniLM-L6-v2`, ONNX on CPU through fastembed), nearest passages in sqlite-vec. This catches rewording that shares little vocabulary.
