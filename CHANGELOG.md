@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.1 follow-up (2026-10-21)
+- Secrets scanner: password assignments pasted from `.env` files and config snippets are detected. Prefixed names (`DB_PASSWORD`, `AWS_SECRET_ACCESS_KEY`), `client_secret`, `access_token`, `auth_token`, and `private_key_id` match with a quoted or unquoted value. Empty values, `${VAR}`, `$VAR`, `<your-password>`, `changeme`, `xxxx`, `***`, `your_api_key_here`, `example`, `null`, `None`, and other short placeholders are ignored. A sentence such as "the password policy is: rotate every 90 days" is not a finding. An unquoted value is kept when it has a digit, a `+/=` symbol, or 16 or more characters. A quoted value of 8 or more characters is kept too, which is the previous quoted-password behavior, once placeholders are removed. Database URLs with a password also cover redis, rediss, amqp, amqps, mssql (including `mssql+pyodbc`), and sqlserver. A specific provider rule still wins when it overlaps the generic assignment. Redaction still replaces the whole assignment. Tests in `tests/test_secrets_formats.py`. Plain pytest is 174 tests.
+
 ## 0.7.1 follow-up (2026-10-19)
 - A dropped PDF now keeps a blank line where the page has a gap between paragraphs. pypdf's plain extract was joining those lines, so a code block inside a longer file was scored with the prose around it and could miss a coach that the same text got when pasted. `Signing Module Review` is coached either way now. The index still uses the plain extract, so the tuned thresholds stay where they are. Test: `tests/test_pdf_paragraphs.py`.
 

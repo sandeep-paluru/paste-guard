@@ -1,11 +1,33 @@
-"""Secrets and PII scanner..
+"""Secrets and PII scanner.
 
-Regex rules for common credentials and password assignments.
+Regex rules for common credentials, connection URLs, and password assignments.
 """
 import re
 
 _K = r"[A-Za-z0-9_-]"
 _NOT_K = r"(?![A-Za-z0-9_-])"
+
+# A sensitive word as its own identifier segment. DB_PASSWORD, client_secret, and
+# AWS_SECRET_ACCESS_KEY match. "secretary" and "password policy" do not.
+_SENSITIVE_KEY = re.compile(
+    r"(?i)(?:^|[_-])"
+    r"(?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|"
+    r"private[_-]?key(?:[_-]?id)?)(?:$|[_-])"
+)
+_MIN_SECRET = 6
+_MASK = re.compile(r"(?i)^(?:x+|\*+)$")
+_INTERP = re.compile(
+    r"^(?:\$\{[^{}]+\}|\$[A-Za-z_][A-Za-z0-9_]*|\{\{[^{}]+\}\}|%[A-Za-z_][A-Za-z0-9_]*%|<[^>\n]{1,80}>)$"
+)
+_PLACEHOLDER_WORD = re.compile(
+    r"(?i)^(?:"
+    r"change[-_]?me|"
+    r"examples?(?:[-_]?(?:key|secret|password|token|[0-9]{1,8}))?|"
+    r"null|none|nil|undefined|todo|fixme|placeholder|dummy|redacted|sample|"
+    r"password|passwd|secret|"
+    r"your[-_][a-z0-9_-]*here"
+    r")$"
+)
 
 RULES = {
     "aws_access_key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -29,23 +51,86 @@ RULES = {
     "sendgrid_key": re.compile(r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}" + _NOT_K),
     "twilio_key": re.compile(r"\bSK[0-9a-fA-F]{32}\b"),
     "azure_storage_key": re.compile(r"\bAccountKey=[A-Za-z0-9+/]{40,}={0,2}"),
+    # User may be empty (redis://:pass@host). Password is group "value" so placeholders can be dropped.
     "db_url_password": re.compile(
-        r"\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?)://[^\s:/@'\"]+:[^\s@/'\"]+@[\w.-]+(?::\d+)?"),
+        r"\b(?:(?i:postgresql|postgres|mysql|mongodb(?:\+srv)?|rediss|redis|amqps|amqp|"
+        r"mssql(?:\+[A-Za-z]+)?|sqlserver))://[^\s:/@'\"]*:(?P<value>[^\s@/'\"]+)@[\w.-]+(?::\d+)?"
+    ),
     "private_key": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
-    "password_assignment": re.compile(r"(?i)\b(password|passwd|secret|api_key)\s*[:=]\s*['\"][^'\"]{6,}['\"]"),
+    # .env and config assignments, quoted or not, with an optional export. Placeholders are
+    # filtered in scan(); the span stays the whole assignment, which is what redact() replaces.
+    "password_assignment": re.compile(
+        r"(?i)(?<![A-Za-z0-9_])"
+        r"(?:export[ \t]+)?"
+        r"[\"']?"
+        r"(?P<key>[A-Za-z_][A-Za-z0-9_-]{0,80})"
+        r"[\"']?"
+        r"[ \t]*[:=][ \t]*"
+        r"(?P<value>\"[^\"\n]{0,200}\"|'[^'\n]{0,200}'|[^\s\"'#,;)]{1,200})"
+    ),
 }
 
 
 GENERIC = {"password_assignment"}  # catch-all rules that yield to specific credential rules
 
 
+def _strip_value(raw: str) -> tuple[str, bool]:
+    raw = raw.strip()
+    if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'":
+        return raw[1:-1].strip(), True
+    return raw, False
+
+
+def _is_placeholder(value: str) -> bool:
+    """Blanks, short strings, interpolations, and stand-in words are not credentials."""
+    if len(value) < _MIN_SECRET or any(c.isspace() for c in value):
+        return True
+    if re.search(r"[()\[\]{}]", value):
+        return True
+    if _MASK.fullmatch(value) or len(set(value)) == 1:
+        return True
+    return bool(_PLACEHOLDER_WORD.fullmatch(value) or _INTERP.fullmatch(value))
+
+
+def _looks_like_secret(value: str, quoted: bool = False) -> bool:
+    """A pasted secret has a digit or a base64 symbol, or it is at least 16 characters.
+
+    Quoted values of 8 or more characters still count, which keeps the old
+    quoted-password behavior, after placeholders have been removed.
+    """
+    if _is_placeholder(value):
+        return False
+    if re.search(r"\d", value) or re.search(r"[+/=]", value):
+        return True
+    # Long enough that it is not a single ordinary word. "rotate" stays quiet.
+    if len(value) >= 16:
+        return True
+    return bool(quoted and len(value) >= 8)
+
+
+def _keep_match(name: str, m: re.Match) -> bool:
+    if name == "password_assignment":
+        key = m.group("key") or ""
+        if not _SENSITIVE_KEY.search(key):
+            return False
+        value, quoted = _strip_value(m.group("value") or "")
+        return _looks_like_secret(value, quoted)
+    if name == "db_url_password":
+        value, quoted = _strip_value(m.group("value") or "")
+        return _looks_like_secret(value, quoted)
+    return True
+
+
 def scan(text: str) -> list[dict]:
     """Return non-overlapping findings. A specific credential rule always beats the generic
     password_assignment rule on overlap (so api_key="sk-ant-..." reports anthropic_key and blocks);
-    otherwise the longest span wins, ties going to the rule defined first."""
+    otherwise the longest span wins, ties going to the rule defined first.
+    Placeholder assignment values are dropped before that."""
     cands = []
     for order, (name, rx) in enumerate(RULES.items()):
         for m in rx.finditer(text):
+            if not _keep_match(name, m):
+                continue
             cands.append((name in GENERIC, m.start() - m.end(), order, m.start(), m.end(), name))
     cands.sort()
     findings = []
