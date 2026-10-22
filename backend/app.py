@@ -58,6 +58,7 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=r"chrome-extension://.*", 
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 INDEX = Index()
 AUDIT = Audit(CONFIG["audit"]["db"], CONFIG["audit"]["keep_days"])
+ALLOWLIST = secrets_scan.compile_allowlist(CONFIG["secrets"])
 ADMIN_HTML = (Path(__file__).with_name("admin.html")).read_text(encoding="utf-8")
 LOGS_HTML = (Path(__file__).with_name("logs.html")).read_text(encoding="utf-8")
 
@@ -185,7 +186,7 @@ def margin(hit) -> float:
 
 def decide(text: str) -> dict:
     INDEX.refresh()
-    findings = secrets_scan.scan(text)
+    findings, allowlisted = secrets_scan.apply_allowlist(text, secrets_scan.scan(text), ALLOWLIST)
     marks = secrets_scan.markers(text)
     types = {f["type"] for f in findings}
     if len(clean(text).strip()) >= 20:
@@ -239,8 +240,8 @@ def decide(text: str) -> dict:
     # The whole-paste view only counts when no narrower window matched.
     narrow = [f for f in flagged if [f[0], f[1]] != [0, len(text)]]
     redacted = redact(text, narrow or flagged, secret_spans)
-    return {"verdict": verdict, "message": msg, "findings": findings + marks, "matches": matches,
-            "semantic_match": top, "redacted": redacted}
+    return {"verdict": verdict, "message": msg, "findings": findings + marks, "allowlisted": allowlisted,
+            "matches": matches, "semantic_match": top, "redacted": redacted}
 
 
 KEEP_LINE = re.compile(r"^\s*(#{1,6}\s|(async\s+)?def\s|class\s|function\s|export\s|public\s|private\s|func\s|fn\s)")

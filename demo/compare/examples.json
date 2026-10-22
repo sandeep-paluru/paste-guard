@@ -43,9 +43,9 @@
   },
   {
    "type": "Secret",
-   "text": "import boto3\nclient = boto3.client(\"s3\", aws_access_key_id=\"AKIAIOSFODNN7EXAMPLE\")\nprint(client.list_buckets())",
+   "text": "import boto3\nclient = boto3.client(\"s3\", aws_access_key_id=\"AKIAABCDEFGHIJKLMNOP\")\nprint(client.list_buckets())",
    "expected": "confidential",
-   "origin": "synthetic (AWS documentation example key)",
+   "origin": "synthetic access key (the AWS documentation example is on the allowlist)",
    "id": "ex6",
    "eval_transform": null
   },

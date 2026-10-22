@@ -1,8 +1,13 @@
 """Secrets and PII scanner.
 
 Regex rules for common credentials, connection URLs, and password assignments.
+Known-safe values are filtered afterwards by apply_allowlist, so a documented
+sample key can be ignored without changing what scan() detects.
 """
+import hashlib
 import re
+import sys
+from pathlib import Path
 
 _K = r"[A-Za-z0-9_-]"
 _NOT_K = r"(?![A-Za-z0-9_-])"
@@ -125,7 +130,9 @@ def scan(text: str) -> list[dict]:
     """Return non-overlapping findings. A specific credential rule always beats the generic
     password_assignment rule on overlap (so api_key="sk-ant-..." reports anthropic_key and blocks);
     otherwise the longest span wins, ties going to the rule defined first.
-    Placeholder assignment values are dropped before that."""
+    Placeholder assignment values are dropped before that.
+    The allowlist is not applied here. Detection stays the same; apply_allowlist drops
+    known-safe hits from the verdict."""
     cands = []
     for order, (name, rx) in enumerate(RULES.items()):
         for m in rx.finditer(text):
@@ -156,3 +163,179 @@ MARKERS = re.compile(
 def markers(text: str) -> list[dict]:
     return [{"type": "confidential_marker", "start": m.start(), "end": m.end(), "match": m.group(0)}
             for m in MARKERS.finditer(text)]
+
+
+# Public documentation samples. Exact strings only, so a real key with a similar
+# shape still matches. Sources:
+# AWS access key id and secret: IAM programmatic access docs.
+# Stripe test key: Stripe docs code samples (sk_test_ sample, not a live key).
+# JWT: the jwt.io debugger sample (alg HS256, sub 1234567890, name John Doe).
+def public_examples() -> list[str]:
+    return [
+        "AKIA" + "IOSFODNN7EXAMPLE",
+        "wJalr" + "XUtnFEMI/" + "K7MDENG/" + "bPxRfiCY" + "EXAMPLEKEY",
+        "sk" + "_test_" + "4eC39HqLyjWDarjtT1zdp7dc",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+        + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+    ]
+
+
+_KINDS = ("value", "regex", "sha256")
+
+
+class Allowlist:
+    """Exact values, whole-value regexes, and sha256 hex digests."""
+
+    def __init__(self, values: set[str], regexes: list, hashes: set[str], bad: list[str]):
+        self.values = values
+        self.regexes = regexes
+        self.hashes = hashes
+        self.bad = bad
+
+    def __bool__(self) -> bool:
+        return bool(self.values or self.regexes or self.hashes)
+
+    def matches(self, candidate: str) -> bool:
+        if candidate in self.values:
+            return True
+        if self.hashes and hashlib.sha256(candidate.encode("utf-8")).hexdigest() in self.hashes:
+            return True
+        return any(rx.fullmatch(candidate) for rx in self.regexes)
+
+
+def parse_allowlist_line(line: str):
+    """One file or config line. None if it is blank or a comment, an error string if it
+    is unusable, or (kind, body) for a value, regex, or sha256 entry."""
+    raw = line.strip()
+    if not raw or raw.startswith("#"):
+        return None
+    kind, sep, body = raw.partition(":")
+    if sep != ":" or kind not in _KINDS:
+        return "unrecognised prefix (use value:, regex:, or sha256:)"
+    if body == "":
+        return "empty entry"
+    if kind == "sha256" and not re.fullmatch(r"[0-9a-fA-F]{64}", body):
+        return "sha256 must be 64 hex characters"
+    if kind == "regex":
+        try:
+            re.compile(body)
+        except re.error as ex:
+            return f"bad regex ({ex})"
+    return (kind, body.lower() if kind == "sha256" else body)
+
+
+def _read_allowlist_file(path) -> tuple[list[tuple[str, str]], list[str]]:
+    entries, bad = [], []
+    text = path.read_text(encoding="utf-8")
+    for n, line in enumerate(text.splitlines(), 1):
+        parsed = parse_allowlist_line(line)
+        if parsed is None:
+            continue
+        if isinstance(parsed, str):
+            bad.append(f"{path.name}:{n}: {parsed}")
+        else:
+            entries.append(parsed)
+    return entries, bad
+
+
+def compile_allowlist(cfg: dict) -> Allowlist:
+    """Build an allowlist from a [secrets] config table.
+
+    cfg keys: examples (bool, default true), allowlist (list of prefixed strings),
+    file (path, already resolved). A missing file is a startup error. A bad line is
+    skipped and recorded on Allowlist.bad.
+    """
+    entries: list[tuple[str, str]] = []
+    bad: list[str] = []
+    if cfg.get("examples", True):
+        entries.extend(("value", v) for v in public_examples())
+    for i, item in enumerate(cfg.get("allowlist") or [], 1):
+        if not isinstance(item, str):
+            bad.append(f"allowlist[{i}]: not a string")
+            continue
+        parsed = parse_allowlist_line(item)
+        if parsed is None:
+            bad.append(f"allowlist[{i}]: empty")
+            continue
+        if isinstance(parsed, str):
+            bad.append(f"allowlist[{i}]: {parsed}")
+        else:
+            entries.append(parsed)
+    path = cfg.get("file") or ""
+    if path:
+        file = Path(path)
+        if not file.is_file():
+            raise SystemExit(f"secrets allowlist file not found: {file}")
+        file_entries, file_bad = _read_allowlist_file(file)
+        entries.extend(file_entries)
+        bad.extend(file_bad)
+    values, regexes, hashes = set(), [], set()
+    for kind, body in entries:
+        if kind == "value":
+            values.add(body)
+        elif kind == "regex":
+            regexes.append(re.compile(body))
+        else:
+            hashes.add(body)
+    allow = Allowlist(values, regexes, hashes, bad)
+    for item in bad:
+        print(f"paste-guard allowlist: skipped {item}", file=sys.stderr)
+    return allow
+
+
+def _candidates(text: str, finding: dict) -> list[str]:
+    """Strings an allowlist entry can refer to. The whole match, and for assignments
+    and database URLs the password with quotes removed."""
+    span = text[finding["start"]:finding["end"]]
+    out = [span]
+    rule = RULES.get(finding["type"])
+    if rule is not None and "value" in rule.groupindex:
+        m = rule.search(span)
+        if m:
+            raw = m.group("value") or ""
+            stripped, _ = _strip_value(raw)
+            if raw and raw not in out:
+                out.append(raw)
+            if stripped and stripped not in out:
+                out.append(stripped)
+    return out
+
+
+def apply_allowlist(text: str, findings: list[dict], allowlist: Allowlist) -> tuple[list[dict], int]:
+    """Drop findings whose value is allowlisted. Returns the kept findings and how many were dropped.
+
+    The dropped findings are not returned, so the value is not echoed. The count is
+    the only record of them."""
+    if not allowlist:
+        return findings, 0
+    kept = []
+    dropped = 0
+    for finding in findings:
+        if any(allowlist.matches(value) for value in _candidates(text, finding)):
+            dropped += 1
+        else:
+            kept.append(finding)
+    return kept, dropped
+
+
+def fingerprint_bytes(data: bytes) -> str:
+    """sha256 hex of a secret. One trailing newline is ignored so `echo secret | pasteguard fingerprint` works."""
+    if data.endswith(b"\r\n"):
+        data = data[:-2]
+    elif data.endswith(b"\n"):
+        data = data[:-1]
+    return hashlib.sha256(data).hexdigest()
+
+
+def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv not in ([], ["fingerprint"]):
+        print("usage: python secrets_scan.py < secret", file=sys.stderr)
+        return 2
+    print(fingerprint_bytes(sys.stdin.buffer.read()))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

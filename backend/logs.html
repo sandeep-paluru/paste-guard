@@ -31,8 +31,9 @@ const PATH = {embedding: "MiniLM ran", cheap_block: "fast path: cheap check alre
 function row(e) {
   const tr = document.createElement("tr"); tr.className = "new";
   const src = e.source ? esc(e.source) : (e.secrets.length ? "secret: " + esc(e.secrets.join(", ")) : '<span class="dim">none</span>');
+  const allow = e.allowlisted ? ` <span class="dim">allowlisted: ${Number(e.allowlisted)}</span>` : "";
   tr.innerHTML = `<td class="s">${esc(e.time)}</td><td>${esc(e.site)}</td><td>${esc(e.channel)}${e.file ? '<div class="path">' + esc(e.file) + '</div>' : ""}</td>
-  <td><span class="v ${esc(e.verdict)}">${esc(e.verdict.toUpperCase())}</span></td><td>${src}</td>
+  <td><span class="v ${esc(e.verdict)}">${esc(e.verdict.toUpperCase())}</span></td><td>${src}${allow}</td>
   <td class="s">${num(e.scores.embedding, "embedding", e.method)}</td><td class="s">${num(e.scores.ngram, "fingerprint", e.method)}</td>
   <td class="s">${num(e.scores.tfidf, "tfidf", e.method)}</td><td class="path">${esc(PATH[e.path] || e.path || "")}</td>
   <td class="s">${e.ms} ms</td><td class="s dim">#${esc(e.hash)} (${e.chars})</td>`;

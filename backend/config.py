@@ -5,7 +5,8 @@ so one file can carry the accurate default and the fast profile side by side.
 
 Environment variables override file values:
 PG_T_DOC_NUDGE / PG_T_DOC_COACH / PG_T_DOC_BLOCK, PG_T_CODE_* (and legacy PG_T_NUDGE etc. for code),
-PG_FP_DOC_COACH / PG_FP_DOC_BLOCK / PG_FP_CODE_* (fingerprint), PG_INDEX_DB, PG_AUDIT_DB.
+PG_FP_DOC_COACH / PG_FP_DOC_BLOCK / PG_FP_CODE_* (fingerprint), PG_INDEX_DB, PG_AUDIT_DB,
+PG_SECRETS_ALLOWLIST (file of known-safe secrets), PG_SECRETS_EXAMPLES=0 (turn off the built-in samples).
 """
 import os
 from pathlib import Path
@@ -36,6 +37,9 @@ DEFAULTS = {
     "fast_path": {"enabled": True, "skip_below": 0.10},
     "sites": {"allowed": ["claude.ai", "chatgpt.com", "chat.openai.com"]},
     "audit": {"db": "data/audit.db", "keep_days": 30},
+    # Known-safe secrets. examples is four public documentation samples. allowlist and file
+    # add value:, regex:, and sha256: entries. Off for anything that is not listed.
+    "secrets": {"examples": True, "allowlist": [], "file": ""},
 }
 
 
@@ -82,6 +86,32 @@ def load() -> dict:
                 cfg["tfidf"][kind][lvl] = float(v)
     if os.environ.get("PG_FAST_PATH") is not None:
         cfg["fast_path"]["enabled"] = os.environ["PG_FAST_PATH"] not in ("0", "false", "")
+    sec = dict(cfg.get("secrets") or {})
+    examples = sec.get("examples", True)
+    if isinstance(examples, str):
+        examples = examples.strip().lower() not in ("0", "false", "")
+    else:
+        examples = bool(examples)
+    if os.environ.get("PG_SECRETS_EXAMPLES") is not None:
+        examples = os.environ["PG_SECRETS_EXAMPLES"].strip().lower() not in ("0", "false", "")
+    raw_list = sec.get("allowlist") or []
+    if isinstance(raw_list, str):
+        raw_list = [raw_list]
+    if not isinstance(raw_list, list) or not all(isinstance(item, str) for item in raw_list):
+        raise SystemExit("paste-guard.toml: [secrets] allowlist must be a list of strings")
+    file = os.environ.get("PG_SECRETS_ALLOWLIST") or str(sec.get("file") or "")
+    file = file.strip()
+    if file:
+        file_path = Path(file)
+        if not file_path.is_absolute():
+            file_path = (base / file_path).resolve()
+        else:
+            file_path = file_path.resolve()
+        file = str(file_path)
+    sec["examples"] = examples
+    sec["allowlist"] = list(raw_list)
+    sec["file"] = file
+    cfg["secrets"] = sec
     return cfg
 
 
