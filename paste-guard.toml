@@ -73,3 +73,14 @@ enabled = false
 [fast_path]
 enabled = true
 skip_below = 0.10
+
+# Known-safe secrets. A matching hit is dropped from the verdict and counted as allowlisted.
+# The value is not written to the log. examples is four public documentation samples
+# (the AWS example access key, the AWS example secret, the Stripe docs test key, the jwt.io sample).
+# It does not allowlist any other key. allowlist entries use the same prefixes as the file:
+# value:, regex: (whole value), sha256:. file is one entry per line, # comments allowed.
+# PG_SECRETS_ALLOWLIST overrides file. PG_SECRETS_EXAMPLES=0 turns the samples off.
+[secrets]
+examples = true
+allowlist = []
+file = ""

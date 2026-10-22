@@ -35,6 +35,7 @@ def record(channel, site, text, res, ms, path, file_name=None):
           "scores": {"embedding": _best(matches, "embedding"), "ngram": _best(matches, "fingerprint"),
                      "tfidf": _best(matches, "tfidf")},
           "secrets": sorted({f["type"] for f in res.get("findings", [])}),
+          "allowlisted": int(res.get("allowlisted") or 0),
           "path": path, "minilm_skipped": path in ("cheap_block", "cheap_clear", "short"),
           "ms": ms, "chars": len(text), "hash": hashlib.sha256(text.encode()).hexdigest()[:10],
           "file": file_name}
@@ -59,7 +60,8 @@ def line(ev):
     """One readable console line per check, no pasted text."""
     s = ev["scores"]
     src = ev["source"] or ("secret: " + ",".join(ev["secrets"]) if ev["secrets"] else "-")
+    extra = f"  allowlisted: {ev['allowlisted']}" if ev.get("allowlisted") else ""
     return (f"[{ev['time']}] {ev['verdict'].upper():6} {ev['channel']:5} {ev['site'][:18]:18} "
             f"emb {_f(s['embedding'])} 3gram {_f(s['ngram'])} tfidf {_f(s['tfidf'])} "
             f"{'fast-path' if ev['minilm_skipped'] else 'MiniLM   '} {ev['ms']:4d} ms  "
-            f"#{ev['hash']} {ev['chars']} chars  -> {src}")
+            f"#{ev['hash']} {ev['chars']} chars  -> {src}{extra}")
