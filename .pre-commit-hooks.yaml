@@ -1,0 +1,7 @@
+- id: pasteguard-scan
+  name: Paste Guard secrets scan
+  description: Scan files for secrets with the Paste Guard rules and allowlist. Does not load the model or need a running server.
+  entry: pasteguard scan
+  language: script
+  types: [text]
+  pass_filenames: true

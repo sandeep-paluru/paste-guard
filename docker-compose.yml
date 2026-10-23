@@ -3,7 +3,7 @@
 services:
   paste-guard:
     build: .
-    image: paste-guard:0.7.2
+    image: paste-guard:0.8.0
     ports:
       - "127.0.0.1:8765:8765"
     volumes:

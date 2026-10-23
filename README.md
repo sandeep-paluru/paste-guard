@@ -115,6 +115,50 @@ Verbatim text and partial excerpts are caught almost always. Paraphrases are cau
 
 Other pages, local connections only: `/admin` (indexed passages, verdict counts, recent checks; hashes and lengths only), `/demo/compare` (regex baseline next to Paste Guard), and `/demo/redteam` (37 adversarial rewrites replayed through `/check`).
 
+## Scan secrets in CI
+
+`./pasteguard scan` runs the same secrets rules on files, directories, or stdin. It uses the `[secrets]` allowlist from `paste-guard.toml`. `PG_SECRETS_ALLOWLIST` and `PG_SECRETS_EXAMPLES` override that file, the same way they do for the server. It does not load the model or the index, and it does not need the server.
+
+```
+./pasteguard scan src/ .env
+./pasteguard scan --exclude '*.min.js' --fail-on coach .
+echo "$TEXT" | ./pasteguard scan
+```
+
+On Windows, from the repo root: `python backend\secrets_scan.py scan .`
+
+No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule severity`, followed by a mask of the secret: the first 4 characters and the length. The value itself is not printed. `--format json` writes a JSON list to stdout and the summary to stderr. The text report ends with a summary line, including how many hits were allowlisted.
+
+A block-level finding exits 1. JWTs and password assignments are coach and exit 0 unless you pass `--fail-on coach`. A usage error exits 2. Directories are walked recursively. Binary files are skipped, and so are `.git`, vendor directories (`node_modules`, `vendor`, `.venv`), and tool caches (`__pycache__`, `.pytest_cache`).
+
+### pre-commit
+
+```yaml
+repos:
+  - repo: https://github.com/sandeep-paluru/paste-guard
+    rev: v0.8.0
+    hooks:
+      - id: pasteguard-scan
+        # args: ["--fail-on", "coach"]
+```
+
+`args` replaces the hook arguments. To fail on coach-level findings as well, the args are `--fail-on` and `coach` only. `scan` is already part of the hook entry.
+
+### GitHub Actions
+
+```yaml
+name: secrets
+on: [push, pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: ./pasteguard scan .
+```
+
+A block-level finding fails the job. The runner's Python is enough. The model is not installed. The demo files and the tests in this repo contain synthetic keys on purpose, so `./pasteguard scan .` here exits 1.
+
 ## Tests
 
 The suite needs the sample code repository cloned (the `itsdangerous` checkout above) and an index built with `./pasteguard reindex`. Backend tests use the real model and the real index. The extension tests use node:test and jsdom.
@@ -127,7 +171,7 @@ cd tests/js && npm ci && cd ../..
 
 On Windows: `.venv\Scripts\python -m pytest`.
 
-`pytest.ini` sets `testpaths = tests`. `tests/test_extension_js.py` runs `node --test` in `tests/js`. If `jsdom` is missing and npm is available, that test installs it first. If node is missing, the JS test is skipped. `npm test` in `tests/js` runs the same `node --test` command.
+`pytest.ini` sets `testpaths = tests`. `tests/test_extension_js.py` runs `node --test` in `tests/js`. If `jsdom` is missing and npm is available, that test installs it first. If node is missing, the JS test is skipped. `npm test` in `tests/js` runs the same `node --test` command. `tests/test_scan_command.py` does not load the model or the index.
 
 GitHub Actions runs this on push and pull request to `main` (`.github/workflows/ci.yml`). The workflow caches the model under `~/.cache/paste-guard/models` (`PG_MODEL_CACHE`).
 
@@ -148,5 +192,5 @@ tests/          pytest suite and extension JS tests
 docs/           architecture, optimization log, write-up
 deploy/windows/ Windows setup and start/stop scripts
 install.sh, pasteguard, Dockerfile, docker-compose.yml
-paste-guard.toml
+paste-guard.toml, .pre-commit-hooks.yaml
 ```

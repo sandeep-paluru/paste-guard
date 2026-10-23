@@ -3,11 +3,18 @@
 Regex rules for common credentials, connection URLs, and password assignments.
 Known-safe values are filtered afterwards by apply_allowlist, so a documented
 sample key can be ignored without changing what scan() detects.
+
+`pasteguard scan` runs these rules on files or stdin. It does not load the
+model, the index, or the server.
 """
+import argparse
+import fnmatch
 import hashlib
+import json
+import os
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 _K = r"[A-Za-z0-9_-]"
 _NOT_K = r"(?![A-Za-z0-9_-])"
@@ -77,6 +84,13 @@ RULES = {
 
 
 GENERIC = {"password_assignment"}  # catch-all rules that yield to specific credential rules
+
+# JWTs and password assignments coach. Every other rule is a live credential and blocks.
+COACH_RULES = frozenset({"jwt", "password_assignment"})
+
+
+def severity(rule: str) -> str:
+    return "coach" if rule in COACH_RULES else "block"
 
 
 def _strip_value(raw: str) -> tuple[str, bool]:
@@ -319,6 +333,301 @@ def apply_allowlist(text: str, findings: list[dict], allowlist: Allowlist) -> tu
     return kept, dropped
 
 
+# Dependency, VCS, and tool-cache folders. A directory walk does not descend into these.
+SKIP_DIRS = frozenset({
+    ".git", ".hg", ".svn",
+    ".venv", "venv", ".tox", ".eggs",
+    "node_modules", "bower_components",
+    "vendor", "third_party", "third-party",
+    "site-packages", "__pycache__",
+    ".pytest_cache", ".mypy_cache", ".ruff_cache",
+})
+_SAMPLE = 8192
+
+
+def _position(text: str, offset: int) -> tuple[int, int]:
+    """1-based line and character column. Column counts characters, not bytes."""
+    line = text.count("\n", 0, offset) + 1
+    start = text.rfind("\n", 0, offset) + 1
+    return line, offset - start + 1
+
+
+def _secret_value(text: str, finding: dict) -> str:
+    """The credential itself. For an assignment or a database URL, the password."""
+    span = text[finding["start"]:finding["end"]]
+    rule = RULES.get(finding["type"])
+    if rule is not None and "value" in rule.groupindex:
+        matched = rule.search(span)
+        if matched:
+            stripped, _quoted = _strip_value(matched.group("value") or "")
+            if stripped:
+                return stripped
+    return span
+
+
+def _mask(value: str) -> str:
+    """First 4 characters and the length. The rest of the value is not included.
+
+    A value of 4 characters or fewer would be the whole secret, so only the length is shown.
+    """
+    if len(value) <= 4:
+        return f"({len(value)})"
+    head = value[:4].replace("\r", "").replace("\n", "")
+    return f"{head}({len(value)})"
+
+
+def _record(display: str, text: str, finding: dict) -> dict:
+    value = _secret_value(text, finding)
+    line, col = _position(text, finding["start"])
+    return {
+        "path": display,
+        "line": line,
+        "col": col,
+        "rule": finding["type"],
+        "severity": severity(finding["type"]),
+        "mask": _mask(value),
+        "length": len(value),
+    }
+
+
+def _summary(files: int, findings: int, block: int, coach: int, allowlisted: int) -> str:
+    file_word = "file" if files == 1 else "files"
+    finding_word = "finding" if findings == 1 else "findings"
+    return (
+        f"scanned {files} {file_word}, {findings} {finding_word}, "
+        f"{block} block, {coach} coach, {allowlisted} allowlisted"
+    )
+
+
+def _display(path: Path) -> str:
+    try:
+        rel = path.resolve().relative_to(Path.cwd().resolve())
+    except ValueError:
+        rel = path
+    return rel.as_posix()
+
+
+def _excluded(rel: str, patterns: list[str]) -> bool:
+    if not patterns:
+        return False
+    rel = rel.replace("\\", "/")
+    name = rel.rsplit("/", 1)[-1]
+    parts = rel.split("/")
+    suffixes = ["/".join(parts[i:]) for i in range(len(parts))]
+    for pattern in patterns:
+        pattern = pattern.replace("\\", "/")
+        if not pattern:
+            continue
+        if fnmatch.fnmatch(rel, pattern) or ("/" not in pattern and fnmatch.fnmatch(name, pattern)):
+            return True
+        if any(fnmatch.fnmatch(suffix, pattern) for suffix in suffixes):
+            return True
+        try:
+            if PurePosixPath(rel).match(pattern):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def _bytes_look_binary(chunk: bytes) -> bool:
+    if b"\0" in chunk:
+        return True
+    if not chunk:
+        return False
+    try:
+        chunk.decode("utf-8")
+        return False
+    except UnicodeDecodeError:
+        pass
+    # A sample can end in the middle of a code point. Only the trailing bytes are suspect.
+    try:
+        chunk[:-3].decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return False
+
+
+def _read_text(path: Path) -> str | None:
+    """File text, or None when the file is binary. OSError propagates."""
+    with path.open("rb") as fh:
+        sample = fh.read(_SAMPLE)
+    if _bytes_look_binary(sample):
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
+def _read_stdin() -> str | None:
+    data = sys.stdin.buffer.read()
+    if _bytes_look_binary(data[:_SAMPLE]):
+        return None
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
+def _walk(root: Path, patterns: list[str]) -> tuple[list[Path], list[str]]:
+    found = []
+    problems = []
+
+    def onerror(err):
+        problems.append(f"cannot read {err.filename}: {err.strerror or err}")
+
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False, onerror=onerror):
+        kept = []
+        for name in sorted(dirnames):
+            if name in SKIP_DIRS:
+                continue
+            child = Path(dirpath) / name
+            if _excluded(_display(child), patterns):
+                continue
+            kept.append(name)
+        dirnames[:] = kept
+        for name in sorted(filenames):
+            path = Path(dirpath) / name
+            if _excluded(_display(path), patterns):
+                continue
+            found.append(path)
+    return found, problems
+
+
+def _scan_one(display: str, text: str, allow) -> tuple[list[dict], int]:
+    kept, dropped = apply_allowlist(text, scan(text), allow)
+    return [_record(display, text, finding) for finding in kept], dropped
+
+
+def _load_allowlist():
+    """The [secrets] table, with PG_SECRETS_ALLOWLIST and PG_SECRETS_EXAMPLES applied."""
+    import config
+    cfg = config.load()
+    return compile_allowlist(cfg["secrets"])
+
+
+def _emit(records: list[dict], summary: str, fmt: str) -> None:
+    if fmt == "json":
+        json.dump(records, sys.stdout, indent=2, ensure_ascii=False)
+        sys.stdout.write("\n")
+        print(summary, file=sys.stderr)
+        return
+    for rec in records:
+        print(f"{rec['path']}:{rec['line']}:{rec['col']} {rec['rule']} {rec['severity']} {rec['mask']}")
+    print(summary)
+
+
+def cmd_scan(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="pasteguard scan",
+        description="Scan files or stdin for secrets. Does not load the model or the index.",
+    )
+    parser.add_argument("paths", nargs="*", help="files or directories to scan; - or no path reads stdin")
+    parser.add_argument("--exclude", action="append", default=[], metavar="GLOB",
+                        help="skip paths matching GLOB, repeatable")
+    parser.add_argument("--format", choices=("text", "json"), default="text",
+                        help="text lines, or a JSON list (default: text)")
+    parser.add_argument("--fail-on", choices=("block", "coach"), default="block", dest="fail_on",
+                        help="exit 1 at this severity; coach also fails JWTs and password assignments")
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as ex:
+        code = ex.code
+        return code if isinstance(code, int) else 2
+
+    patterns = [item for item in args.exclude if item]
+    paths = args.paths or ["-"]
+    planned: list = []
+    errors = []
+    for raw in paths:
+        if raw == "-":
+            planned.append(None)
+            continue
+        path = Path(raw)
+        if not path.exists():
+            print(f"pasteguard scan: not found: {raw}", file=sys.stderr)
+            return 2
+        if path.is_file():
+            planned.append(path)
+        elif path.is_dir():
+            found, problems = _walk(path, patterns)
+            planned.extend(found)
+            errors.extend(problems)
+        else:
+            print(f"pasteguard scan: not a file or directory: {raw}", file=sys.stderr)
+            return 2
+
+    try:
+        allow = _load_allowlist()
+    except SystemExit as ex:
+        message = ex.code
+        if isinstance(message, str) and message.strip():
+            print(message.strip(), file=sys.stderr)
+        return 2
+    except Exception as ex:
+        if type(ex).__name__ == "TOMLDecodeError":
+            print(f"pasteguard scan: {ex}", file=sys.stderr)
+            return 2
+        raise
+
+    stdin_text = None
+    stdin_done = False
+    if any(item is None for item in planned):
+        stdin_text = _read_stdin()
+
+    records: list[dict] = []
+    files = 0
+    allowlisted = 0
+    seen = set()
+    for item in planned:
+        if item is None:
+            if stdin_done:
+                continue
+            stdin_done = True
+            if stdin_text is None:
+                continue
+            rows, dropped = _scan_one("-", stdin_text, allow)
+            files += 1
+            allowlisted += dropped
+            records.extend(rows)
+            continue
+        try:
+            key = str(item.resolve())
+            display = _display(item)
+        except OSError as ex:
+            errors.append(f"cannot read {item.as_posix()}: {ex.strerror or ex}")
+            continue
+        if _excluded(display, patterns):
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            text = _read_text(item)
+        except OSError as ex:
+            errors.append(f"cannot read {display}: {ex.strerror or ex}")
+            continue
+        if text is None:
+            continue
+        rows, dropped = _scan_one(display, text, allow)
+        files += 1
+        allowlisted += dropped
+        records.extend(rows)
+
+    for message in errors:
+        print(f"pasteguard scan: {message}", file=sys.stderr)
+    records.sort(key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]))
+    block = sum(1 for rec in records if rec["severity"] == "block")
+    coach = sum(1 for rec in records if rec["severity"] == "coach")
+    _emit(records, _summary(files, len(records), block, coach, allowlisted), args.format)
+    if errors:
+        return 2
+    if args.fail_on == "coach":
+        return 1 if block or coach else 0
+    return 1 if block else 0
+
+
 def fingerprint_bytes(data: bytes) -> str:
     """sha256 hex of a secret. One trailing newline is ignored so `echo secret | pasteguard fingerprint` works."""
     if data.endswith(b"\r\n"):
@@ -330,11 +639,13 @@ def fingerprint_bytes(data: bytes) -> str:
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv not in ([], ["fingerprint"]):
-        print("usage: python secrets_scan.py < secret", file=sys.stderr)
-        return 2
-    print(fingerprint_bytes(sys.stdin.buffer.read()))
-    return 0
+    if not argv or argv == ["fingerprint"]:
+        print(fingerprint_bytes(sys.stdin.buffer.read()))
+        return 0
+    if argv[0] == "scan":
+        return cmd_scan(argv[1:])
+    print("usage: python secrets_scan.py [fingerprint | scan [options] [PATH ...]]", file=sys.stderr)
+    return 2
 
 
 if __name__ == "__main__":

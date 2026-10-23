@@ -32,10 +32,7 @@ PROFILE = CONFIG["profile"]
 FAST = CONFIG["fast_path"]  # two-step matching: cheap lexical checks first, MiniLM only when uncertain
 STATS = {}  # fast path counters, shown on /health
 # Live credentials always block. password_assignment and jwt stay a softer "may contain a secret" coach.
-HARD_SECRETS = {"private_key", "aws_access_key", "aws_temp_key", "github_token", "github_pat_fine_grained",
-                "anthropic_key", "openai_key", "xai_key", "google_api_key", "google_oauth_client_secret",
-                "stripe_key", "slack_token", "slack_webhook", "huggingface_token", "gitlab_token", "npm_token",
-                "sendgrid_key", "twilio_key", "azure_storage_key", "db_url_password"}
+HARD_SECRETS = {name for name in secrets_scan.RULES if name not in secrets_scan.COACH_RULES}
 MAX_WINDOWS = int(os.environ.get("PG_MAX_WINDOWS", "48"))  # bounds CPU and RAM per request
 MAX_FILE_BYTES = int(os.environ.get("PG_MAX_FILE_BYTES", str(10 * 1024 * 1024)))
 MAX_CHARS = int(os.environ.get("PG_MAX_CHARS", str(2 * 1024 * 1024)))  # longer pastes are rejected with HTTP 422

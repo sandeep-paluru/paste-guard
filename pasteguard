@@ -5,6 +5,7 @@
 #   ./pasteguard status       show backend health
 #   ./pasteguard eval         run the evaluation (writes eval/results.md)
 #   ./pasteguard fingerprint  sha256 of a value read from stdin
+#   ./pasteguard scan         scan files or stdin for secrets (no model, no server)
 #   ./pasteguard version
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,5 +20,6 @@ case "${1:-help}" in
   eval)    cd "$ROOT" && exec "$PY" eval/run_eval.py "${@:2}" ;;
   fingerprint) cd "$ROOT/backend" && exec "$PY" secrets_scan.py ;;
   version) cat "$ROOT/VERSION" ;;
-  *) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//' ;;
+  scan) exec "$PY" "$ROOT/backend/secrets_scan.py" scan "${@:2}" ;;
+  *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac
