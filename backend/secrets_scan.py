@@ -5,7 +5,9 @@ Known-safe values are filtered afterwards by apply_allowlist, so a documented
 sample key can be ignored without changing what scan() detects.
 
 `pasteguard scan` runs these rules on files or stdin. It does not load the
-model, the index, or the server.
+model, the index, or the server. `--format sarif` writes SARIF 2.1.0.
+`--write-baseline` records fingerprints, and `--baseline` hides findings
+already recorded there.
 """
 import argparse
 import fnmatch
@@ -15,6 +17,7 @@ import os
 import re
 import sys
 from pathlib import Path, PurePosixPath
+from urllib.parse import quote
 
 _K = r"[A-Za-z0-9_-]"
 _NOT_K = r"(?![A-Za-z0-9_-])"
@@ -87,6 +90,38 @@ GENERIC = {"password_assignment"}  # catch-all rules that yield to specific cred
 
 # JWTs and password assignments coach. Every other rule is a live credential and blocks.
 COACH_RULES = frozenset({"jwt", "password_assignment"})
+
+# One short SARIF description per detector. No sample values.
+RULE_DESCRIPTIONS = {
+    "aws_access_key": "AWS access key ID",
+    "aws_temp_key": "AWS temporary access key ID",
+    "github_token": "GitHub personal access token",
+    "github_pat_fine_grained": "GitHub fine-grained personal access token",
+    "anthropic_key": "Anthropic API key",
+    "openai_key": "OpenAI API key",
+    "xai_key": "xAI API key",
+    "google_api_key": "Google API key",
+    "google_oauth_client_secret": "Google OAuth client secret",
+    "stripe_key": "Stripe secret or restricted key",
+    "slack_token": "Slack token",
+    "slack_webhook": "Slack incoming webhook URL",
+    "jwt": "JSON Web Token",
+    "huggingface_token": "Hugging Face access token",
+    "gitlab_token": "GitLab personal access token",
+    "npm_token": "npm access token",
+    "sendgrid_key": "SendGrid API key",
+    "twilio_key": "Twilio API key",
+    "azure_storage_key": "Azure storage account key",
+    "db_url_password": "Database URL with a password",
+    "private_key": "PEM private key",
+    "password_assignment": "Password or secret assignment",
+}
+
+_SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
+_TOOL_URI = "https://github.com/sandeep-paluru/paste-guard"
+_BASELINE_VERSION = 1
+_PUBLIC_FIELDS = ("path", "line", "col", "rule", "severity", "mask", "length")
+_HEX = frozenset("0123456789abcdef")
 
 
 def severity(rule: str) -> str:
@@ -376,27 +411,46 @@ def _mask(value: str) -> str:
     return f"{head}({len(value)})"
 
 
+def baseline_fingerprint(rule: str, value: str) -> str:
+    """sha256 hex of the detector type, a NUL byte, and the raw value.
+
+    A baseline file stores this next to the path. The value itself is not stored.
+    """
+    return hashlib.sha256(rule.encode("utf-8") + b"\0" + value.encode("utf-8")).hexdigest()
+
+
 def _record(display: str, text: str, finding: dict) -> dict:
     value = _secret_value(text, finding)
     line, col = _position(text, finding["start"])
+    rule = finding["type"]
     return {
         "path": display,
         "line": line,
         "col": col,
-        "rule": finding["type"],
-        "severity": severity(finding["type"]),
+        "rule": rule,
+        "severity": severity(rule),
         "mask": _mask(value),
         "length": len(value),
+        "fingerprint": baseline_fingerprint(rule, value),
     }
 
 
-def _summary(files: int, findings: int, block: int, coach: int, allowlisted: int) -> str:
+def _public_record(rec: dict) -> dict:
+    """The finding as text and JSON show it. The fingerprint stays internal."""
+    return {key: rec[key] for key in _PUBLIC_FIELDS}
+
+
+def _summary(files: int, findings: int, block: int, coach: int, allowlisted: int,
+             suppressed: int | None = None) -> str:
     file_word = "file" if files == 1 else "files"
     finding_word = "finding" if findings == 1 else "findings"
-    return (
+    text = (
         f"scanned {files} {file_word}, {findings} {finding_word}, "
         f"{block} block, {coach} coach, {allowlisted} allowlisted"
     )
+    if suppressed is not None:
+        text += f", {suppressed} suppressed"
+    return text
 
 
 def _display(path: Path) -> str:
@@ -507,9 +561,164 @@ def _load_allowlist():
     return compile_allowlist(cfg["secrets"])
 
 
+def _tool_version() -> str:
+    path = Path(__file__).resolve().parents[1] / "VERSION"
+    try:
+        text = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "0.0.0"
+    return text or "0.0.0"
+
+
+def _sarif_level(severity_name: str) -> str:
+    return "warning" if severity_name == "coach" else "error"
+
+
+def _sarif_uri(path: str) -> str:
+    """File URI relative to the working directory. Slashes stay literal."""
+    return quote(path.replace("\\", "/"), safe="/")
+
+
+def _sarif(records: list[dict]) -> dict:
+    """SARIF 2.1.0. One rule per detector. The result message is only the mask."""
+    rules = []
+    for name in RULES:
+        rules.append({
+            "id": name,
+            "shortDescription": {"text": RULE_DESCRIPTIONS.get(name) or name},
+            "defaultConfiguration": {"level": _sarif_level(severity(name))},
+        })
+    index = {rule["id"]: i for i, rule in enumerate(rules)}
+    results = []
+    for rec in records:
+        rule_id = rec["rule"]
+        if rule_id not in index:
+            index[rule_id] = len(rules)
+            rules.append({
+                "id": rule_id,
+                "shortDescription": {"text": RULE_DESCRIPTIONS.get(rule_id) or rule_id},
+                "defaultConfiguration": {"level": _sarif_level(rec["severity"])},
+            })
+        results.append({
+            "ruleId": rule_id,
+            "ruleIndex": index[rule_id],
+            "level": _sarif_level(rec["severity"]),
+            "message": {"text": rec["mask"]},
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": _sarif_uri(rec["path"])},
+                    "region": {
+                        "startLine": rec["line"],
+                        "startColumn": rec["col"],
+                    },
+                },
+            }],
+        })
+    return {
+        "$schema": _SARIF_SCHEMA,
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "paste-guard",
+                    "version": _tool_version(),
+                    "informationUri": _TOOL_URI,
+                    "rules": rules,
+                },
+            },
+            "columnKind": "unicodeCodePoints",
+            "results": results,
+        }],
+    }
+
+
+def _load_baseline(path: Path) -> tuple[set[tuple[str, str, str]] | None, str | None]:
+    """Return (path, rule, fingerprint) keys, or an error string."""
+    if not path.is_file():
+        return None, f"pasteguard scan: baseline not found: {path}"
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as ex:
+        return None, f"pasteguard scan: cannot read baseline: {path}: {ex.strerror or ex}"
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None, f"pasteguard scan: baseline is not valid JSON: {path}"
+    findings = data.get("findings") if isinstance(data, dict) else None
+    if not isinstance(data, dict) or data.get("version") != _BASELINE_VERSION or not isinstance(findings, list):
+        return None, f"pasteguard scan: unrecognized baseline file: {path}"
+    keys = set()
+    for item in findings:
+        if not isinstance(item, dict):
+            return None, f"pasteguard scan: unrecognized baseline file: {path}"
+        rel, rule, fp = item.get("path"), item.get("rule"), item.get("fingerprint")
+        if not isinstance(rel, str) or not isinstance(rule, str) or not isinstance(fp, str):
+            return None, f"pasteguard scan: unrecognized baseline file: {path}"
+        digest = fp.lower()
+        if not rel or not rule or len(digest) != 64 or any(c not in _HEX for c in digest):
+            return None, f"pasteguard scan: unrecognized baseline file: {path}"
+        keys.add((rel.replace("\\", "/"), rule, digest))
+    return keys, None
+
+
+def _write_baseline(path: Path, records: list[dict]) -> str | None:
+    """Replace path with the current findings. Returns an error string, or None.
+
+    Each entry is the path, the detector, and the fingerprint. The raw value is not written.
+    """
+    if path.exists() and path.is_dir():
+        return f"pasteguard scan: baseline is a directory: {path}"
+    if not path.parent.exists():
+        return f"pasteguard scan: baseline directory not found: {path.parent}"
+    seen = set()
+    findings = []
+    for rec in records:
+        item = (rec["path"], rec["rule"], rec["fingerprint"])
+        if item in seen:
+            continue
+        seen.add(item)
+        findings.append({
+            "path": rec["path"],
+            "rule": rec["rule"],
+            "fingerprint": rec["fingerprint"],
+        })
+    text = json.dumps(
+        {"version": _BASELINE_VERSION, "findings": findings},
+        indent=2,
+        ensure_ascii=False,
+    ) + "\n"
+    tmp = path.with_name(path.name + ".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError as ex:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        return f"pasteguard scan: cannot write baseline: {path}: {ex.strerror or ex}"
+    return None
+
+
+def _apply_baseline(records: list[dict], known: set[tuple[str, str, str]]) -> tuple[list[dict], int]:
+    kept = []
+    suppressed = 0
+    for rec in records:
+        if (rec["path"], rec["rule"], rec["fingerprint"]) in known:
+            suppressed += 1
+        else:
+            kept.append(rec)
+    return kept, suppressed
+
+
 def _emit(records: list[dict], summary: str, fmt: str) -> None:
     if fmt == "json":
-        json.dump(records, sys.stdout, indent=2, ensure_ascii=False)
+        json.dump([_public_record(rec) for rec in records], sys.stdout, indent=2, ensure_ascii=False)
+        sys.stdout.write("\n")
+        print(summary, file=sys.stderr)
+        return
+    if fmt == "sarif":
+        json.dump(_sarif(records), sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         print(summary, file=sys.stderr)
         return
@@ -526,10 +735,14 @@ def cmd_scan(argv: list[str]) -> int:
     parser.add_argument("paths", nargs="*", help="files or directories to scan; - or no path reads stdin")
     parser.add_argument("--exclude", action="append", default=[], metavar="GLOB",
                         help="skip paths matching GLOB, repeatable")
-    parser.add_argument("--format", choices=("text", "json"), default="text",
-                        help="text lines, or a JSON list (default: text)")
+    parser.add_argument("--format", choices=("text", "json", "sarif"), default="text",
+                        help="text lines, a JSON list, or SARIF 2.1.0 (default: text)")
     parser.add_argument("--fail-on", choices=("block", "coach"), default="block", dest="fail_on",
                         help="exit 1 at this severity; coach also fails JWTs and password assignments")
+    parser.add_argument("--baseline", metavar="PATH",
+                        help="suppress findings whose path and fingerprint are in this file")
+    parser.add_argument("--write-baseline", metavar="PATH", dest="write_baseline",
+                        help="write current findings as path and sha256 fingerprints, without the secret")
     try:
         args = parser.parse_args(argv)
     except SystemExit as ex:
@@ -570,6 +783,13 @@ def cmd_scan(argv: list[str]) -> int:
             print(f"pasteguard scan: {ex}", file=sys.stderr)
             return 2
         raise
+
+    baseline_keys = None
+    if args.baseline:
+        baseline_keys, baseline_error = _load_baseline(Path(args.baseline))
+        if baseline_error:
+            print(baseline_error, file=sys.stderr)
+            return 2
 
     stdin_text = None
     stdin_done = False
@@ -618,10 +838,26 @@ def cmd_scan(argv: list[str]) -> int:
     for message in errors:
         print(f"pasteguard scan: {message}", file=sys.stderr)
     records.sort(key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]))
+
+    write_error = None
+    if args.write_baseline:
+        # Record every current finding, including ones a baseline would suppress.
+        write_error = _write_baseline(Path(args.write_baseline), records)
+        if write_error:
+            print(write_error, file=sys.stderr)
+
+    suppressed = None
+    if baseline_keys is not None:
+        records, suppressed = _apply_baseline(records, baseline_keys)
+
     block = sum(1 for rec in records if rec["severity"] == "block")
     coach = sum(1 for rec in records if rec["severity"] == "coach")
-    _emit(records, _summary(files, len(records), block, coach, allowlisted), args.format)
-    if errors:
+    _emit(
+        records,
+        _summary(files, len(records), block, coach, allowlisted, suppressed),
+        args.format,
+    )
+    if write_error or errors:
         return 2
     if args.fail_on == "coach":
         return 1 if block or coach else 0

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0 (2026-10-24)
+
+- `./pasteguard scan --format sarif` writes SARIF 2.1.0 to stdout (the summary stays on stderr) for GitHub code scanning. One rule per detector, with a short description. Each result has a file URI relative to the working directory, `startLine`, `startColumn`, and a message that is only the mask. The secret is not written. Exit codes and `--fail-on` are unchanged. `--write-baseline PATH` records each current finding as its path, detector, and the sha256 of the detector name, a NUL byte, and the raw value. `--baseline PATH` drops findings already in that file from the report and from the exit code. The text summary, and the JSON and SARIF summaries on stderr, include how many were suppressed. The allowlist runs first, so an allowlisted value is counted as allowlisted and is not written to a baseline. Stdlib only. Tests in `tests/test_scan_command.py`. Plain pytest is 208 tests (was 203).
+- Version is 0.9.0 in `VERSION`, the extension manifest, `/health` and the compose image tag.
+
 ## 0.8.0 (2026-10-23)
 
 - `./pasteguard scan` checks files, directories, or stdin with the secrets scanner. Same rules and overlap handling as the extension, and the same `[secrets]` allowlist (`paste-guard.toml`, `PG_SECRETS_ALLOWLIST`, `PG_SECRETS_EXAMPLES`). It does not load the model, the index, or the server. Directories are walked recursively, skipping binary files, `.git`, vendor directories (`node_modules`, `vendor`, `.venv`), and tool caches (`__pycache__`, `.pytest_cache`). `--exclude GLOB` may be repeated. Each finding is one line, `path:line:col rule severity`, plus a mask of the first 4 characters and the length. The secret itself is not printed. `--format json` prints a JSON list on stdout and the summary on stderr. The text report ends with a summary line that includes how many hits were allowlisted. Exit 0 when nothing blocks, 1 when a block-level finding remains, 2 on a usage error. `--fail-on coach` also fails on JWTs and password assignments. `.pre-commit-hooks.yaml` adds the `pasteguard-scan` hook. Tests in `tests/test_scan_command.py`. Plain pytest is 203 tests (was 188).

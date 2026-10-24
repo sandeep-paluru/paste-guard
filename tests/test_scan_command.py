@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from secrets_scan import RULES, public_examples, severity  # noqa: E402
+from secrets_scan import RULES, RULE_DESCRIPTIONS, public_examples, severity  # noqa: E402
 
 SCAN = [sys.executable, str(ROOT / "backend" / "secrets_scan.py"), "scan"]
 
@@ -44,7 +44,7 @@ def hidden(secret, proc):
 
 
 def summary_of(proc, fmt="text"):
-    blob = proc.stderr if fmt == "json" else proc.stdout
+    blob = proc.stderr if fmt in ("json", "sarif") else proc.stdout
     line = blob.decode().strip().splitlines()[-1]
     assert line.startswith("scanned "), line
     return line
@@ -410,6 +410,319 @@ def test_scanner_does_not_import_the_model():
     )
     proc = subprocess.run([sys.executable, "-c", code], cwd=ROOT / "backend", capture_output=True)
     assert proc.returncode == 0, proc.stderr.decode() + proc.stdout.decode()
+
+
+def _fingerprint(rule, value):
+    return hashlib.sha256(rule.encode() + b"\0" + value.encode()).hexdigest()
+
+
+def _assert_secret_absent(secret, blob):
+    assert secret not in blob
+    if len(secret) > 4:
+        assert secret[4:] not in blob
+
+
+def _sarif_results(doc):
+    assert doc["version"] == "2.1.0"
+    assert "2.1.0" in doc["$schema"]
+    assert isinstance(doc["runs"], list) and len(doc["runs"]) == 1
+    run = doc["runs"][0]
+    assert run["columnKind"] == "unicodeCodePoints"
+    driver = run["tool"]["driver"]
+    assert driver["name"] == "paste-guard"
+    assert driver["version"] == (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    rules = driver["rules"]
+    ids = [rule["id"] for rule in rules]
+    assert ids == list(RULES)
+    assert len(ids) == len(set(ids))
+    for rule in rules:
+        text = rule["shortDescription"]["text"]
+        assert isinstance(text, str) and text.strip()
+        assert rule["defaultConfiguration"]["level"] in {"warning", "error", "note", "none"}
+    assert set(RULE_DESCRIPTIONS) == set(RULES)
+    for result in run["results"]:
+        assert result["ruleId"] in ids
+        assert result["ruleIndex"] == ids.index(result["ruleId"])
+        assert result["level"] in {"warning", "error", "note", "none"}
+        assert list(result["message"]) == ["text"]
+        assert isinstance(result["message"]["text"], str) and result["message"]["text"]
+        loc = result["locations"][0]["physicalLocation"]
+        uri = loc["artifactLocation"]["uri"]
+        assert isinstance(uri, str) and uri
+        assert "://" not in uri and not uri.startswith("/")
+        region = loc["region"]
+        assert region["startLine"] >= 1 and region["startColumn"] >= 1
+        assert "snippet" not in loc
+    return run["results"]
+
+
+def test_sarif_shape_masks_and_exit_codes(tmp_path):
+    content = "é " + KEY + "\n"
+    (tmp_path / "keys.txt").write_text(content, encoding="utf-8")
+    nested = tmp_path / "src"
+    nested.mkdir()
+    (nested / "my keys.txt").write_text(HF + "\n", encoding="utf-8")
+    pw = "hunter2" + "-prod-9x"
+    (tmp_path / ".env").write_text("DB_PASSWORD=" + pw + "\n", encoding="utf-8")
+
+    proc = scan(["--format", "sarif", "."], cwd=tmp_path)
+    assert proc.returncode == 1
+    doc = json.loads(proc.stdout)
+    results = _sarif_results(doc)
+    by_rule = {row["ruleId"]: row for row in results}
+    assert set(by_rule) == {"aws_access_key", "huggingface_token", "password_assignment"}
+
+    aws = by_rule["aws_access_key"]
+    assert aws["level"] == "error"
+    assert aws["message"]["text"] == f"{KEY[:4]}({len(KEY)})"
+    aws_loc = aws["locations"][0]["physicalLocation"]
+    assert aws_loc["artifactLocation"]["uri"] == "keys.txt"
+    assert aws_loc["region"] == {"startLine": 1, "startColumn": 3}
+
+    hf = by_rule["huggingface_token"]
+    assert hf["message"]["text"] == f"{HF[:4]}({len(HF)})"
+    assert hf["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "src/my%20keys.txt"
+    assert hf["locations"][0]["physicalLocation"]["region"] == {"startLine": 1, "startColumn": 1}
+
+    coach = by_rule["password_assignment"]
+    assert coach["level"] == "warning"
+    assert coach["message"]["text"] == f"{pw[:4]}({len(pw)})"
+    assert coach["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == ".env"
+
+    blob = proc.stdout.decode()
+    for secret in (KEY, HF, pw):
+        _assert_secret_absent(secret, blob)
+        _assert_secret_absent(secret, proc.stderr.decode())
+    assert "scanned" not in blob
+    assert summary_of(proc, "sarif") == "scanned 3 files, 3 findings, 2 block, 1 coach, 0 allowlisted"
+
+    # Coach alone does not fail, unless --fail-on coach. SARIF does not change that.
+    only = scan(["--format", "sarif", ".env"], cwd=tmp_path)
+    assert only.returncode == 0
+    only_doc = json.loads(only.stdout)
+    assert [row["ruleId"] for row in only_doc["runs"][0]["results"]] == ["password_assignment"]
+    strict = scan(["--format", "sarif", "--fail-on", "coach", ".env"], cwd=tmp_path)
+    assert strict.returncode == 1
+    _assert_secret_absent(pw, strict.stdout.decode())
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    none = scan(["--format", "sarif", str(empty)])
+    assert none.returncode == 0
+    none_doc = json.loads(none.stdout)
+    assert none_doc["runs"][0]["results"] == []
+    assert len(none_doc["runs"][0]["tool"]["driver"]["rules"]) == len(RULES)
+    assert summary_of(none, "sarif") == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+
+
+def test_baseline_round_trip(tmp_path):
+    (tmp_path / "a.txt").write_text("prefix " + KEY + "\n", encoding="utf-8")
+    base = tmp_path / "baseline.json"
+
+    first = scan(["--write-baseline", str(base), "a.txt"], cwd=tmp_path)
+    assert first.returncode == 1
+    assert "a.txt:1:8 aws_access_key block" in first.stdout.decode()
+    assert "suppressed" not in first.stdout.decode()
+    assert "suppressed" not in first.stderr.decode()
+    hidden(KEY, first)
+    data = json.loads(base.read_text(encoding="utf-8"))
+    assert data == {
+        "version": 1,
+        "findings": [{
+            "path": "a.txt",
+            "rule": "aws_access_key",
+            "fingerprint": _fingerprint("aws_access_key", KEY),
+        }],
+    }
+    stored = base.read_text(encoding="utf-8")
+    _assert_secret_absent(KEY, stored)
+    assert KEY[:4] not in stored
+
+    second = scan(["--baseline", str(base), "a.txt"], cwd=tmp_path)
+    assert second.returncode == 0
+    assert "aws_access_key" not in second.stdout.decode()
+    assert summary_of(second) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 1 suppressed"
+    hidden(KEY, second)
+
+    # Same secret, later line: still baselined. A second copy in the same file counts once in the file
+    # and twice when both are suppressed.
+    (tmp_path / "a.txt").write_text("\n\n" + KEY + "\n" + KEY + "\n", encoding="utf-8")
+    moved = scan(["--baseline", str(base), "--format", "json", "a.txt"], cwd=tmp_path)
+    assert moved.returncode == 0
+    assert json.loads(moved.stdout) == []
+    assert summary_of(moved, "json") == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 2 suppressed"
+    _assert_secret_absent(KEY, moved.stdout.decode())
+    _assert_secret_absent(KEY, moved.stderr.decode())
+
+    other = "AKIA" + "FFFFFFFFFFFFFFFF"
+    (tmp_path / "a.txt").write_text(KEY + "\n" + other + "\n", encoding="utf-8")
+    (tmp_path / "b.txt").write_text(KEY + "\n", encoding="utf-8")
+    fresh = scan(["--baseline", str(base), "a.txt", "b.txt"], cwd=tmp_path)
+    assert fresh.returncode == 1
+    body = fresh.stdout.decode()
+    assert "a.txt:2:1 aws_access_key block" in body
+    assert "b.txt:1:1 aws_access_key block" in body
+    assert body.count("aws_access_key") == 2
+    assert summary_of(fresh) == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 1 suppressed"
+    hidden(KEY, fresh)
+    hidden(other, fresh)
+
+    # Rewriting the baseline records every current finding, then the report still uses the old set.
+    both = tmp_path / "both.json"
+    both.write_text(base.read_text(encoding="utf-8"), encoding="utf-8")
+    rewrite = scan(
+        ["--baseline", str(both), "--write-baseline", str(both), "--format", "json", "a.txt"],
+        cwd=tmp_path,
+    )
+    assert rewrite.returncode == 1
+    rows = json.loads(rewrite.stdout)
+    assert [row["line"] for row in rows] == [2]
+    assert "fingerprint" not in rows[0]
+    assert summary_of(rewrite, "json").endswith(", 1 suppressed")
+    rewritten = json.loads(both.read_text(encoding="utf-8"))
+    assert {(item["path"], item["rule"], item["fingerprint"]) for item in rewritten["findings"]} == {
+        ("a.txt", "aws_access_key", _fingerprint("aws_access_key", KEY)),
+        ("a.txt", "aws_access_key", _fingerprint("aws_access_key", other)),
+    }
+    _assert_secret_absent(KEY, both.read_text(encoding="utf-8"))
+    _assert_secret_absent(other, both.read_text(encoding="utf-8"))
+
+    # An empty baseline suppresses nothing and still reports the count.
+    empty = tmp_path / "empty.json"
+    (tmp_path / "clean.txt").write_text("hello\n", encoding="utf-8")
+    made = scan(["--write-baseline", str(empty), "clean.txt"], cwd=tmp_path)
+    assert made.returncode == 0
+    assert json.loads(empty.read_text(encoding="utf-8")) == {"version": 1, "findings": []}
+    counted = scan(["--baseline", str(empty), "a.txt"], cwd=tmp_path)
+    assert counted.returncode == 1
+    assert summary_of(counted).endswith(", 0 suppressed")
+
+
+def test_baseline_hashes_secret_value(tmp_path):
+    pw = "hunter2" + "-prod-9x"
+    db_pw = "s3cret" + "-token"
+    url = "postgres://user:" + db_pw + "@db.example.com/app"
+    (tmp_path / ".env").write_text('DB_PASSWORD="' + pw + '"\n' + url + "\n", encoding="utf-8")
+    base = tmp_path / "base.json"
+    proc = scan(["--write-baseline", str(base), "--format", "sarif", ".env"], cwd=tmp_path)
+    assert proc.returncode == 1
+    data = json.loads(base.read_text(encoding="utf-8"))
+    fps = {item["rule"]: item["fingerprint"] for item in data["findings"]}
+    assert fps["password_assignment"] == _fingerprint("password_assignment", pw)
+    assert fps["db_url_password"] == _fingerprint("db_url_password", db_pw)
+    blob = base.read_text(encoding="utf-8")
+    for secret in (pw, db_pw, url, "DB_PASSWORD"):
+        assert secret not in blob
+    doc = json.loads(proc.stdout)
+    messages = [row["message"]["text"] for row in doc["runs"][0]["results"]]
+    assert messages == [f"{pw[:4]}({len(pw)})", f"{db_pw[:4]}({len(db_pw)})"]
+    for secret in (pw, db_pw, url):
+        _assert_secret_absent(secret, proc.stdout.decode())
+        _assert_secret_absent(secret, blob)
+
+
+def test_baseline_and_allowlist(tmp_path):
+    stripe = "sk_live_" + ("B" * 24)
+    (tmp_path / "both.txt").write_text(KEY + "\n" + stripe + "\n", encoding="utf-8")
+    base = tmp_path / "base.json"
+    wrote = scan(["--write-baseline", str(base), "both.txt"], cwd=tmp_path)
+    assert wrote.returncode == 1
+    stored = json.loads(base.read_text(encoding="utf-8"))
+    assert {item["rule"] for item in stored["findings"]} == {"aws_access_key", "stripe_key"}
+    blob = base.read_text(encoding="utf-8")
+    _assert_secret_absent(KEY, blob)
+    _assert_secret_absent(stripe, blob)
+
+    listed = tmp_path / "allow.txt"
+    listed.write_text("value:" + KEY + "\n", encoding="utf-8")
+    env = {"PG_SECRETS_ALLOWLIST": str(listed)}
+
+    # Allowlist wins over the baseline: KEY is allowlisted, not suppressed. Stripe is suppressed.
+    quiet = scan(["--baseline", str(base), "both.txt"], cwd=tmp_path, env=env)
+    assert quiet.returncode == 0
+    assert "aws_access_key" not in quiet.stdout.decode()
+    assert "stripe_key" not in quiet.stdout.decode()
+    assert summary_of(quiet) == "scanned 1 file, 0 findings, 0 block, 0 coach, 1 allowlisted, 1 suppressed"
+    hidden(KEY, quiet)
+    hidden(stripe, quiet)
+
+    js = scan(["--baseline", str(base), "--format", "json", "both.txt"], cwd=tmp_path, env=env)
+    assert js.returncode == 0
+    assert json.loads(js.stdout) == []
+    assert summary_of(js, "json") == summary_of(quiet)
+    hidden(KEY, js)
+    hidden(stripe, js)
+
+    # A new secret is still reported and fails the run. The allowlisted key stays out of a new baseline.
+    (tmp_path / "both.txt").write_text(KEY + "\n" + stripe + "\n" + HF + "\n", encoding="utf-8")
+    new_base = tmp_path / "new.json"
+    reported = scan(
+        ["--baseline", str(base), "--write-baseline", str(new_base), "--format", "sarif", "both.txt"],
+        cwd=tmp_path, env=env,
+    )
+    assert reported.returncode == 1
+    doc = json.loads(reported.stdout)
+    results = doc["runs"][0]["results"]
+    assert [row["ruleId"] for row in results] == ["huggingface_token"]
+    assert results[0]["message"]["text"] == f"{HF[:4]}({len(HF)})"
+    assert results[0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "both.txt"
+    assert summary_of(reported, "sarif") == "scanned 1 file, 1 finding, 1 block, 0 coach, 1 allowlisted, 1 suppressed"
+    for secret in (KEY, stripe, HF):
+        _assert_secret_absent(secret, reported.stdout.decode())
+        _assert_secret_absent(secret, reported.stderr.decode())
+    fresh = json.loads(new_base.read_text(encoding="utf-8"))
+    assert {item["rule"] for item in fresh["findings"]} == {"stripe_key", "huggingface_token"}
+    fresh_blob = new_base.read_text(encoding="utf-8")
+    for secret in (KEY, stripe, HF):
+        _assert_secret_absent(secret, fresh_blob)
+
+    # Without the allowlist, KEY is new relative to a baseline that never recorded it.
+    only_stripe = scan(["--baseline", str(new_base), "both.txt"], cwd=tmp_path)
+    assert only_stripe.returncode == 1
+    body = only_stripe.stdout.decode()
+    assert "aws_access_key" in body
+    assert "stripe_key" not in body
+    assert "huggingface_token" not in body
+    assert summary_of(only_stripe) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 2 suppressed"
+    hidden(KEY, only_stripe)
+    hidden(stripe, only_stripe)
+    hidden(HF, only_stripe)
+
+
+def test_baseline_usage_errors(tmp_path):
+    (tmp_path / "a.txt").write_text(KEY + "\n", encoding="utf-8")
+    missing = scan(["--baseline", str(tmp_path / "nope.json"), "a.txt"], cwd=tmp_path)
+    assert missing.returncode == 2
+    assert b"baseline not found" in missing.stderr
+    hidden(KEY, missing)
+
+    bad = tmp_path / "bad.json"
+    bad.write_text("{", encoding="utf-8")
+    broken = scan(["--baseline", str(bad), "a.txt"], cwd=tmp_path)
+    assert broken.returncode == 2
+    assert b"not valid JSON" in broken.stderr
+    hidden(KEY, broken)
+
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text('{"version": 2, "findings": []}\n', encoding="utf-8")
+    unrecognized = scan(["--baseline", str(wrong), "a.txt"], cwd=tmp_path)
+    assert unrecognized.returncode == 2
+    assert b"unrecognized baseline" in unrecognized.stderr
+
+    nested = tmp_path / "missing-dir"
+    refused = scan(["--write-baseline", str(nested / "base.json"), "a.txt"], cwd=tmp_path)
+    assert refused.returncode == 2
+    assert b"baseline directory not found" in refused.stderr
+    hidden(KEY, refused)
+    assert not nested.exists()
+
+    assert scan(["--baseline"]).returncode == 2
+    assert scan(["--write-baseline"]).returncode == 2
+    help_proc = scan(["--help"])
+    text = help_proc.stdout.decode()
+    assert "sarif" in text
+    assert "--baseline" in text
+    assert "--write-baseline" in text
 
 
 def test_fingerprint_still_works():

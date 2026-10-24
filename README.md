@@ -127,7 +127,7 @@ echo "$TEXT" | ./pasteguard scan
 
 On Windows, from the repo root: `python backend\secrets_scan.py scan .`
 
-No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule severity`, followed by a mask of the secret: the first 4 characters and the length. The value itself is not printed. `--format json` writes a JSON list to stdout and the summary to stderr. The text report ends with a summary line, including how many hits were allowlisted.
+No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule severity`, followed by a mask of the secret: the first 4 characters and the length. The value itself is not printed. `--format json` writes a JSON list to stdout and the summary to stderr. `--format sarif` writes SARIF 2.1.0 to stdout and the same summary to stderr. The text report ends with a summary line, including how many hits were allowlisted. With `--baseline`, the summary also includes how many findings were suppressed.
 
 A block-level finding exits 1. JWTs and password assignments are coach and exit 0 unless you pass `--fail-on coach`. A usage error exits 2. Directories are walked recursively. Binary files are skipped, and so are `.git`, vendor directories (`node_modules`, `vendor`, `.venv`), and tool caches (`__pycache__`, `.pytest_cache`).
 
@@ -136,7 +136,7 @@ A block-level finding exits 1. JWTs and password assignments are coach and exit 
 ```yaml
 repos:
   - repo: https://github.com/sandeep-paluru/paste-guard
-    rev: v0.8.0
+    rev: v0.9.0
     hooks:
       - id: pasteguard-scan
         # args: ["--fail-on", "coach"]
@@ -158,6 +158,43 @@ jobs:
 ```
 
 A block-level finding fails the job. The runner's Python is enough. The model is not installed. The demo files and the tests in this repo contain synthetic keys on purpose, so `./pasteguard scan .` here exits 1.
+
+### SARIF
+
+`--format sarif` writes [SARIF 2.1.0](https://json.schemastore.org/sarif-2.1.0.json) for GitHub code scanning. Paths are relative to the working directory, the same paths the text report uses. There is one rule per detector, with a short description. Each result carries `startLine`, `startColumn`, and a message that is the mask (the first 4 characters and the length). Columns count Unicode code points. Exit codes and `--fail-on` are unchanged.
+
+```yaml
+name: secrets
+on: [push, pull_request]
+jobs:
+  sarif:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - run: ./pasteguard scan --format sarif . > results.sarif
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: results.sarif
+```
+
+A block-level finding still exits 1, which fails the job. `if: always()` uploads the SARIF either way, so code scanning still receives it. `security-events: write` is the permission `github/codeql-action/upload-sarif` needs.
+
+### Baseline
+
+`--write-baseline .paste-guard-baseline.json` records the findings from this run. Each entry stores the path, the detector name, and the sha256 of the detector name, a NUL byte, and the raw value. The value is not written, so the file is safe to commit. The line is not part of the fingerprint, so a secret that moves inside the same file stays recorded. The same value in a different file is a new finding.
+
+`--baseline .paste-guard-baseline.json` hides recorded findings. Only new ones are printed, and only new ones affect the exit code. The summary adds `, N suppressed` (on stderr for JSON and SARIF).
+
+The allowlist runs first. An allowlisted value is counted as allowlisted, left out of the baseline, and not counted as suppressed.
+
+```
+./pasteguard scan --write-baseline .paste-guard-baseline.json .
+./pasteguard scan --baseline .paste-guard-baseline.json .
+```
 
 ## Tests
 
