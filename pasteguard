@@ -5,7 +5,7 @@
 #   ./pasteguard status       show backend health
 #   ./pasteguard eval         run the evaluation (writes eval/results.md)
 #   ./pasteguard fingerprint  sha256 of a value read from stdin
-#   ./pasteguard scan         scan files or stdin for secrets (no model, no server)
+#   ./pasteguard scan         scan files, stdin, or added git lines for secrets (no model, no server)
 #   ./pasteguard version
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

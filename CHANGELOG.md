@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0 (2026-10-25)
+
+- `./pasteguard scan --staged` scans only lines added in the index (`git diff --cached`) and reads the staged blob, so a pre-commit hook checks the text that will be committed. `./pasteguard scan --diff-base REF` scans only lines added since the merge-base of REF and HEAD (`git diff REF...HEAD`). That compares commits, so uncommitted edits are not included. A secret is reported only when every line it touches was added. One that was already in the file, or that sits on a line the diff left alone, is left out. Line numbers are positions in the new file. Deleted files and binary diffs are skipped. Renames are followed. `--exclude`, the vendor and binary skips, the allowlist, `--baseline`, and `--fail-on` still apply. A path argument, a missing git repo, or a bad ref exits 2. `.pre-commit-hooks.yaml` adds `pasteguard-scan-staged`. Tests in `tests/test_scan_diff.py`. Plain pytest is 225 tests (was 208).
+- Version is 0.10.0 in `VERSION`, the extension manifest, `/health` and the compose image tag.
+
 ## 0.9.0 (2026-10-24)
 
 - `./pasteguard scan --format sarif` writes SARIF 2.1.0 to stdout (the summary stays on stderr) for GitHub code scanning. One rule per detector, with a short description. Each result has a file URI relative to the working directory, `startLine`, `startColumn`, and a message that is only the mask. The secret is not written. Exit codes and `--fail-on` are unchanged. `--write-baseline PATH` records each current finding as its path, detector, and the sha256 of the detector name, a NUL byte, and the raw value. `--baseline PATH` drops findings already in that file from the report and from the exit code. The text summary, and the JSON and SARIF summaries on stderr, include how many were suppressed. The allowlist runs first, so an allowlisted value is counted as allowlisted and is not written to a baseline. Stdlib only. Tests in `tests/test_scan_command.py`. Plain pytest is 208 tests (was 203).

@@ -5,3 +5,9 @@
   language: script
   types: [text]
   pass_filenames: true
+- id: pasteguard-scan-staged
+  name: Paste Guard staged diff scan
+  description: Scan lines added in the index. Reads the staged blob, not the working tree. Does not load the model or need a running server.
+  entry: pasteguard scan --staged
+  language: script
+  pass_filenames: false
