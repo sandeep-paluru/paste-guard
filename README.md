@@ -129,7 +129,7 @@ echo "$TEXT" | ./pasteguard scan
 
 On Windows, from the repo root: `python backend\secrets_scan.py scan .`
 
-No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule severity`, followed by a mask of the secret: the first 4 characters and the length. The value itself is not printed. `--format json` writes a JSON list to stdout and the summary to stderr. `--format sarif` writes SARIF 2.1.0 to stdout and the same summary to stderr. The text report ends with a summary line, including how many hits were allowlisted. With `--baseline`, the summary also includes how many findings were suppressed.
+No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule severity`, followed by a mask of the secret: the first 4 characters and the length. The value itself is not printed. `--format json` writes a JSON list to stdout and the summary to stderr. `--format sarif` writes SARIF 2.1.0 to stdout and the same summary to stderr. The text report ends with a summary line, including how many hits were allowlisted and how many an inline ignore suppressed. With `--baseline`, the summary also includes how many findings were suppressed.
 
 A block-level finding exits 1. JWTs and password assignments are coach and exit 0 unless you pass `--fail-on coach`. A usage error exits 2. Directories are walked recursively. Binary files are skipped, and so are `.git`, vendor directories (`node_modules`, `vendor`, `.venv`), and tool caches (`__pycache__`, `.pytest_cache`).
 
@@ -137,7 +137,7 @@ A block-level finding exits 1. JWTs and password assignments are coach and exit 
 
 `--staged` scans lines added in the index (`git diff --cached`). It reads the staged blob, which is the text that will be committed. An edit that is still only in the working tree is ignored. `--diff-base REF` scans lines added since the merge-base of REF and HEAD (`git diff REF...HEAD`). It compares those two commits. Uncommitted edits stay out of that scan.
 
-A secret is reported only when every line it touches was added. One that was already in the file, or that sits on a line this diff left alone, is left out. Line and column numbers are positions in the new file. Deleted files are skipped. A binary diff is skipped. A rename is followed, and a secret that only moved with the file is not reported again. `--exclude` and the usual vendor and binary skips still apply. The allowlist and `--baseline` apply to the findings that remain.
+A secret is reported only when every line it touches was added. One that was already in the file, or that sits on a line this diff left alone, is left out. Line and column numbers are positions in the new file. Deleted files are skipped. A binary diff is skipped. A rename is followed, and a secret that only moved with the file is not reported again. `--exclude` and the usual vendor and binary skips still apply. The allowlist, inline ignores, and `--baseline` apply to the findings that remain. A marker in the new file still counts when the marker line itself was not added.
 
 Both flags need a git work tree, and neither accepts file arguments. The command exits 2 when the directory is not a git repo, the ref does not exist, or a path is passed as well.
 
@@ -146,7 +146,7 @@ Both flags need a git work tree, and neither accepts file arguments. The command
 ```yaml
 repos:
   - repo: https://github.com/sandeep-paluru/paste-guard
-    rev: v0.10.0
+    rev: v0.11.0
     hooks:
       - id: pasteguard-scan-staged
         # args: ["--fail-on", "coach"]
@@ -190,7 +190,7 @@ jobs:
 
 ### SARIF
 
-`--format sarif` writes [SARIF 2.1.0](https://json.schemastore.org/sarif-2.1.0.json) for GitHub code scanning. Paths are relative to the working directory, the same paths the text report uses. There is one rule per detector, with a short description. Each result carries `startLine`, `startColumn`, and a message that is the mask (the first 4 characters and the length). Columns count Unicode code points. Exit codes and `--fail-on` are unchanged.
+`--format sarif` writes [SARIF 2.1.0](https://json.schemastore.org/sarif-2.1.0.json) for GitHub code scanning. Paths are relative to the working directory, the same paths the text report uses. There is one rule per detector, with a short description. Each result carries `startLine`, `startColumn`, and a message that is the mask (the first 4 characters and the length). Columns count Unicode code points. Exit codes and `--fail-on` are unchanged. An inline-suppressed finding stays in the file, with a suppression of kind `inSource`.
 
 ```yaml
 name: secrets
@@ -223,6 +223,26 @@ The allowlist runs first. An allowlisted value is counted as allowlisted, left o
 ```
 ./pasteguard scan --write-baseline .paste-guard-baseline.json .
 ./pasteguard scan --baseline .paste-guard-baseline.json .
+```
+
+### Inline ignores
+
+`pasteguard:ignore` on the same line as a finding suppresses that finding. `pasteguard:ignore=aws_access_key` limits it to that detector. A comma-separated list names several. `pasteguard:ignore-next-line` on its own line suppresses the next line, and it takes the same optional `=rule` list.
+
+The scanner looks for that text, so `#`, `//`, `--`, `/* */`, `<!-- -->`, and `;` all work.
+
+A secret that spans several lines is suppressed when the marker is on its first line, or on the line above it for `pasteguard:ignore-next-line`.
+
+Suppressed findings are not printed and do not change the exit code. The summary counts them as `N inline`, separate from the allowlisted count and from `N suppressed` on a baseline. JSON leaves them out of the list. SARIF keeps them and marks each one with a suppression of kind `inSource` and status `accepted`, which is what GitHub code scanning uses to hide an alert.
+
+`--no-inline-ignore` turns the markers off, for an audit that should show every finding. The summary leaves off the inline count in that mode. `--report-unused-ignores` prints each marker that suppressed nothing, as `path:line unused pasteguard:ignore`, and exits 1 when any are found. An unknown rule name prints a warning on stderr and does not stop the scan.
+
+The allowlist runs first. An allowlisted value is counted as allowlisted, not as inline. In `--staged` and `--diff-base`, a marker in the new file still counts when that line was not part of the diff.
+
+```
+api_key = "..."  # pasteguard:ignore=aws_access_key
+# pasteguard:ignore-next-line
+client_secret = "..."
 ```
 
 ## Tests
