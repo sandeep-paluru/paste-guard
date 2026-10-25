@@ -78,7 +78,7 @@ def test_line_column_and_mask_text_and_json(tmp_path):
     body = text.stdout.decode()
     assert f"keys.txt:1:3 aws_access_key block {KEY[:4]}({len(KEY)})" in body
     assert f"keys.txt:3:3 huggingface_token block {HF[:4]}({len(HF)})" in body
-    assert summary_of(text) == "scanned 1 file, 2 findings, 2 block, 0 coach, 0 allowlisted"
+    assert summary_of(text) == "scanned 1 file, 2 findings, 2 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, text)
     hidden(HF, text)
 
@@ -160,17 +160,17 @@ def test_allowlisted_values_do_not_fail(tmp_path):
     safe = scan(["safe.txt"], cwd=tmp_path, env=env)
     assert safe.returncode == 0
     hidden(key, safe)
-    assert summary_of(safe) == "scanned 1 file, 0 findings, 0 block, 0 coach, 1 allowlisted"
+    assert summary_of(safe) == "scanned 1 file, 0 findings, 0 block, 0 coach, 1 allowlisted, 0 inline"
     js = scan(["safe.txt", "--format", "json"], cwd=tmp_path, env=env)
     assert js.returncode == 0
     assert json.loads(js.stdout) == []
     hidden(key, js)
-    assert summary_of(js, "json").endswith("1 allowlisted")
+    assert summary_of(js, "json").endswith("1 allowlisted, 0 inline")
 
     near_proc = scan(["near.txt"], cwd=tmp_path, env=env)
     assert near_proc.returncode == 1
     hidden(near, near_proc)
-    assert summary_of(near_proc).endswith("0 allowlisted")
+    assert summary_of(near_proc).endswith("0 allowlisted, 0 inline")
 
     pw = "hunter2" + "-prod-9x"
     digest = hashlib.sha256(pw.encode()).hexdigest()
@@ -179,25 +179,25 @@ def test_allowlisted_values_do_not_fail(tmp_path):
     hashed = scan([".env"], cwd=tmp_path, env={"PG_SECRETS_ALLOWLIST": str(tmp_path / "sha.txt")})
     assert hashed.returncode == 0
     hidden(pw, hashed)
-    assert summary_of(hashed).endswith("1 allowlisted")
+    assert summary_of(hashed).endswith("1 allowlisted, 0 inline")
 
     akia = public_examples()[0]
     (tmp_path / "doc.txt").write_text("sample " + akia + "\n", encoding="utf-8")
     on = scan(["doc.txt"], cwd=tmp_path, env={"PG_SECRETS_EXAMPLES": "1"})
     assert on.returncode == 0
     hidden(akia, on)
-    assert "1 allowlisted" in summary_of(on)
+    assert "1 allowlisted, 0 inline" in summary_of(on)
     off = scan(["doc.txt"], cwd=tmp_path, env={"PG_SECRETS_EXAMPLES": "0"})
     assert off.returncode == 1
     hidden(akia, off)
-    assert "0 allowlisted" in summary_of(off)
+    assert "0 allowlisted, 0 inline" in summary_of(off)
 
     cfg = tmp_path / "paste-guard.toml"
     cfg.write_text('[secrets]\nexamples = false\nallowlist = ["value:' + key + '"]\n', encoding="utf-8")
     toml = scan(["safe.txt"], cwd=tmp_path, env={"PG_CONFIG": str(cfg), "PG_SECRETS_EXAMPLES": None})
     assert toml.returncode == 0
     hidden(key, toml)
-    assert summary_of(toml).endswith("1 allowlisted")
+    assert summary_of(toml).endswith("1 allowlisted, 0 inline")
 
 
 def test_exit_codes(tmp_path):
@@ -205,7 +205,7 @@ def test_exit_codes(tmp_path):
     (tmp_path / "also.txt").write_text("world\n", encoding="utf-8")
     clean = scan(["clean.txt", "also.txt"], cwd=tmp_path)
     assert clean.returncode == 0
-    assert summary_of(clean) == "scanned 2 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(clean) == "scanned 2 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
     (tmp_path / "key.txt").write_text(KEY + "\n", encoding="utf-8")
     assert scan(["key.txt"], cwd=tmp_path).returncode == 1
@@ -214,7 +214,7 @@ def test_exit_codes(tmp_path):
     empty.mkdir()
     none = scan([str(empty)])
     assert none.returncode == 0
-    assert summary_of(none) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(none) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
     assert scan(["--bogus"]).returncode == 2
     assert scan(["--fail-on"]).returncode == 2
@@ -251,7 +251,7 @@ def test_fail_on_coach(tmp_path):
     body = base.stdout.decode()
     assert f".env:1:1 password_assignment coach {pw[:4]}({len(pw)})" in body
     assert f".env:2:1 jwt coach {jwt[:4]}({len(jwt)})" in body
-    assert summary_of(base) == "scanned 1 file, 2 findings, 0 block, 2 coach, 0 allowlisted"
+    assert summary_of(base) == "scanned 1 file, 2 findings, 0 block, 2 coach, 0 allowlisted, 0 inline"
     hidden(pw, base)
     hidden(jwt, base)
 
@@ -278,11 +278,11 @@ def test_exclude(tmp_path):
     hidden(KEY, kept)
     assert "noise.txt" not in kept.stdout.decode()
     assert "hide.txt" not in kept.stdout.decode()
-    assert summary_of(kept) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(kept) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
     bare = scan(["."], cwd=tmp_path)
     assert bare.returncode == 1
-    assert summary_of(bare) == "scanned 3 files, 2 findings, 2 block, 0 coach, 0 allowlisted"
+    assert summary_of(bare) == "scanned 3 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, bare)
 
 
@@ -307,7 +307,7 @@ def test_vendor_dirs_skipped(tmp_path):
         assert skipped not in body
         assert skipped not in proc.stderr.decode()
     hidden(KEY, proc)
-    assert summary_of(proc) == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_stdin(tmp_path):
@@ -330,18 +330,18 @@ def test_stdin(tmp_path):
     (tmp_path / "clean.txt").write_text("ok\n", encoding="utf-8")
     mixed = scan(["clean.txt", "-"], input=KEY.encode(), cwd=tmp_path)
     assert mixed.returncode == 1
-    assert summary_of(mixed) == "scanned 2 files, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(mixed) == "scanned 2 files, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, mixed)
 
     binary = scan([], input=b"\0" + KEY.encode())
     assert binary.returncode == 0
     assert b"aws_access_key" not in binary.stdout
     hidden(KEY, binary)
-    assert summary_of(binary) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(binary) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
     empty = scan([], input=b"")
     assert empty.returncode == 0
-    assert summary_of(empty) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(empty) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_binary_skip(tmp_path):
@@ -356,7 +356,7 @@ def test_binary_skip(tmp_path):
     assert "blob.bin" not in body and "weird.bin" not in body
     assert "blob.bin" not in proc.stderr.decode() and "weird.bin" not in proc.stderr.decode()
     hidden(KEY, proc)
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
 
     explicit = scan(["blob.bin"], cwd=tmp_path)
     assert explicit.returncode == 0
@@ -494,7 +494,7 @@ def test_sarif_shape_masks_and_exit_codes(tmp_path):
         _assert_secret_absent(secret, blob)
         _assert_secret_absent(secret, proc.stderr.decode())
     assert "scanned" not in blob
-    assert summary_of(proc, "sarif") == "scanned 3 files, 3 findings, 2 block, 1 coach, 0 allowlisted"
+    assert summary_of(proc, "sarif") == "scanned 3 files, 3 findings, 2 block, 1 coach, 0 allowlisted, 0 inline"
 
     # Coach alone does not fail, unless --fail-on coach. SARIF does not change that.
     only = scan(["--format", "sarif", ".env"], cwd=tmp_path)
@@ -512,7 +512,7 @@ def test_sarif_shape_masks_and_exit_codes(tmp_path):
     none_doc = json.loads(none.stdout)
     assert none_doc["runs"][0]["results"] == []
     assert len(none_doc["runs"][0]["tool"]["driver"]["rules"]) == len(RULES)
-    assert summary_of(none, "sarif") == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(none, "sarif") == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_baseline_round_trip(tmp_path):
@@ -541,7 +541,7 @@ def test_baseline_round_trip(tmp_path):
     second = scan(["--baseline", str(base), "a.txt"], cwd=tmp_path)
     assert second.returncode == 0
     assert "aws_access_key" not in second.stdout.decode()
-    assert summary_of(second) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 1 suppressed"
+    assert summary_of(second) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline, 1 suppressed"
     hidden(KEY, second)
 
     # Same secret, later line: still baselined. A second copy in the same file counts once in the file
@@ -550,7 +550,7 @@ def test_baseline_round_trip(tmp_path):
     moved = scan(["--baseline", str(base), "--format", "json", "a.txt"], cwd=tmp_path)
     assert moved.returncode == 0
     assert json.loads(moved.stdout) == []
-    assert summary_of(moved, "json") == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 2 suppressed"
+    assert summary_of(moved, "json") == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline, 2 suppressed"
     _assert_secret_absent(KEY, moved.stdout.decode())
     _assert_secret_absent(KEY, moved.stderr.decode())
 
@@ -563,7 +563,7 @@ def test_baseline_round_trip(tmp_path):
     assert "a.txt:2:1 aws_access_key block" in body
     assert "b.txt:1:1 aws_access_key block" in body
     assert body.count("aws_access_key") == 2
-    assert summary_of(fresh) == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 1 suppressed"
+    assert summary_of(fresh) == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 0 inline, 1 suppressed"
     hidden(KEY, fresh)
     hidden(other, fresh)
 
@@ -642,7 +642,7 @@ def test_baseline_and_allowlist(tmp_path):
     assert quiet.returncode == 0
     assert "aws_access_key" not in quiet.stdout.decode()
     assert "stripe_key" not in quiet.stdout.decode()
-    assert summary_of(quiet) == "scanned 1 file, 0 findings, 0 block, 0 coach, 1 allowlisted, 1 suppressed"
+    assert summary_of(quiet) == "scanned 1 file, 0 findings, 0 block, 0 coach, 1 allowlisted, 0 inline, 1 suppressed"
     hidden(KEY, quiet)
     hidden(stripe, quiet)
 
@@ -666,7 +666,7 @@ def test_baseline_and_allowlist(tmp_path):
     assert [row["ruleId"] for row in results] == ["huggingface_token"]
     assert results[0]["message"]["text"] == f"{HF[:4]}({len(HF)})"
     assert results[0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "both.txt"
-    assert summary_of(reported, "sarif") == "scanned 1 file, 1 finding, 1 block, 0 coach, 1 allowlisted, 1 suppressed"
+    assert summary_of(reported, "sarif") == "scanned 1 file, 1 finding, 1 block, 0 coach, 1 allowlisted, 0 inline, 1 suppressed"
     for secret in (KEY, stripe, HF):
         _assert_secret_absent(secret, reported.stdout.decode())
         _assert_secret_absent(secret, reported.stderr.decode())
@@ -683,7 +683,7 @@ def test_baseline_and_allowlist(tmp_path):
     assert "aws_access_key" in body
     assert "stripe_key" not in body
     assert "huggingface_token" not in body
-    assert summary_of(only_stripe) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 2 suppressed"
+    assert summary_of(only_stripe) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline, 2 suppressed"
     hidden(KEY, only_stripe)
     hidden(stripe, only_stripe)
     hidden(HF, only_stripe)

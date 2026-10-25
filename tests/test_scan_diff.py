@@ -127,7 +127,7 @@ def test_staged_addition_found(tmp_path):
     proc = scan(["--staged"], cwd=repo)
     assert proc.returncode == 1
     assert f"app.txt:2:3 aws_access_key block {KEY[:4]}({len(KEY)})" in proc.stdout.decode()
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, proc)
 
     js = scan(["--staged", "--format", "json"], cwd=repo)
@@ -167,7 +167,7 @@ def test_staged_ignores_unstaged_and_reads_the_index(tmp_path):
     quiet = scan(["--staged"], cwd=repo)
     assert quiet.returncode == 0
     assert "huggingface" not in quiet.stdout.decode()
-    assert summary_of(quiet) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(quiet) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(HF, quiet)
 
 
@@ -181,7 +181,7 @@ def test_unchanged_secret_ignored(tmp_path):
     quiet = scan(["--staged"], cwd=repo)
     assert quiet.returncode == 0
     assert "aws_access_key" not in quiet.stdout.decode()
-    assert summary_of(quiet) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(quiet) == "scanned 1 file, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, quiet)
 
     (repo / "app.txt").write_text(KEY + "\nkeep\n" + HF + "\n", encoding="utf-8")
@@ -191,7 +191,7 @@ def test_unchanged_secret_ignored(tmp_path):
     body = proc.stdout.decode()
     assert f"app.txt:3:1 huggingface_token block {HF[:4]}({len(HF)})" in body
     assert "aws_access_key" not in body
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
     hidden(KEY, proc)
     hidden(HF, proc)
 
@@ -236,7 +236,7 @@ def test_diff_base_on_a_branch(tmp_path):
     assert "extra.txt" not in blob
     for secret in (KEY, HF, STRIPE):
         hidden(secret, proc)
-    assert summary_of(proc, "sarif") == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc, "sarif") == "scanned 2 files, 2 findings, 2 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_rename(tmp_path):
@@ -250,7 +250,7 @@ def test_rename(tmp_path):
     assert "aws_access_key" not in pure.stdout.decode()
     assert "new.txt" not in pure.stdout.decode()
     hidden(KEY, pure)
-    assert summary_of(pure) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(pure) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
     (repo / "new.txt").write_text(original + HF + "\n", encoding="utf-8")
     git(repo, "add", "new.txt")
@@ -276,7 +276,7 @@ def test_deleted_file(tmp_path):
     assert "aws_access_key" not in proc.stdout.decode()
     assert "gone.txt" not in proc.stdout.decode()
     hidden(KEY, proc)
-    assert summary_of(proc) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 0 files, 0 findings, 0 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_binary_file(tmp_path):
@@ -294,7 +294,7 @@ def test_binary_file(tmp_path):
     assert "aws_access_key" not in body
     hidden(KEY, proc)
     hidden(HF, proc)
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_bad_ref(tmp_path):
@@ -360,7 +360,7 @@ def test_exclude_and_vendor_on_staged(tmp_path):
     assert "huggingface" not in body
     for secret in (KEY, HF, STRIPE):
         hidden(secret, proc)
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 0 allowlisted, 0 inline"
 
 
 def test_fail_on_applies_to_added_lines(tmp_path):
@@ -424,7 +424,7 @@ def test_baseline_and_allowlist_on_added_lines(tmp_path):
     assert "stripe_key" not in body
     # OLD sits on an unchanged line, so it is not a suppressed finding.
     # KEY is allowlisted. STRIPE is on an added line and is in the baseline.
-    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 1 allowlisted, 1 suppressed"
+    assert summary_of(proc) == "scanned 1 file, 1 finding, 1 block, 0 coach, 1 allowlisted, 0 inline, 1 suppressed"
     for secret in (OLD, KEY, STRIPE, HF):
         hidden(secret, proc)
 

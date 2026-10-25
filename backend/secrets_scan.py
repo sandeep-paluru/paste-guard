@@ -10,6 +10,9 @@ model, the index, or the server. `--format sarif` writes SARIF 2.1.0.
 already recorded there. `--staged` scans lines added in the index, reading
 the staged blob. `--diff-base REF` scans lines added since the merge-base
 of REF and HEAD. A secret on a line the diff did not add is left out.
+`pasteguard:ignore` on a finding's first line, or `pasteguard:ignore-next-line`
+on the line above, suppresses that finding. `--no-inline-ignore` turns the
+markers off.
 """
 import argparse
 import fnmatch
@@ -444,13 +447,16 @@ def _public_record(rec: dict) -> dict:
 
 
 def _summary(files: int, findings: int, block: int, coach: int, allowlisted: int,
-             suppressed: int | None = None) -> str:
+             suppressed: int | None = None, inline: int | None = None) -> str:
     file_word = "file" if files == 1 else "files"
     finding_word = "finding" if findings == 1 else "findings"
     text = (
         f"scanned {files} {file_word}, {findings} {finding_word}, "
         f"{block} block, {coach} coach, {allowlisted} allowlisted"
     )
+    # Inline stays between allowlisted and the baseline count. Both can be zero.
+    if inline is not None:
+        text += f", {inline} inline"
     if suppressed is not None:
         text += f", {suppressed} suppressed"
     return text
@@ -552,11 +558,6 @@ def _walk(root: Path, patterns: list[str]) -> tuple[list[Path], list[str]]:
     return found, problems
 
 
-def _scan_one(display: str, text: str, allow) -> tuple[list[dict], int]:
-    kept, dropped = apply_allowlist(text, scan(text), allow)
-    return [_record(display, text, finding) for finding in kept], dropped
-
-
 def _load_allowlist():
     """The [secrets] table, with PG_SECRETS_ALLOWLIST and PG_SECRETS_EXAMPLES applied."""
     import config
@@ -583,7 +584,11 @@ def _sarif_uri(path: str) -> str:
 
 
 def _sarif(records: list[dict]) -> dict:
-    """SARIF 2.1.0. One rule per detector. The result message is only the mask."""
+    """SARIF 2.1.0. One rule per detector. The result message is only the mask.
+
+    A record with inline set is kept and given a suppression of kind inSource,
+    instead of being dropped. Text and JSON leave those findings out.
+    """
     rules = []
     for name in RULES:
         rules.append({
@@ -602,7 +607,7 @@ def _sarif(records: list[dict]) -> dict:
                 "shortDescription": {"text": RULE_DESCRIPTIONS.get(rule_id) or rule_id},
                 "defaultConfiguration": {"level": _sarif_level(rec["severity"])},
             })
-        results.append({
+        result = {
             "ruleId": rule_id,
             "ruleIndex": index[rule_id],
             "level": _sarif_level(rec["severity"]),
@@ -616,7 +621,12 @@ def _sarif(records: list[dict]) -> dict:
                     },
                 },
             }],
-        })
+        }
+        # kind inSource is the SARIF name for a suppression written in the file.
+        # status accepted is what GitHub code scanning uses to hide the alert.
+        if rec.get("inline"):
+            result["suppressions"] = [{"kind": "inSource", "status": "accepted"}]
+        results.append(result)
     return {
         "$schema": _SARIF_SCHEMA,
         "version": "2.1.0",
@@ -714,19 +724,264 @@ def _apply_baseline(records: list[dict], known: set[tuple[str, str, str]]) -> tu
     return kept, suppressed
 
 
-def _emit(records: list[dict], summary: str, fmt: str) -> None:
+class _Marker:
+    """One pasteguard:ignore or pasteguard:ignore-next-line on a source line.
+
+    rules is None when every detector is covered. An empty set covers nothing,
+    which is what an `=` with no names means. problems holds None for a missing
+    name and the raw token for a name that is not a detector.
+    """
+
+    def __init__(self, line: int, kind: str, rules: set[str] | None, problems: list):
+        self.line = line
+        self.kind = kind
+        self.rules = rules
+        self.problems = problems
+        self.used = False
+
+
+def _split_lines(text: str) -> list[str]:
+    """Lines in the same order _position and _line_count use. The newline is not kept."""
+    if not text:
+        return []
+    parts = text.split("\n")
+    if text.endswith("\n"):
+        parts.pop()
+    return parts
+
+
+def _parse_rule_suffix(rest: str) -> tuple[set[str] | None, list, int]:
+    """Optional `=rule,rule` after the marker keyword.
+
+    None means the marker names no rules, so it covers every detector.
+    The returned index is how far into rest the suffix reached.
+    """
+    i = 0
+    n = len(rest)
+    while i < n and rest[i] in " \t":
+        i += 1
+    if i >= n or rest[i] != "=":
+        return None, [], 0
+    i += 1
+    names: list[str] = []
+    while i < n:
+        while i < n and rest[i] in " \t":
+            i += 1
+        if i < n and rest[i] == ",":
+            i += 1
+            continue
+        j = i
+        while j < n and (rest[j].isalnum() or rest[j] in "_-"):
+            j += 1
+        if j == i:
+            break
+        # An HTML closer is `-->`. The hyphens are not part of the rule id.
+        raw = rest[i:j].rstrip("-")
+        if not raw:
+            break
+        names.append(raw)
+        i = j
+        while i < n and rest[i] in " \t":
+            i += 1
+        if i < n and rest[i] == ",":
+            i += 1
+            continue
+        break
+    if not names:
+        return set(), [None], i
+    problems = []
+    seen = set()
+    known = set()
+    for name in names:
+        if name in RULES:
+            known.add(name)
+        elif name not in seen:
+            problems.append(name)
+            seen.add(name)
+    return known, problems, i
+
+
+def _parse_marker_at(line: str, start: int):
+    """One marker starting at start, or None when the text only shares a prefix.
+
+    `pasteguard:ignored` is not a marker. `pasteguard:ignore-next-line` is the
+    next-line form and is not also a same-line ignore.
+    """
+    key = "pasteguard:ignore"
+    if not line.startswith(key, start):
+        return None
+    pos = start + len(key)
+    kind = "line"
+    if line.startswith("-next-line", pos):
+        after = pos + len("-next-line")
+        if after < len(line) and (line[after].isalnum() or line[after] == "_"):
+            return None
+        kind = "next"
+        pos = after
+    elif pos < len(line) and (line[pos].isalnum() or line[pos] == "_"):
+        return None
+    rules, problems, consumed = _parse_rule_suffix(line[pos:])
+    return kind, rules, problems, pos + consumed
+
+
+def _parse_markers(text: str) -> list[_Marker]:
+    """Every marker in the file. The comment syntax around it is irrelevant."""
+    found = []
+    for number, line in enumerate(_split_lines(text), 1):
+        start = 0
+        while True:
+            at = line.find("pasteguard:ignore", start)
+            if at < 0:
+                break
+            parsed = _parse_marker_at(line, at)
+            if parsed is None:
+                start = at + 1
+                continue
+            kind, rules, problems, end = parsed
+            found.append(_Marker(number, kind, rules, problems))
+            start = end
+    return found
+
+
+def _marker_covers(marker: _Marker, rule: str) -> bool:
+    return marker.rules is None or rule in marker.rules
+
+
+def _marker_in_scope(marker: _Marker, scope: set[int] | None, line_count: int) -> bool:
+    """scope None means the whole file. Otherwise the target line has to be in it.
+
+    ignore-next-line targets the following line. A marker on the last added
+    line whose next line does not exist is still in scope, so it can be reported
+    as unused.
+    """
+    if scope is None:
+        return True
+    target = marker.line if marker.kind == "line" else marker.line + 1
+    if target in scope:
+        return True
+    return marker.line in scope and target > line_count
+
+
+def _apply_inline(text: str, findings: list[dict], markers: list[_Marker],
+                  scope: set[int] | None) -> tuple[list[dict], list[dict], list[_Marker]]:
+    """Drop findings a marker covers. A multi-line span uses its first line only.
+
+    Returns kept findings, suppressed findings, and in-scope markers that
+    suppressed nothing.
+    """
+    same: dict[int, list[_Marker]] = {}
+    nxt: dict[int, list[_Marker]] = {}
+    for marker in markers:
+        if marker.kind == "line":
+            same.setdefault(marker.line, []).append(marker)
+        else:
+            nxt.setdefault(marker.line + 1, []).append(marker)
+    kept = []
+    suppressed = []
+    for finding in findings:
+        line = text.count("\n", 0, finding["start"]) + 1
+        rule = finding["type"]
+        hit = [marker for marker in same.get(line, ()) if _marker_covers(marker, rule)]
+        hit.extend(marker for marker in nxt.get(line, ()) if _marker_covers(marker, rule))
+        if hit:
+            for marker in hit:
+                marker.used = True
+            suppressed.append(finding)
+        else:
+            kept.append(finding)
+    line_count = _line_count(text)
+    unused = [
+        marker for marker in markers
+        if not marker.used and _marker_in_scope(marker, scope, line_count)
+    ]
+    return kept, suppressed, unused
+
+
+def _marker_warnings(path: str, markers: list[_Marker]) -> list[str]:
+    lines = []
+    for marker in markers:
+        for item in marker.problems:
+            if item is None:
+                lines.append(
+                    f"pasteguard scan: {path}:{marker.line}: pasteguard:ignore is missing a rule name"
+                )
+            else:
+                lines.append(
+                    f"pasteguard scan: {path}:{marker.line}: unknown rule '{item}' in pasteguard:ignore"
+                )
+    return lines
+
+
+def _unused_pairs(path: str, markers: list[_Marker]) -> list[tuple[str, int]]:
+    seen = set()
+    pairs = []
+    for marker in markers:
+        key = (path, marker.line)
+        if key in seen:
+            continue
+        seen.add(key)
+        pairs.append(key)
+    return pairs
+
+
+def _analyze(display: str, text: str, allow, scope: set[int] | None, inline_on: bool):
+    """Scan one blob. scope limits which lines can produce a finding (None means all).
+
+    The allowlist runs first. An allowlisted value is not counted as inline, and a
+    marker that only sat on one is unused. Returns records, inline records,
+    allowlisted count, warnings, and unused marker locations.
+    """
+    findings = scan(text)
+    if scope is not None:
+        findings = [item for item in findings if _on_added_lines(text, item, scope)]
+    kept, dropped = apply_allowlist(text, findings, allow)
+    inline_findings: list[dict] = []
+    warnings: list[str] = []
+    unused: list[tuple[str, int]] = []
+    if inline_on:
+        markers = _parse_markers(text)
+        kept, inline_findings, stale = _apply_inline(text, kept, markers, scope)
+        # Only markers that could affect this scan. A typo on a line the diff
+        # did not touch stays quiet.
+        visible = [marker for marker in markers if _marker_in_scope(marker, scope, _line_count(text))]
+        warnings = _marker_warnings(display, visible)
+        unused = _unused_pairs(display, stale)
+    records = [_record(display, text, finding) for finding in kept]
+    inline_records = [_record(display, text, finding) for finding in inline_findings]
+    for rec in inline_records:
+        rec["inline"] = True
+    return records, inline_records, dropped, warnings, unused
+
+
+def _emit(records: list[dict], inline_records: list[dict], unused_lines: list[str],
+          summary: str, fmt: str) -> None:
+    """Text and JSON list the findings that remain. SARIF also lists inline ones.
+
+    Unused-marker lines share a stream with the summary, so a JSON or SARIF
+    parser never sees them on stdout.
+    """
     if fmt == "json":
         json.dump([_public_record(rec) for rec in records], sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
+        for line in unused_lines:
+            print(line, file=sys.stderr)
         print(summary, file=sys.stderr)
         return
     if fmt == "sarif":
-        json.dump(_sarif(records), sys.stdout, indent=2, ensure_ascii=False)
+        combined = sorted(
+            records + inline_records,
+            key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]),
+        )
+        json.dump(_sarif(combined), sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
+        for line in unused_lines:
+            print(line, file=sys.stderr)
         print(summary, file=sys.stderr)
         return
     for rec in records:
         print(f"{rec['path']}:{rec['line']}:{rec['col']} {rec['rule']} {rec['severity']} {rec['mask']}")
+    for line in unused_lines:
+        print(line)
     print(summary)
 
 
@@ -900,12 +1155,6 @@ def _blob_diff(old: str, new: str) -> tuple[bytes, str | None]:
     return proc.stdout, None
 
 
-def _scan_added(display: str, text: str, added: set[int], allow) -> tuple[list[dict], int]:
-    findings = [item for item in scan(text) if _on_added_lines(text, item, added)]
-    kept, dropped = apply_allowlist(text, findings, allow)
-    return [_record(display, text, finding) for finding in kept], dropped
-
-
 def _changed_entries(staged: bool, diff_range: tuple[str, str] | None) -> tuple[list[tuple[str, str, str | None]], str | None]:
     if staged:
         cmd = ["diff", "--cached", "--find-renames", "--name-status", "-z"]
@@ -918,12 +1167,14 @@ def _changed_entries(staged: bool, diff_range: tuple[str, str] | None) -> tuple[
     return _parse_name_status(proc.stdout), None
 
 
-def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[str], allow):
-    """Scan added lines. Returns (records, files, allowlisted, errors) or an error string.
+def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[str], allow, inline_on: bool):
+    """Scan added lines. Returns a result tuple, or an error string.
 
+    The tuple is (records, inline records, files, allowlisted, warnings, unused, errors).
     `--staged` reads the index (`:path`), so the working tree is irrelevant.
     `--diff-base` reads `HEAD:path` and compares commits: the merge-base of REF
     and HEAD against HEAD. Uncommitted edits are not part of that diff.
+    A marker in that blob counts even when the marker line itself was not added.
     """
     entries, fatal = _changed_entries(staged, diff_range)
     if fatal:
@@ -936,8 +1187,11 @@ def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[
     head = None if staged else diff_range[1]
     base = None if staged else diff_range[0]
     records: list[dict] = []
+    inline_records: list[dict] = []
     files = 0
     allowlisted = 0
+    warnings: list[str] = []
+    unused: list[tuple[str, int]] = []
     errors: list[str] = []
     seen = set()
     for kind, path, old in entries:
@@ -974,22 +1228,28 @@ def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[
                 continue
         if not added:
             continue
-        rows, dropped = _scan_added(display, text, added, allow)
+        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, added, inline_on)
         files += 1
         allowlisted += dropped
         records.extend(rows)
-    return records, files, allowlisted, errors
+        inline_records.extend(hidden)
+        warnings.extend(warns)
+        unused.extend(stale)
+    return records, inline_records, files, allowlisted, warnings, unused, errors
 
 
-def _scan_planned(planned: list, patterns: list[str], allow):
+def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool):
     stdin_text = None
     stdin_done = False
     if any(item is None for item in planned):
         stdin_text = _read_stdin()
 
     records: list[dict] = []
+    inline_records: list[dict] = []
     files = 0
     allowlisted = 0
+    warnings: list[str] = []
+    unused: list[tuple[str, int]] = []
     errors: list[str] = []
     seen = set()
     for item in planned:
@@ -999,10 +1259,13 @@ def _scan_planned(planned: list, patterns: list[str], allow):
             stdin_done = True
             if stdin_text is None:
                 continue
-            rows, dropped = _scan_one("-", stdin_text, allow)
+            rows, hidden, dropped, warns, stale = _analyze("-", stdin_text, allow, None, inline_on)
             files += 1
             allowlisted += dropped
             records.extend(rows)
+            inline_records.extend(hidden)
+            warnings.extend(warns)
+            unused.extend(stale)
             continue
         try:
             key = str(item.resolve())
@@ -1022,11 +1285,14 @@ def _scan_planned(planned: list, patterns: list[str], allow):
             continue
         if text is None:
             continue
-        rows, dropped = _scan_one(display, text, allow)
+        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, None, inline_on)
         files += 1
         allowlisted += dropped
         records.extend(rows)
-    return records, files, allowlisted, errors
+        inline_records.extend(hidden)
+        warnings.extend(warns)
+        unused.extend(stale)
+    return records, inline_records, files, allowlisted, warnings, unused, errors
 
 
 def _load_scan_allowlist():
@@ -1044,14 +1310,19 @@ def _load_scan_allowlist():
         raise
 
 
-def _report_scan(records, files, allowlisted, errors, args, baseline_keys) -> int:
+def _report_scan(records, inline_records, files, allowlisted, warnings, unused, errors, args, baseline_keys) -> int:
     for message in errors:
         print(f"pasteguard scan: {message}", file=sys.stderr)
+    for message in warnings:
+        print(message, file=sys.stderr)
     records.sort(key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]))
+    inline_records.sort(key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]))
+    unused = sorted(unused)
 
     write_error = None
     if args.write_baseline:
         # Record every current finding, including ones a baseline would suppress.
+        # Inline-suppressed findings are already gone, same as allowlisted ones.
         write_error = _write_baseline(Path(args.write_baseline), records)
         if write_error:
             print(write_error, file=sys.stderr)
@@ -1062,16 +1333,23 @@ def _report_scan(records, files, allowlisted, errors, args, baseline_keys) -> in
 
     block = sum(1 for rec in records if rec["severity"] == "block")
     coach = sum(1 for rec in records if rec["severity"] == "coach")
+    inline_count = None if args.no_inline_ignore else len(inline_records)
+    unused_lines = []
+    if args.report_unused_ignores and not args.no_inline_ignore:
+        unused_lines = [f"{path}:{line} unused pasteguard:ignore" for path, line in unused]
     _emit(
         records,
-        _summary(files, len(records), block, coach, allowlisted, suppressed),
+        inline_records,
+        unused_lines,
+        _summary(files, len(records), block, coach, allowlisted, suppressed, inline_count),
         args.format,
     )
     if write_error or errors:
         return 2
-    if args.fail_on == "coach":
-        return 1 if block or coach else 0
-    return 1 if block else 0
+    failed = bool(block or coach) if args.fail_on == "coach" else bool(block)
+    if unused_lines:
+        failed = True
+    return 1 if failed else 0
 
 
 def cmd_scan(argv: list[str]) -> int:
@@ -1094,6 +1372,10 @@ def cmd_scan(argv: list[str]) -> int:
                         help="scan only lines added in the index (git diff --cached); reads the staged blob, not the working tree")
     parser.add_argument("--diff-base", metavar="REF",
                         help="scan only lines added since the merge-base of REF and HEAD (git diff REF...HEAD); compares commits")
+    parser.add_argument("--no-inline-ignore", action="store_true", dest="no_inline_ignore",
+                        help="do not honor pasteguard:ignore comments")
+    parser.add_argument("--report-unused-ignores", action="store_true", dest="report_unused_ignores",
+                        help="print pasteguard:ignore markers that suppressed nothing, and exit 1 if any")
     try:
         args = parser.parse_args(argv)
     except SystemExit as ex:
@@ -1156,16 +1438,21 @@ def cmd_scan(argv: list[str]) -> int:
             print(baseline_error, file=sys.stderr)
             return 2
 
+    inline_on = not args.no_inline_ignore
     if args.staged or args.diff_base:
-        scanned = _scan_diff(args.staged, diff_range, patterns, allow)
+        scanned = _scan_diff(args.staged, diff_range, patterns, allow, inline_on)
         if isinstance(scanned, str):
             print(scanned, file=sys.stderr)
             return 2
-        records, files, allowlisted, errors = scanned
+        records, inline_records, files, allowlisted, warnings, unused, errors = scanned
     else:
-        records, files, allowlisted, errors = _scan_planned(planned, patterns, allow)
+        records, inline_records, files, allowlisted, warnings, unused, errors = _scan_planned(
+            planned, patterns, allow, inline_on,
+        )
         errors = walk_errors + errors
-    return _report_scan(records, files, allowlisted, errors, args, baseline_keys)
+    return _report_scan(
+        records, inline_records, files, allowlisted, warnings, unused, errors, args, baseline_keys,
+    )
 
 
 def fingerprint_bytes(data: bytes) -> str:
