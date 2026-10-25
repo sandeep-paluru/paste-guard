@@ -123,6 +123,8 @@ Other pages, local connections only: `/admin` (indexed passages, verdict counts,
 ./pasteguard scan src/ .env
 ./pasteguard scan --exclude '*.min.js' --fail-on coach .
 echo "$TEXT" | ./pasteguard scan
+./pasteguard scan --staged
+./pasteguard scan --diff-base origin/main
 ```
 
 On Windows, from the repo root: `python backend\secrets_scan.py scan .`
@@ -131,18 +133,28 @@ No path, or `-`, reads stdin. Each finding is one line, `path:line:col rule seve
 
 A block-level finding exits 1. JWTs and password assignments are coach and exit 0 unless you pass `--fail-on coach`. A usage error exits 2. Directories are walked recursively. Binary files are skipped, and so are `.git`, vendor directories (`node_modules`, `vendor`, `.venv`), and tool caches (`__pycache__`, `.pytest_cache`).
 
+### Changed lines
+
+`--staged` scans lines added in the index (`git diff --cached`). It reads the staged blob, which is the text that will be committed. An edit that is still only in the working tree is ignored. `--diff-base REF` scans lines added since the merge-base of REF and HEAD (`git diff REF...HEAD`). It compares those two commits. Uncommitted edits stay out of that scan.
+
+A secret is reported only when every line it touches was added. One that was already in the file, or that sits on a line this diff left alone, is left out. Line and column numbers are positions in the new file. Deleted files are skipped. A binary diff is skipped. A rename is followed, and a secret that only moved with the file is not reported again. `--exclude` and the usual vendor and binary skips still apply. The allowlist and `--baseline` apply to the findings that remain.
+
+Both flags need a git work tree, and neither accepts file arguments. The command exits 2 when the directory is not a git repo, the ref does not exist, or a path is passed as well.
+
 ### pre-commit
 
 ```yaml
 repos:
   - repo: https://github.com/sandeep-paluru/paste-guard
-    rev: v0.9.0
+    rev: v0.10.0
     hooks:
-      - id: pasteguard-scan
+      - id: pasteguard-scan-staged
         # args: ["--fail-on", "coach"]
 ```
 
-`args` replaces the hook arguments. To fail on coach-level findings as well, the args are `--fail-on` and `coach` only. `scan` is already part of the hook entry.
+`pasteguard-scan-staged` runs `pasteguard scan --staged` once and does not receive filenames. That is the hook that checks the commit. `pasteguard-scan` still scans each staged text file in full.
+
+`args` replaces the hook's own arguments. `--staged` stays in the entry, so to fail on coach-level findings as well the args are `--fail-on` and `coach` only.
 
 ### GitHub Actions
 
@@ -158,6 +170,23 @@ jobs:
 ```
 
 A block-level finding fails the job. The runner's Python is enough. The model is not installed. The demo files and the tests in this repo contain synthetic keys on purpose, so `./pasteguard scan .` here exits 1.
+
+To check a pull request against the base branch, fetch enough history for the merge-base. `fetch-depth: 0` does that. A depth of 1 does not, and `origin/main` may be missing.
+
+```yaml
+name: secrets
+on: [pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: ./pasteguard scan --diff-base origin/main
+```
+
+`--diff-base origin/main` reports secrets on lines added since `origin/main`. Secrets already on that branch are left out.
 
 ### SARIF
 
