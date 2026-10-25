@@ -7,7 +7,9 @@ sample key can be ignored without changing what scan() detects.
 `pasteguard scan` runs these rules on files or stdin. It does not load the
 model, the index, or the server. `--format sarif` writes SARIF 2.1.0.
 `--write-baseline` records fingerprints, and `--baseline` hides findings
-already recorded there.
+already recorded there. `--staged` scans lines added in the index, reading
+the staged blob. `--diff-base REF` scans lines added since the merge-base
+of REF and HEAD. A secret on a line the diff did not add is left out.
 """
 import argparse
 import fnmatch
@@ -15,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
@@ -727,70 +730,258 @@ def _emit(records: list[dict], summary: str, fmt: str) -> None:
     print(summary)
 
 
-def cmd_scan(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(
-        prog="pasteguard scan",
-        description="Scan files or stdin for secrets. Does not load the model or the index.",
-    )
-    parser.add_argument("paths", nargs="*", help="files or directories to scan; - or no path reads stdin")
-    parser.add_argument("--exclude", action="append", default=[], metavar="GLOB",
-                        help="skip paths matching GLOB, repeatable")
-    parser.add_argument("--format", choices=("text", "json", "sarif"), default="text",
-                        help="text lines, a JSON list, or SARIF 2.1.0 (default: text)")
-    parser.add_argument("--fail-on", choices=("block", "coach"), default="block", dest="fail_on",
-                        help="exit 1 at this severity; coach also fails JWTs and password assignments")
-    parser.add_argument("--baseline", metavar="PATH",
-                        help="suppress findings whose path and fingerprint are in this file")
-    parser.add_argument("--write-baseline", metavar="PATH", dest="write_baseline",
-                        help="write current findings as path and sha256 fingerprints, without the secret")
-    try:
-        args = parser.parse_args(argv)
-    except SystemExit as ex:
-        code = ex.code
-        return code if isinstance(code, int) else 2
+_HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 
-    patterns = [item for item in args.exclude if item]
-    paths = args.paths or ["-"]
-    planned: list = []
-    errors = []
-    for raw in paths:
-        if raw == "-":
-            planned.append(None)
+
+def _git(args: list[str]) -> subprocess.CompletedProcess:
+    """Run git in the current directory. Diff settings that would change hunks are pinned."""
+    cmd = [
+        "git",
+        "-c", "diff.renames=true",
+        "-c", "diff.suppressBlankEmpty=false",
+        "-c", "core.quotePath=false",
+        *args,
+    ]
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    return subprocess.run(cmd, capture_output=True, check=False, env=env)
+
+
+def _git_err(proc: subprocess.CompletedProcess, fallback: str) -> str:
+    lines = proc.stderr.decode("utf-8", "replace").strip().splitlines()
+    return lines[-1] if lines else fallback
+
+
+def _require_work_tree() -> str | None:
+    try:
+        proc = _git(["rev-parse", "--is-inside-work-tree"])
+    except FileNotFoundError:
+        return "pasteguard scan: git is not available"
+    if proc.returncode != 0 or proc.stdout.strip() != b"true":
+        return "pasteguard scan: not a git repository"
+    return None
+
+
+def _repo_root() -> Path:
+    proc = _git(["rev-parse", "--show-toplevel"])
+    return Path(proc.stdout.decode("utf-8", "surrogateescape").splitlines()[0])
+
+
+def _resolve_diff_base(ref: str) -> tuple[str, str] | str:
+    """SHAs for `git diff REF...HEAD`: merge-base, then HEAD. Or an error string."""
+    if _git(["rev-parse", "--verify", "--quiet", "--end-of-options", "HEAD"]).returncode != 0:
+        return "pasteguard scan: no commits yet to compare against"
+    peeled = ref + "^{commit}"
+    if _git(["rev-parse", "--verify", "--quiet", "--end-of-options", peeled]).returncode != 0:
+        return f"pasteguard scan: ref not found: {ref}"
+    base = _git(["merge-base", "--end-of-options", ref, "HEAD"])
+    head = _git(["rev-parse", "--verify", "--end-of-options", "HEAD"])
+    if base.returncode != 0 or head.returncode != 0 or not base.stdout.strip():
+        return f"pasteguard scan: no merge base between {ref} and HEAD"
+    return base.stdout.decode().strip(), head.stdout.decode().strip()
+
+
+def _parse_name_status(blob: bytes) -> list[tuple[str, str, str | None]]:
+    """(status letter, new path, old path). Renames carry the source path."""
+    parts = blob.split(b"\0")
+    if parts and parts[-1] == b"":
+        parts.pop()
+    entries = []
+    i = 0
+    while i < len(parts):
+        status = parts[i].decode("utf-8", "surrogateescape")
+        i += 1
+        kind = status[:1]
+        if kind in ("R", "C"):
+            if i + 1 >= len(parts):
+                break
+            old = parts[i].decode("utf-8", "surrogateescape")
+            new = parts[i + 1].decode("utf-8", "surrogateescape")
+            i += 2
+            entries.append((kind, new, old))
             continue
-        path = Path(raw)
-        if not path.exists():
-            print(f"pasteguard scan: not found: {raw}", file=sys.stderr)
-            return 2
-        if path.is_file():
-            planned.append(path)
-        elif path.is_dir():
-            found, problems = _walk(path, patterns)
-            planned.extend(found)
-            errors.extend(problems)
+        if i >= len(parts):
+            break
+        path = parts[i].decode("utf-8", "surrogateescape")
+        i += 1
+        entries.append((kind, path, None))
+    return entries
+
+
+def _parse_added_lines(diff: bytes) -> set[int] | None:
+    """1-based line numbers added in the new file. None when git calls the diff binary.
+
+    Once a hunk starts, every '+' line is an added line, including a line whose
+    text itself starts with '+'. '+++' is only a header, and it sits before the
+    first hunk.
+    """
+    text = diff.decode("utf-8", "replace")
+    added: set[int] = set()
+    new_line = None
+    for line in text.splitlines():
+        if line.startswith("Binary files ") and line.endswith(" differ"):
+            return None
+        if line.startswith("GIT binary patch"):
+            return None
+        match = _HUNK_RE.match(line)
+        if match:
+            new_line = int(match.group(1))
+            continue
+        if new_line is None:
+            continue
+        if line.startswith("+"):
+            added.add(new_line)
+            new_line += 1
+        elif line.startswith("-") or line.startswith("\\"):
+            continue
         else:
-            print(f"pasteguard scan: not a file or directory: {raw}", file=sys.stderr)
-            return 2
+            new_line += 1
+    return added
 
+
+def _line_count(text: str) -> int:
+    if not text:
+        return 0
+    count = text.count("\n")
+    if not text.endswith("\n"):
+        count += 1
+    return count
+
+
+def _on_added_lines(text: str, finding: dict, added: set[int]) -> bool:
+    """True when every line the finding touches was added.
+
+    A secret that sits on an unchanged line, or that runs onto one, is not
+    part of this diff. Offsets are into the new file.
+    """
+    start, end = finding["start"], finding["end"]
+    if end <= start:
+        return False
+    first = text.count("\n", 0, start) + 1
+    last = text.count("\n", 0, end - 1) + 1
+    return all(line in added for line in range(first, last + 1))
+
+
+def _skipped_vendor(rel: str) -> bool:
+    """A parent directory the walker would not descend into."""
+    parts = rel.split("/")
+    return any(part in SKIP_DIRS for part in parts[:-1])
+
+
+def _text_from_bytes(data: bytes) -> str | None:
+    if _bytes_look_binary(data[:_SAMPLE]):
+        return None
     try:
-        allow = _load_allowlist()
-    except SystemExit as ex:
-        message = ex.code
-        if isinstance(message, str) and message.strip():
-            print(message.strip(), file=sys.stderr)
-        return 2
-    except Exception as ex:
-        if type(ex).__name__ == "TOMLDecodeError":
-            print(f"pasteguard scan: {ex}", file=sys.stderr)
-            return 2
-        raise
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
 
-    baseline_keys = None
-    if args.baseline:
-        baseline_keys, baseline_error = _load_baseline(Path(args.baseline))
-        if baseline_error:
-            print(baseline_error, file=sys.stderr)
-            return 2
 
+def _read_blob(spec: str) -> tuple[bytes | None, str | None, str | None]:
+    """(bytes, git object type, error). Non-blobs (a submodule commit) have no bytes and no error."""
+    kind = _git(["cat-file", "-t", spec])
+    if kind.returncode != 0:
+        return None, None, _git_err(kind, "cannot read")
+    obj_type = kind.stdout.decode().strip()
+    if obj_type != "blob":
+        return None, obj_type, None
+    data = _git(["cat-file", "-p", spec])
+    if data.returncode != 0:
+        return None, obj_type, _git_err(data, "cannot read")
+    return data.stdout, obj_type, None
+
+
+def _blob_diff(old: str, new: str) -> tuple[bytes, str | None]:
+    proc = _git([
+        "diff", "-U0", "--no-color", "--no-ext-diff", "--no-textconv", old, new,
+    ])
+    if proc.returncode != 0:
+        return b"", _git_err(proc, "git diff failed")
+    return proc.stdout, None
+
+
+def _scan_added(display: str, text: str, added: set[int], allow) -> tuple[list[dict], int]:
+    findings = [item for item in scan(text) if _on_added_lines(text, item, added)]
+    kept, dropped = apply_allowlist(text, findings, allow)
+    return [_record(display, text, finding) for finding in kept], dropped
+
+
+def _changed_entries(staged: bool, diff_range: tuple[str, str] | None) -> tuple[list[tuple[str, str, str | None]], str | None]:
+    if staged:
+        cmd = ["diff", "--cached", "--find-renames", "--name-status", "-z"]
+    else:
+        assert diff_range is not None
+        cmd = ["diff", "--find-renames", "--name-status", "-z", diff_range[0], diff_range[1]]
+    proc = _git(cmd)
+    if proc.returncode != 0:
+        return [], "pasteguard scan: " + _git_err(proc, "git diff failed")
+    return _parse_name_status(proc.stdout), None
+
+
+def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[str], allow):
+    """Scan added lines. Returns (records, files, allowlisted, errors) or an error string.
+
+    `--staged` reads the index (`:path`), so the working tree is irrelevant.
+    `--diff-base` reads `HEAD:path` and compares commits: the merge-base of REF
+    and HEAD against HEAD. Uncommitted edits are not part of that diff.
+    """
+    entries, fatal = _changed_entries(staged, diff_range)
+    if fatal:
+        return fatal
+    try:
+        root = _repo_root()
+    except (IndexError, OSError):
+        return "pasteguard scan: not a git repository"
+
+    head = None if staged else diff_range[1]
+    base = None if staged else diff_range[0]
+    records: list[dict] = []
+    files = 0
+    allowlisted = 0
+    errors: list[str] = []
+    seen = set()
+    for kind, path, old in entries:
+        if kind == "D":
+            continue
+        if kind == "U":
+            return f"pasteguard scan: unmerged file: {path}"
+        if path in seen or _skipped_vendor(path):
+            continue
+        seen.add(path)
+        display = _display(root / path)
+        if _excluded(display, patterns):
+            continue
+        new_spec = f":{path}" if staged else f"{head}:{path}"
+        data, obj_type, read_error = _read_blob(new_spec)
+        if read_error:
+            errors.append(f"cannot read {display}: {read_error}")
+            continue
+        if obj_type != "blob" or data is None:
+            continue
+        text = _text_from_bytes(data)
+        if text is None:
+            continue
+        if kind in ("A", "C"):
+            added = set(range(1, _line_count(text) + 1))
+        else:
+            old_spec = f"HEAD:{old or path}" if staged else f"{base}:{old or path}"
+            diff, diff_error = _blob_diff(old_spec, new_spec)
+            if diff_error:
+                errors.append(f"cannot diff {display}: {diff_error}")
+                continue
+            added = _parse_added_lines(diff)
+            if added is None:
+                continue
+        if not added:
+            continue
+        rows, dropped = _scan_added(display, text, added, allow)
+        files += 1
+        allowlisted += dropped
+        records.extend(rows)
+    return records, files, allowlisted, errors
+
+
+def _scan_planned(planned: list, patterns: list[str], allow):
     stdin_text = None
     stdin_done = False
     if any(item is None for item in planned):
@@ -799,6 +990,7 @@ def cmd_scan(argv: list[str]) -> int:
     records: list[dict] = []
     files = 0
     allowlisted = 0
+    errors: list[str] = []
     seen = set()
     for item in planned:
         if item is None:
@@ -834,7 +1026,25 @@ def cmd_scan(argv: list[str]) -> int:
         files += 1
         allowlisted += dropped
         records.extend(rows)
+    return records, files, allowlisted, errors
 
+
+def _load_scan_allowlist():
+    """The [secrets] allowlist, or an error string to print (exit 2)."""
+    try:
+        return _load_allowlist(), None
+    except SystemExit as ex:
+        message = ex.code
+        if isinstance(message, str) and message.strip():
+            return None, message.strip()
+        return None, ""
+    except Exception as ex:
+        if type(ex).__name__ == "TOMLDecodeError":
+            return None, f"pasteguard scan: {ex}"
+        raise
+
+
+def _report_scan(records, files, allowlisted, errors, args, baseline_keys) -> int:
     for message in errors:
         print(f"pasteguard scan: {message}", file=sys.stderr)
     records.sort(key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]))
@@ -862,6 +1072,100 @@ def cmd_scan(argv: list[str]) -> int:
     if args.fail_on == "coach":
         return 1 if block or coach else 0
     return 1 if block else 0
+
+
+def cmd_scan(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="pasteguard scan",
+        description="Scan files or stdin for secrets. Does not load the model or the index.",
+    )
+    parser.add_argument("paths", nargs="*", help="files or directories to scan; - or no path reads stdin")
+    parser.add_argument("--exclude", action="append", default=[], metavar="GLOB",
+                        help="skip paths matching GLOB, repeatable")
+    parser.add_argument("--format", choices=("text", "json", "sarif"), default="text",
+                        help="text lines, a JSON list, or SARIF 2.1.0 (default: text)")
+    parser.add_argument("--fail-on", choices=("block", "coach"), default="block", dest="fail_on",
+                        help="exit 1 at this severity; coach also fails JWTs and password assignments")
+    parser.add_argument("--baseline", metavar="PATH",
+                        help="suppress findings whose path and fingerprint are in this file")
+    parser.add_argument("--write-baseline", metavar="PATH", dest="write_baseline",
+                        help="write current findings as path and sha256 fingerprints, without the secret")
+    parser.add_argument("--staged", action="store_true",
+                        help="scan only lines added in the index (git diff --cached); reads the staged blob, not the working tree")
+    parser.add_argument("--diff-base", metavar="REF",
+                        help="scan only lines added since the merge-base of REF and HEAD (git diff REF...HEAD); compares commits")
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as ex:
+        code = ex.code
+        return code if isinstance(code, int) else 2
+
+    if args.staged and args.diff_base:
+        print("pasteguard scan: use either --staged or --diff-base", file=sys.stderr)
+        return 2
+    if (args.staged or args.diff_base) and args.paths:
+        flag = "--staged" if args.staged else "--diff-base"
+        print(f"pasteguard scan: {flag} does not take path arguments", file=sys.stderr)
+        return 2
+
+    diff_range = None
+    if args.staged or args.diff_base:
+        repo_error = _require_work_tree()
+        if repo_error:
+            print(repo_error, file=sys.stderr)
+            return 2
+        if args.diff_base:
+            resolved = _resolve_diff_base(args.diff_base)
+            if isinstance(resolved, str):
+                print(resolved, file=sys.stderr)
+                return 2
+            diff_range = resolved
+
+    patterns = [item for item in args.exclude if item]
+    planned: list = []
+    walk_errors: list[str] = []
+    if not args.staged and not args.diff_base:
+        for raw in args.paths or ["-"]:
+            if raw == "-":
+                planned.append(None)
+                continue
+            path = Path(raw)
+            if not path.exists():
+                print(f"pasteguard scan: not found: {raw}", file=sys.stderr)
+                return 2
+            if path.is_file():
+                planned.append(path)
+            elif path.is_dir():
+                found, problems = _walk(path, patterns)
+                planned.extend(found)
+                walk_errors.extend(problems)
+            else:
+                print(f"pasteguard scan: not a file or directory: {raw}", file=sys.stderr)
+                return 2
+
+    allow, allow_error = _load_scan_allowlist()
+    if allow_error is not None:
+        if allow_error:
+            print(allow_error, file=sys.stderr)
+        return 2
+
+    baseline_keys = None
+    if args.baseline:
+        baseline_keys, baseline_error = _load_baseline(Path(args.baseline))
+        if baseline_error:
+            print(baseline_error, file=sys.stderr)
+            return 2
+
+    if args.staged or args.diff_base:
+        scanned = _scan_diff(args.staged, diff_range, patterns, allow)
+        if isinstance(scanned, str):
+            print(scanned, file=sys.stderr)
+            return 2
+        records, files, allowlisted, errors = scanned
+    else:
+        records, files, allowlisted, errors = _scan_planned(planned, patterns, allow)
+        errors = walk_errors + errors
+    return _report_scan(records, files, allowlisted, errors, args, baseline_keys)
 
 
 def fingerprint_bytes(data: bytes) -> str:
