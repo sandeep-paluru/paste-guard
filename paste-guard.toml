@@ -84,3 +84,8 @@ skip_below = 0.10
 examples = true
 allowlist = []
 file = ""
+
+# Extra detectors for ./pasteguard scan only. The server and the extension
+# do not load these. Each [[scan.rules]] table needs name, regex, and severity
+# ("block" or "coach"). keywords, secret_group, min_entropy, and description
+# are optional. See the README for the full example. A bad rule is a usage error.

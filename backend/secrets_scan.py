@@ -13,17 +13,36 @@ of REF and HEAD. A secret on a line the diff did not add is left out.
 `pasteguard:ignore` on a finding's first line, or `pasteguard:ignore-next-line`
 on the line above, suppresses that finding. `--no-inline-ignore` turns the
 markers off.
+
+`[[scan.rules]]` in paste-guard.toml, and a TOML file passed with `--rules`,
+add detectors. A custom rule has a name, a regex, and a severity (`block` or
+`coach`). `keywords` is a case-insensitive substring prefilter: the regex runs
+only on lines that contain one. `secret_group` picks the capture that is the
+secret (default 0, the whole match). `min_entropy` is a Shannon floor, in bits
+per character, on that capture. `description` is the SARIF text.
+
+Custom rules are matched per line, and only the first 10000 characters of a
+line are scanned. That bounds a runaway pattern to one line. A nested
+quantifier can still be slow on a long line, so keep the regex specific.
+They do not cross line boundaries. The server and the extension do not load
+them; `scan()` without a ruleset is the built-in detectors only.
 """
 import argparse
 import fnmatch
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
+
+try:
+    import tomllib
+except ImportError:  # Python 3.10
+    import tomli as tomllib
 
 _K = r"[A-Za-z0-9_-]"
 _NOT_K = r"(?![A-Za-z0-9_-])"
@@ -128,6 +147,13 @@ _TOOL_URI = "https://github.com/sandeep-paluru/paste-guard"
 _BASELINE_VERSION = 1
 _PUBLIC_FIELDS = ("path", "line", "col", "rule", "severity", "mask", "length")
 _HEX = frozenset("0123456789abcdef")
+# Custom rules scan one line at a time, and stop after this many characters.
+# A nested quantifier can still be slow inside that window.
+_CUSTOM_LINE_CAP = 10000
+_RULE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+_RULE_FIELDS = frozenset({
+    "name", "regex", "severity", "keywords", "secret_group", "min_entropy", "description",
+})
 
 
 def severity(rule: str) -> str:
@@ -181,24 +207,118 @@ def _keep_match(name: str, m: re.Match) -> bool:
     return True
 
 
-def scan(text: str) -> list[dict]:
+class CustomRule:
+    """One user detector. keywords are already casefolded. secret_group 0 is the whole match."""
+
+    def __init__(self, name, pattern, severity, description, source, keywords, secret_group, min_entropy):
+        self.name = name
+        self.pattern = pattern
+        self.severity = severity
+        self.description = description
+        self.source = source
+        self.keywords = keywords
+        self.secret_group = secret_group
+        self.min_entropy = min_entropy
+
+
+class RuleSet:
+    """Custom detectors loaded for one scan. Built-ins stay in RULES."""
+
+    def __init__(self, custom=None):
+        self.custom = list(custom or [])
+
+    def known_names(self) -> set[str]:
+        names = set(RULES)
+        names.update(rule.name for rule in self.custom)
+        return names
+
+
+def _shannon(value: str) -> float:
+    """Shannon entropy in bits per character. A single repeated character is 0."""
+    if len(value) < 2:
+        return 0.0
+    counts: dict[str, int] = {}
+    for ch in value:
+        counts[ch] = counts.get(ch, 0) + 1
+    length = len(value)
+    entropy = 0.0
+    for count in counts.values():
+        p = count / length
+        entropy -= p * math.log2(p)
+    return entropy
+
+
+def _match_custom(text: str, rule: CustomRule):
+    """Matches of one custom rule. Each yield is (start, end, secret) in the whole text.
+
+    The regex runs on one line, and only on the first _CUSTOM_LINE_CAP characters.
+    A keyword list skips lines that contain none of them (case-insensitive).
+    """
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        body = line
+        if body.endswith("\r\n"):
+            body = body[:-2]
+        elif body.endswith(("\n", "\r")):
+            body = body[:-1]
+        if len(body) > _CUSTOM_LINE_CAP:
+            body = body[:_CUSTOM_LINE_CAP]
+        if rule.keywords:
+            folded = body.casefold()
+            if not any(word in folded for word in rule.keywords):
+                offset += len(line)
+                continue
+        for match in rule.pattern.finditer(body):
+            if match.end() == match.start():
+                continue
+            try:
+                secret = match.group(rule.secret_group)
+            except IndexError:
+                continue
+            if not secret:
+                continue
+            if rule.min_entropy is not None and _shannon(secret) < rule.min_entropy:
+                continue
+            yield offset + match.start(), offset + match.end(), secret
+        offset += len(line)
+
+
+def scan(text: str, ruleset: RuleSet | None = None) -> list[dict]:
     """Return non-overlapping findings. A specific credential rule always beats the generic
     password_assignment rule on overlap (so api_key="sk-ant-..." reports anthropic_key and blocks);
     otherwise the longest span wins, ties going to the rule defined first.
     Placeholder assignment values are dropped before that.
     The allowlist is not applied here. Detection stays the same; apply_allowlist drops
-    known-safe hits from the verdict."""
+    known-safe hits from the verdict.
+
+    ruleset adds custom detectors. They are specific rules, so they beat
+    password_assignment on overlap. A tie on length goes to the earlier rule,
+    and built-ins are earlier. A custom finding carries the captured secret
+    and its severity. Built-in findings do not.
+    """
     cands = []
+    extra: dict[tuple[int, int, str], tuple[str, str]] = {}
     for order, (name, rx) in enumerate(RULES.items()):
         for m in rx.finditer(text):
             if not _keep_match(name, m):
                 continue
             cands.append((name in GENERIC, m.start() - m.end(), order, m.start(), m.end(), name))
+    if ruleset is not None and ruleset.custom:
+        base = len(RULES)
+        for index, rule in enumerate(ruleset.custom):
+            for start, end, secret in _match_custom(text, rule):
+                cands.append((False, start - end, base + index, start, end, rule.name))
+                extra[(start, end, rule.name)] = (secret, rule.severity)
     cands.sort()
     findings = []
     for _, _, _, start, end, name in cands:
         if all(end <= f["start"] or start >= f["end"] for f in findings):
-            findings.append({"type": name, "start": start, "end": end})
+            item = {"type": name, "start": start, "end": end}
+            found = extra.get((start, end, name))
+            if found is not None:
+                item["secret"] = found[0]
+                item["severity"] = found[1]
+            findings.append(item)
     return sorted(findings, key=lambda f: f["start"])
 
 
@@ -341,9 +461,20 @@ def compile_allowlist(cfg: dict) -> Allowlist:
 
 def _candidates(text: str, finding: dict) -> list[str]:
     """Strings an allowlist entry can refer to. The whole match, and for assignments
-    and database URLs the password with quotes removed."""
+    and database URLs the password with quotes removed.
+
+    A custom rule also tries the captured secret, quotes stripped.
+    """
     span = text[finding["start"]:finding["end"]]
     out = [span]
+    secret = finding.get("secret")
+    if secret:
+        if secret not in out:
+            out.append(secret)
+        stripped, _quoted = _strip_value(secret)
+        if stripped and stripped not in out:
+            out.append(stripped)
+        return out
     rule = RULES.get(finding["type"])
     if rule is not None and "value" in rule.groupindex:
         m = rule.search(span)
@@ -394,7 +525,13 @@ def _position(text: str, offset: int) -> tuple[int, int]:
 
 
 def _secret_value(text: str, finding: dict) -> str:
-    """The credential itself. For an assignment or a database URL, the password."""
+    """The credential itself. For an assignment or a database URL, the password.
+
+    A custom finding already carries the captured secret.
+    """
+    secret = finding.get("secret")
+    if secret:
+        return secret
     span = text[finding["start"]:finding["end"]]
     rule = RULES.get(finding["type"])
     if rule is not None and "value" in rule.groupindex:
@@ -434,7 +571,7 @@ def _record(display: str, text: str, finding: dict) -> dict:
         "line": line,
         "col": col,
         "rule": rule,
-        "severity": severity(rule),
+        "severity": finding.get("severity") or severity(rule),
         "mask": _mask(value),
         "length": len(value),
         "fingerprint": baseline_fingerprint(rule, value),
@@ -583,11 +720,12 @@ def _sarif_uri(path: str) -> str:
     return quote(path.replace("\\", "/"), safe="/")
 
 
-def _sarif(records: list[dict]) -> dict:
+def _sarif(records: list[dict], ruleset: RuleSet | None = None) -> dict:
     """SARIF 2.1.0. One rule per detector. The result message is only the mask.
 
     A record with inline set is kept and given a suppression of kind inSource,
     instead of being dropped. Text and JSON leave those findings out.
+    Custom detectors are listed after the built-ins, with their description.
     """
     rules = []
     for name in RULES:
@@ -596,6 +734,13 @@ def _sarif(records: list[dict]) -> dict:
             "shortDescription": {"text": RULE_DESCRIPTIONS.get(name) or name},
             "defaultConfiguration": {"level": _sarif_level(severity(name))},
         })
+    if ruleset is not None:
+        for rule in ruleset.custom:
+            rules.append({
+                "id": rule.name,
+                "shortDescription": {"text": rule.description or rule.name},
+                "defaultConfiguration": {"level": _sarif_level(rule.severity)},
+            })
     index = {rule["id"]: i for i, rule in enumerate(rules)}
     results = []
     for rec in records:
@@ -750,11 +895,12 @@ def _split_lines(text: str) -> list[str]:
     return parts
 
 
-def _parse_rule_suffix(rest: str) -> tuple[set[str] | None, list, int]:
+def _parse_rule_suffix(rest: str, known: set[str] | None = None) -> tuple[set[str] | None, list, int]:
     """Optional `=rule,rule` after the marker keyword.
 
     None means the marker names no rules, so it covers every detector.
     The returned index is how far into rest the suffix reached.
+    known is the detector names that count. The default is the built-in set.
     """
     i = 0
     n = len(rest)
@@ -791,17 +937,18 @@ def _parse_rule_suffix(rest: str) -> tuple[set[str] | None, list, int]:
         return set(), [None], i
     problems = []
     seen = set()
-    known = set()
+    catalog = set(RULES) if known is None else known
+    matched = set()
     for name in names:
-        if name in RULES:
-            known.add(name)
+        if name in catalog:
+            matched.add(name)
         elif name not in seen:
             problems.append(name)
             seen.add(name)
-    return known, problems, i
+    return matched, problems, i
 
 
-def _parse_marker_at(line: str, start: int):
+def _parse_marker_at(line: str, start: int, known: set[str] | None = None):
     """One marker starting at start, or None when the text only shares a prefix.
 
     `pasteguard:ignored` is not a marker. `pasteguard:ignore-next-line` is the
@@ -820,12 +967,16 @@ def _parse_marker_at(line: str, start: int):
         pos = after
     elif pos < len(line) and (line[pos].isalnum() or line[pos] == "_"):
         return None
-    rules, problems, consumed = _parse_rule_suffix(line[pos:])
+    rules, problems, consumed = _parse_rule_suffix(line[pos:], known)
     return kind, rules, problems, pos + consumed
 
 
-def _parse_markers(text: str) -> list[_Marker]:
-    """Every marker in the file. The comment syntax around it is irrelevant."""
+def _parse_markers(text: str, known: set[str] | None = None) -> list[_Marker]:
+    """Every marker in the file. The comment syntax around it is irrelevant.
+
+    known is the detector names a `=rule` list may name. The default is the
+    built-in set, which is what the server and a scan with no custom rules use.
+    """
     found = []
     for number, line in enumerate(_split_lines(text), 1):
         start = 0
@@ -833,7 +984,7 @@ def _parse_markers(text: str) -> list[_Marker]:
             at = line.find("pasteguard:ignore", start)
             if at < 0:
                 break
-            parsed = _parse_marker_at(line, at)
+            parsed = _parse_marker_at(line, at, known)
             if parsed is None:
                 start = at + 1
                 continue
@@ -924,14 +1075,15 @@ def _unused_pairs(path: str, markers: list[_Marker]) -> list[tuple[str, int]]:
     return pairs
 
 
-def _analyze(display: str, text: str, allow, scope: set[int] | None, inline_on: bool):
+def _analyze(display: str, text: str, allow, scope: set[int] | None, inline_on: bool,
+             ruleset: RuleSet | None = None):
     """Scan one blob. scope limits which lines can produce a finding (None means all).
 
     The allowlist runs first. An allowlisted value is not counted as inline, and a
     marker that only sat on one is unused. Returns records, inline records,
     allowlisted count, warnings, and unused marker locations.
     """
-    findings = scan(text)
+    findings = scan(text, ruleset)
     if scope is not None:
         findings = [item for item in findings if _on_added_lines(text, item, scope)]
     kept, dropped = apply_allowlist(text, findings, allow)
@@ -939,7 +1091,8 @@ def _analyze(display: str, text: str, allow, scope: set[int] | None, inline_on: 
     warnings: list[str] = []
     unused: list[tuple[str, int]] = []
     if inline_on:
-        markers = _parse_markers(text)
+        known = ruleset.known_names() if ruleset is not None else None
+        markers = _parse_markers(text, known)
         kept, inline_findings, stale = _apply_inline(text, kept, markers, scope)
         # Only markers that could affect this scan. A typo on a line the diff
         # did not touch stays quiet.
@@ -954,7 +1107,7 @@ def _analyze(display: str, text: str, allow, scope: set[int] | None, inline_on: 
 
 
 def _emit(records: list[dict], inline_records: list[dict], unused_lines: list[str],
-          summary: str, fmt: str) -> None:
+          summary: str, fmt: str, ruleset: RuleSet | None = None) -> None:
     """Text and JSON list the findings that remain. SARIF also lists inline ones.
 
     Unused-marker lines share a stream with the summary, so a JSON or SARIF
@@ -972,7 +1125,7 @@ def _emit(records: list[dict], inline_records: list[dict], unused_lines: list[st
             records + inline_records,
             key=lambda rec: (rec["path"], rec["line"], rec["col"], rec["rule"]),
         )
-        json.dump(_sarif(combined), sys.stdout, indent=2, ensure_ascii=False)
+        json.dump(_sarif(combined, ruleset), sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         for line in unused_lines:
             print(line, file=sys.stderr)
@@ -1167,7 +1320,8 @@ def _changed_entries(staged: bool, diff_range: tuple[str, str] | None) -> tuple[
     return _parse_name_status(proc.stdout), None
 
 
-def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[str], allow, inline_on: bool):
+def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[str], allow, inline_on: bool,
+               ruleset: RuleSet | None = None):
     """Scan added lines. Returns a result tuple, or an error string.
 
     The tuple is (records, inline records, files, allowlisted, warnings, unused, errors).
@@ -1228,7 +1382,7 @@ def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[
                 continue
         if not added:
             continue
-        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, added, inline_on)
+        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, added, inline_on, ruleset)
         files += 1
         allowlisted += dropped
         records.extend(rows)
@@ -1238,7 +1392,8 @@ def _scan_diff(staged: bool, diff_range: tuple[str, str] | None, patterns: list[
     return records, inline_records, files, allowlisted, warnings, unused, errors
 
 
-def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool):
+def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool,
+                  ruleset: RuleSet | None = None):
     stdin_text = None
     stdin_done = False
     if any(item is None for item in planned):
@@ -1259,7 +1414,7 @@ def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool):
             stdin_done = True
             if stdin_text is None:
                 continue
-            rows, hidden, dropped, warns, stale = _analyze("-", stdin_text, allow, None, inline_on)
+            rows, hidden, dropped, warns, stale = _analyze("-", stdin_text, allow, None, inline_on, ruleset)
             files += 1
             allowlisted += dropped
             records.extend(rows)
@@ -1285,7 +1440,7 @@ def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool):
             continue
         if text is None:
             continue
-        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, None, inline_on)
+        rows, hidden, dropped, warns, stale = _analyze(display, text, allow, None, inline_on, ruleset)
         files += 1
         allowlisted += dropped
         records.extend(rows)
@@ -1293,6 +1448,165 @@ def _scan_planned(planned: list, patterns: list[str], allow, inline_on: bool):
         warnings.extend(warns)
         unused.extend(stale)
     return records, inline_records, files, allowlisted, warnings, unused, errors
+
+
+def _parse_one_rule(item, source: str, index: int, seen: set[str]) -> tuple[CustomRule | None, str | None]:
+    """One [[scan.rules]] table. The error names the rule once its name is known."""
+    where = f"pasteguard scan: {source}: scan.rules[{index}]"
+    if not isinstance(item, dict):
+        return None, f"{where}: expected a table"
+    raw_name = item.get("name")
+    if not isinstance(raw_name, str) or not raw_name:
+        return None, f"{where}: missing name"
+    where = f"pasteguard scan: {source}: rule {raw_name}"
+    if not _RULE_NAME.fullmatch(raw_name):
+        return None, f"{where}: name must use letters, digits, '_' or '-'"
+    if raw_name in RULES:
+        return None, f"{where}: name matches a built-in detector"
+    if raw_name in seen:
+        return None, f"{where}: duplicate name"
+    unknown = [key for key in item if key not in _RULE_FIELDS]
+    if unknown:
+        return None, f"{where}: unknown field '{unknown[0]}'"
+
+    pattern = item.get("regex")
+    if not isinstance(pattern, str) or pattern == "":
+        return None, f"{where}: missing regex"
+    try:
+        compiled = re.compile(pattern)
+    except re.error as ex:
+        return None, f"{where}: bad regex ({ex})"
+
+    if "severity" not in item:
+        return None, f"{where}: missing severity"
+    sev = item.get("severity")
+    if sev not in ("block", "coach"):
+        if isinstance(sev, str):
+            return None, f"{where}: unknown severity '{sev}'"
+        return None, f"{where}: unknown severity"
+
+    group = item.get("secret_group", 0)
+    if isinstance(group, bool) or not isinstance(group, int):
+        return None, f"{where}: secret_group must be an integer"
+    if group < 0 or group > compiled.groups:
+        return None, f"{where}: secret_group {group} is out of range"
+
+    raw_keywords = item.get("keywords", [])
+    if raw_keywords is None:
+        raw_keywords = []
+    if isinstance(raw_keywords, str) or not isinstance(raw_keywords, list):
+        return None, f"{where}: keywords must be a list of strings"
+    words: list[str] = []
+    for word in raw_keywords:
+        if not isinstance(word, str) or word.strip() == "":
+            return None, f"{where}: keywords must be a list of strings"
+        folded = word.casefold()
+        if folded not in words:
+            words.append(folded)
+
+    min_entropy = None
+    if "min_entropy" in item and item.get("min_entropy") is not None:
+        ent = item.get("min_entropy")
+        if isinstance(ent, bool) or not isinstance(ent, (int, float)):
+            return None, f"{where}: min_entropy must be a number"
+        if ent < 0 or ent != ent or ent == float("inf"):
+            return None, f"{where}: min_entropy must be zero or greater"
+        min_entropy = float(ent)
+
+    desc = item.get("description", "")
+    if desc is None:
+        desc = ""
+    if not isinstance(desc, str):
+        return None, f"{where}: description must be a string"
+    description = desc.strip() or raw_name
+    return CustomRule(
+        raw_name, compiled, sev, description, source, tuple(words), group, min_entropy,
+    ), None
+
+
+def _rules_from_document(doc, source: str, seen: set[str], require: bool) -> tuple[list[CustomRule], str | None]:
+    """Pull [[scan.rules]] out of a parsed TOML document.
+
+    require is for --rules, which has to contain the table. paste-guard.toml
+    may omit it.
+    """
+    if not isinstance(doc, dict):
+        return [], f"pasteguard scan: {source}: no [[scan.rules]] table"
+    if "scan" not in doc:
+        if require:
+            return [], f"pasteguard scan: {source}: no [[scan.rules]] table"
+        return [], None
+    scan = doc.get("scan")
+    if not isinstance(scan, dict):
+        return [], f"pasteguard scan: {source}: scan must be a table"
+    if "rules" not in scan:
+        if require:
+            return [], f"pasteguard scan: {source}: no [[scan.rules]] table"
+        return [], None
+    rules = scan.get("rules")
+    if not isinstance(rules, list):
+        return [], f"pasteguard scan: {source}: scan.rules must be an array of tables"
+    parsed: list[CustomRule] = []
+    for index, item in enumerate(rules):
+        rule, err = _parse_one_rule(item, source, index, seen)
+        if err:
+            return [], err
+        assert rule is not None
+        seen.add(rule.name)
+        parsed.append(rule)
+    return parsed, None
+
+
+def _load_custom_rules(rules_path: str | None) -> tuple[RuleSet | None, str | None]:
+    """Rules from paste-guard.toml, then from --rules. An error string exits 2.
+
+    The same name twice, or a name that is already a built-in, is an error.
+    The rules file uses the same [[scan.rules]] tables as the config.
+    """
+    try:
+        import config
+        cfg = config.load()
+    except SystemExit as ex:
+        message = ex.code
+        if isinstance(message, str) and message.strip():
+            return None, message.strip()
+        return None, "pasteguard scan: cannot read config"
+    except Exception as ex:
+        if type(ex).__name__ == "TOMLDecodeError":
+            return None, f"pasteguard scan: {ex}"
+        raise
+    source = Path(config.CONFIG_PATH).name
+    seen: set[str] = set()
+    custom, err = _rules_from_document(cfg, source, seen, require=False)
+    if err:
+        return None, err
+    if rules_path:
+        path = Path(rules_path)
+        if not path.is_file():
+            return None, f"pasteguard scan: rules file not found: {rules_path}"
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as ex:
+            return None, f"pasteguard scan: cannot read rules file: {rules_path}: {ex.strerror or ex}"
+        try:
+            doc = tomllib.loads(text)
+        except Exception as ex:
+            if type(ex).__name__ == "TOMLDecodeError":
+                return None, f"pasteguard scan: rules file is not valid TOML: {rules_path}: {ex}"
+            raise
+        extra, err = _rules_from_document(doc, path.name, seen, require=True)
+        if err:
+            return None, err
+        custom.extend(extra)
+    return RuleSet(custom), None
+
+
+def _print_rule_list(ruleset: RuleSet) -> None:
+    """name, severity, and where the detector came from. Built-ins first."""
+    for name in RULES:
+        print(f"{name} {severity(name)} built-in")
+    for rule in ruleset.custom:
+        print(f"{rule.name} {rule.severity} {rule.source}")
 
 
 def _load_scan_allowlist():
@@ -1310,7 +1624,8 @@ def _load_scan_allowlist():
         raise
 
 
-def _report_scan(records, inline_records, files, allowlisted, warnings, unused, errors, args, baseline_keys) -> int:
+def _report_scan(records, inline_records, files, allowlisted, warnings, unused, errors, args, baseline_keys,
+                 ruleset: RuleSet | None = None) -> int:
     for message in errors:
         print(f"pasteguard scan: {message}", file=sys.stderr)
     for message in warnings:
@@ -1343,6 +1658,7 @@ def _report_scan(records, inline_records, files, allowlisted, warnings, unused, 
         unused_lines,
         _summary(files, len(records), block, coach, allowlisted, suppressed, inline_count),
         args.format,
+        ruleset,
     )
     if write_error or errors:
         return 2
@@ -1363,7 +1679,11 @@ def cmd_scan(argv: list[str]) -> int:
     parser.add_argument("--format", choices=("text", "json", "sarif"), default="text",
                         help="text lines, a JSON list, or SARIF 2.1.0 (default: text)")
     parser.add_argument("--fail-on", choices=("block", "coach"), default="block", dest="fail_on",
-                        help="exit 1 at this severity; coach also fails JWTs and password assignments")
+                        help="exit 1 at this severity; coach also fails coach-level detectors")
+    parser.add_argument("--rules", metavar="FILE",
+                        help="TOML file of extra [[scan.rules]] detectors, added to paste-guard.toml")
+    parser.add_argument("--list-rules", action="store_true", dest="list_rules",
+                        help="print built-in and custom detectors with severity and source, then exit")
     parser.add_argument("--baseline", metavar="PATH",
                         help="suppress findings whose path and fingerprint are in this file")
     parser.add_argument("--write-baseline", metavar="PATH", dest="write_baseline",
@@ -1381,6 +1701,17 @@ def cmd_scan(argv: list[str]) -> int:
     except SystemExit as ex:
         code = ex.code
         return code if isinstance(code, int) else 2
+
+    if args.list_rules:
+        if args.paths or args.staged or args.diff_base:
+            print("pasteguard scan: --list-rules does not take path arguments", file=sys.stderr)
+            return 2
+        listed, list_error = _load_custom_rules(args.rules)
+        if list_error:
+            print(list_error, file=sys.stderr)
+            return 2
+        _print_rule_list(listed)
+        return 0
 
     if args.staged and args.diff_base:
         print("pasteguard scan: use either --staged or --diff-base", file=sys.stderr)
@@ -1425,6 +1756,11 @@ def cmd_scan(argv: list[str]) -> int:
                 print(f"pasteguard scan: not a file or directory: {raw}", file=sys.stderr)
                 return 2
 
+    ruleset, rules_error = _load_custom_rules(args.rules)
+    if rules_error:
+        print(rules_error, file=sys.stderr)
+        return 2
+
     allow, allow_error = _load_scan_allowlist()
     if allow_error is not None:
         if allow_error:
@@ -1440,18 +1776,19 @@ def cmd_scan(argv: list[str]) -> int:
 
     inline_on = not args.no_inline_ignore
     if args.staged or args.diff_base:
-        scanned = _scan_diff(args.staged, diff_range, patterns, allow, inline_on)
+        scanned = _scan_diff(args.staged, diff_range, patterns, allow, inline_on, ruleset)
         if isinstance(scanned, str):
             print(scanned, file=sys.stderr)
             return 2
         records, inline_records, files, allowlisted, warnings, unused, errors = scanned
     else:
         records, inline_records, files, allowlisted, warnings, unused, errors = _scan_planned(
-            planned, patterns, allow, inline_on,
+            planned, patterns, allow, inline_on, ruleset,
         )
         errors = walk_errors + errors
     return _report_scan(
         records, inline_records, files, allowlisted, warnings, unused, errors, args, baseline_keys,
+        ruleset,
     )
 
 
