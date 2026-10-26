@@ -146,7 +146,7 @@ Both flags need a git work tree, and neither accepts file arguments. The command
 ```yaml
 repos:
   - repo: https://github.com/sandeep-paluru/paste-guard
-    rev: v0.11.0
+    rev: v0.12.0
     hooks:
       - id: pasteguard-scan-staged
         # args: ["--fail-on", "coach"]
@@ -244,6 +244,45 @@ api_key = "..."  # pasteguard:ignore=aws_access_key
 # pasteguard:ignore-next-line
 client_secret = "..."
 ```
+
+### Custom rules
+
+`[[scan.rules]]` in `paste-guard.toml` adds a detector. `--rules FILE` adds the tables from another TOML file. Rules from both places are loaded. The same name twice, or a name that is already a built-in detector, is an error.
+
+```toml
+[[scan.rules]]
+name = "acme_live"
+regex = 'acme_live_([A-Za-z0-9]{32})'
+severity = "block"          # block or coach
+keywords = ["acme_live_"]   # optional, case-insensitive
+secret_group = 1            # optional, default 0 (the whole match)
+min_entropy = 3.0           # optional Shannon floor, bits per character
+description = "Acme live API token"
+```
+
+```
+./pasteguard scan --rules rules.toml src/
+./pasteguard scan --list-rules
+./pasteguard scan --list-rules --rules rules.toml
+```
+
+A custom detector is reported like a built-in one. The line is `path:line:col name severity` plus a mask of the captured value (the first 4 characters and the length). The value is not printed. JSON uses the same fields as a built-in finding. SARIF adds one rule per custom detector, built-ins first, and the description is the rule's `shortDescription`. A coach rule is a SARIF warning. `--fail-on coach` fails the run on a coach rule. The default fails only on block.
+
+The location is the whole match. The mask, the allowlist, and the baseline fingerprint use the capture selected by `secret_group`. `0` is the whole match. A group the regex does not have is a usage error.
+
+`keywords` is a cheap prefilter. The regex runs only on lines that contain one of them, compared case-insensitively. Leave it out to run the regex on every line.
+
+`min_entropy` drops a capture whose Shannon entropy is below that floor. `0` keeps everything. A repeated character is entropy 0.
+
+`pasteguard:ignore=acme_live` suppresses that detector. The allowlist, `--baseline`, `--report-unused-ignores`, `--staged`, and `--diff-base` treat the finding the same way they treat a built-in one.
+
+`--list-rules` prints each detector as `name severity source` and does not scan. Built-ins say `built-in`. A rule from the config says the config file's name. A rule from `--rules` says that file's name.
+
+A bad regex, a duplicate name, a name that matches a built-in, an unknown severity, or a `secret_group` the regex does not have exits 2. The message names the rule.
+
+Custom rules run one line at a time, and only the first 10000 characters of a line are scanned. A match past that, or a match that crosses a newline, is not found. Capping the line keeps a runaway pattern on one line. A nested quantifier can still be slow inside those 10000 characters, so keep the regex specific and use a keyword when you can.
+
+These rules apply to `./pasteguard scan` only. `/check` and the extension still use the built-in detectors.
 
 ## Tests
 
